@@ -1,0 +1,55 @@
+<header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div class="container mx-auto px-4">
+        <div class="flex h-16 items-center justify-between">
+            <!-- Logo -->
+            <div class="flex items-center space-x-reverse space-x-4">
+                <div class="flex items-center space-x-reverse space-x-2">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <span class="text-primary-foreground font-bold text-lg">ق</span>
+                    </div>
+                    <span class="font-bold text-xl">دفتر وکالت پیشرو</span>
+                </div>
+            </div>
+            
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex items-center space-x-reverse space-x-6">
+                <a href="/" class="nav-link text-sm font-medium hover:text-primary transition-colors <%= page === 'home' ? 'active' : '' %>">خانه</a>
+                <a href="/services" class="nav-link text-sm font-medium hover:text-primary transition-colors <%= page === 'services' ? 'active' : '' %>">خدمات</a>
+                <a href="/case-review" class="nav-link text-sm font-medium hover:text-primary transition-colors <%= page === 'case-review' ? 'active' : '' %>">بررسی پرونده حقوقی</a>
+                <a href="/contact" class="nav-link text-sm font-medium hover:text-primary transition-colors <%= page === 'contact' ? 'active' : '' %>">تماس با ما</a>
+                <a href="/client-login" class="nav-link text-sm font-medium hover:text-primary transition-colors <%= page === 'client-login' ? 'active' : '' %>">ورود موکلان</a>
+            </nav>
+            
+            <!-- Actions -->
+            <div class="flex items-center space-x-reverse space-x-4">
+                <!-- Dark Mode Toggle -->
+                <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-muted transition-colors" aria-label="تغییر حالت تاریک">
+                    <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                    <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </button>
+                
+                <!-- Mobile Menu Button -->
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-lg hover:bg-muted transition-colors" aria-label="منوی موبایل">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mobile Navigation -->
+    <div id="mobile-menu" class="hidden md:hidden border-t border-border">
+        <div class="container mx-auto px-4 py-4 space-y-4">
+            <a href="/" class="block w-full text-right py-2 text-sm font-medium hover:text-primary transition-colors">خانه</a>
+            <a href="/services" class="block w-full text-right py-2 text-sm font-medium hover:text-primary transition-colors">خدمات</a>
+            <a href="/case-review" class="block w-full text-right py-2 text-sm font-medium hover:text-primary transition-colors">بررسی پرونده حقوقی</a>
+            <a href="/contact" class="block w-full text-right py-2 text-sm font-medium hover:text-primary transition-colors">تماس با ما</a>
+            <a href="/client-login" class="block w-full text-right py-2 text-sm font-medium hover:text-primary transition-colors">ورود موکلان</a>
+        </div>
+    </div>
+</header>

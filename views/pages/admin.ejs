@@ -1,0 +1,271 @@
+
+<div class="min-h-screen bg-muted/30">
+    <!-- Admin Header -->
+    <header class="bg-card border-b border-border shadow-sm">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <span class="text-primary-foreground font-bold text-lg">ق</span>
+                        </div>
+                        <span class="font-bold text-xl">پنل مدیریت</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-muted-foreground text-sm">خوش آمدید</span>
+                    <a href="/" class="btn-primary">
+                        بازگشت به سایت
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Dashboard Overview -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-6">داشبورد مدیریت</h1>
+            
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-muted-foreground">پرونده‌های فعال</h3>
+                        <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-primary mb-2"><%= cases.filter(c => c.status === 'pending').length %></div>
+                    <p class="text-sm text-muted-foreground">در انتظار بررسی</p>
+                </div>
+
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-muted-foreground">پیام‌های جدید</h3>
+                        <div class="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-accent mb-2"><%= contacts.length %></div>
+                    <p class="text-sm text-muted-foreground">پیام دریافتی</p>
+                </div>
+
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-muted-foreground">کل پرونده‌ها</h3>
+                        <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-primary mb-2"><%= cases.length %></div>
+                    <p class="text-sm text-muted-foreground">تعداد کل</p>
+                </div>
+
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-muted-foreground">پرونده‌های حل شده</h3>
+                        <div class="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-accent mb-2"><%= cases.filter(c => c.status === 'resolved').length %></div>
+                    <p class="text-sm text-muted-foreground">حل شده</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Cases Table -->
+        <div class="card p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">پرونده‌های اخیر</h2>
+                <div class="flex gap-2">
+                    <input type="search" class="input-field w-64" placeholder="جستجو در پرونده‌ها...">
+                    <select class="input-field w-32">
+                        <option>همه</option>
+                        <option>در انتظار</option>
+                        <option>در حال بررسی</option>
+                        <option>حل شده</option>
+                        <option>رد شده</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>شماره پرونده</th>
+                            <th>نام موکل</th>
+                            <th>نوع پرونده</th>
+                            <th>وضعیت</th>
+                            <th>فوریت</th>
+                            <th>تاریخ ایجاد</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                        <% if (cases.length === 0) { %>
+                        <tr>
+                            <td colspan="7" class="text-center py-8 text-muted-foreground">
+                                هیچ پرونده‌ای یافت نشد
+                            </td>
+                        </tr>
+                        <% } else { %>
+                        <% cases.slice(0, 10).forEach((caseItem, index) => { %>
+                        <tr class="hover:bg-muted/30">
+                            <td class="p-4 font-medium">
+                                <%= caseItem.id.substring(0, 8) %>...
+                            </td>
+                            <td class="p-4"><%= caseItem.clientName %></td>
+                            <td class="p-4">
+                                <% const caseTypeMap = {
+                                    'family': 'حقوق خانواده',
+                                    'commercial': 'حقوق تجاری',
+                                    'property': 'حقوق املاک',
+                                    'criminal': 'حقوق کیفری',
+                                    'labor': 'حقوق کار',
+                                    'civil': 'حقوق مدنی'
+                                } %>
+                                <%= caseTypeMap[caseItem.caseType] || caseItem.caseType %>
+                            </td>
+                            <td class="p-4">
+                                <% let statusClass = 'badge-primary'; %>
+                                <% let statusText = 'در انتظار'; %>
+                                <% if (caseItem.status === 'reviewing') { statusClass = 'badge-warning'; statusText = 'در حال بررسی'; } %>
+                                <% if (caseItem.status === 'resolved') { statusClass = 'badge-success'; statusText = 'حل شده'; } %>
+                                <% if (caseItem.status === 'rejected') { statusClass = 'badge-error'; statusText = 'رد شده'; } %>
+                                <span class="badge <%= statusClass %>">
+                                    <%= statusText %>
+                                </span>
+                            </td>
+                            <td class="p-4">
+                                <% let urgencyClass = 'badge-success'; %>
+                                <% let urgencyText = 'عادی'; %>
+                                <% if (caseItem.urgency === 'urgent') { urgencyClass = 'badge-warning'; urgencyText = 'فوری'; } %>
+                                <% if (caseItem.urgency === 'critical') { urgencyClass = 'badge-error'; urgencyText = 'بحرانی'; } %>
+                                <span class="badge <%= urgencyClass %>">
+                                    <%= urgencyText %>
+                                </span>
+                            </td>
+                            <td class="p-4 text-muted-foreground">
+                                <%= caseItem.createdAt ? new Date(caseItem.createdAt).toLocaleDateString('fa-IR') : 'نامشخص' %>
+                            </td>
+                            <td class="p-4 text-center">
+                                <div class="flex justify-center gap-2">
+                                    <button onclick="viewCase('<%= caseItem.id %>')" class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors" title="مشاهده">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                    </button>
+                                    <select onchange="updateCaseStatus('<%= caseItem.id %>', this.value)" class="text-sm border border-border rounded p-1">
+                                        <option value="pending" <%= caseItem.status === 'pending' ? 'selected' : '' %>>در انتظار</option>
+                                        <option value="reviewing" <%= caseItem.status === 'reviewing' ? 'selected' : '' %>>در حال بررسی</option>
+                                        <option value="resolved" <%= caseItem.status === 'resolved' ? 'selected' : '' %>>حل شده</option>
+                                        <option value="rejected" <%= caseItem.status === 'rejected' ? 'selected' : '' %>>رد شده</option>
+                                    </select>
+                                </div>
+                            </td>
+                        </tr>
+                        <% }) %>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <% if (cases.length > 10) { %>
+            <div class="p-6 border-t border-border">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-muted-foreground">
+                        نمایش ۱ تا ۱۰ از <%= cases.length %> پرونده
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="px-3 py-2 text-sm border border-border rounded-lg hover:bg-muted transition-colors" disabled>
+                            قبلی
+                        </button>
+                        <button class="px-3 py-2 text-sm bg-primary text-primary-foreground rounded-lg">
+                            ۱
+                        </button>
+                        <button class="px-3 py-2 text-sm border border-border rounded-lg hover:bg-muted transition-colors">
+                            بعدی
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <% } %>
+        </div>
+
+        <!-- Recent Contacts -->
+        <div class="card p-6">
+            <h2 class="text-xl font-bold mb-4">پیام‌های اخیر</h2>
+            
+            <% if (contacts.length === 0) { %>
+            <div class="text-center py-8 text-muted-foreground">
+                هیچ پیامی دریافت نشده است
+            </div>
+            <% } else { %>
+            <div class="space-y-4">
+                <% contacts.slice(0, 5).forEach((contact) => { %>
+                <div class="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="font-medium">
+                            <%= contact.firstName %> <%= contact.lastName %>
+                        </div>
+                        <div class="text-sm text-muted-foreground">
+                            <%= contact.createdAt ? new Date(contact.createdAt).toLocaleDateString('fa-IR') : 'نامشخص' %>
+                        </div>
+                    </div>
+                    <div class="text-sm text-muted-foreground mb-2">
+                        موضوع: 
+                        <% const subjectMap = {
+                            'consultation': 'درخواست مشاوره',
+                            'appointment': 'تعیین وقت ملاقات',
+                            'case-status': 'پیگیری پرونده',
+                            'information': 'درخواست اطلاعات',
+                            'other': 'سایر'
+                        } %>
+                        <%= subjectMap[contact.subject] || contact.subject %>
+                    </div>
+                    <div class="text-sm">
+                        <%= contact.message.length > 100 ? contact.message.substring(0, 100) + '...' : contact.message %>
+                    </div>
+                    <div class="flex justify-between items-center mt-3">
+                        <div class="text-sm text-muted-foreground">
+                            <span class="ml-4">📞 <%= contact.phone %></span>
+                            <% if (contact.email) { %>
+                            <span>📧 <%= contact.email %></span>
+                            <% } %>
+                        </div>
+                        <button onclick="replyToContact('<%= contact.id %>')" class="text-primary hover:underline text-sm">
+                            پاسخ
+                        </button>
+                    </div>
+                </div>
+                <% }) %>
+            </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewCase(caseId) {
+    showToast(`مشاهده پرونده ${caseId}`, 'info');
+    // اینجا می‌توانید مودال یا صفحه جزئیات پرونده را باز کنید
+}
+
+function replyToContact(contactId) {
+    showToast(`پاسخ به پیام ${contactId}`, 'info');
+    // اینجا می‌توانید فرم پاسخ یا مودال ایمیل را باز کنید
+}
+</script>

@@ -1,0 +1,56 @@
+
+<div class="container mx-auto px-4 py-16 text-center min-h-[60vh] flex items-center justify-center">
+    <div class="max-w-md mx-auto">
+        <div class="mb-8">
+            <div class="w-24 h-24 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-12 h-12 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.728-.833-2.464 0L4.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+        </div>
+        
+        <h1 class="text-6xl font-bold text-destructive mb-4">۵۰۰</h1>
+        <h2 class="text-2xl font-bold mb-4">خطای داخلی سرور</h2>
+        <p class="text-muted-foreground mb-8">
+            متأسفانه در حال حاضر مشکلی در سرور رخ داده است. لطفاً چند دقیقه دیگر دوباره تلاش کنید.
+        </p>
+        
+        <% if (typeof error !== 'undefined' && error) { %>
+        <div class="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg text-right">
+            <h3 class="font-semibold text-destructive mb-2">جزئیات خطا:</h3>
+            <p class="text-sm text-muted-foreground"><%= error %></p>
+        </div>
+        <% } %>
+        
+        <div class="space-y-4">
+            <button onclick="location.reload()" class="btn-primary">
+                تلاش مجدد
+            </button>
+            <a href="/" class="btn-ghost inline-block">
+                بازگشت به خانه
+            </a>
+        </div>
+        
+        <!-- Support contact -->
+        <div class="mt-8 p-4 border border-border rounded-lg bg-muted/50">
+            <h3 class="font-semibold mb-2">مشکل ادامه دارد؟</h3>
+            <p class="text-sm text-muted-foreground mb-3">
+                در صورت تکرار این خطا، لطفاً با تیم فنی ما تماس بگیرید.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-2 justify-center">
+                <a href="tel:02188776655" class="btn-accent text-sm">
+                    ۰۲۱-۸۸۷۷۶۶۵۵
+                </a>
+                <a href="/contact" class="btn-ghost text-sm">
+                    ارسال پیام
+                </a>
+            </div>
+        </div>
+        
+        <!-- Additional info -->
+        <div class="mt-6 text-xs text-muted-foreground">
+            <p>کد خطا: SERVER_ERROR_500</p>
+            <p>زمان: <%= new Date().toLocaleString('fa-IR') %></p>
+        </div>
+    </div>
+</div>

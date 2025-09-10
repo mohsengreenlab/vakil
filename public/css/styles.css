@@ -1,0 +1,376 @@
+:root {
+    /* Design Tokens */
+    --color-primary: hsl(217, 91%, 33%);
+    --color-neutral: hsl(217, 19%, 27%);
+    --color-accent: hsl(43, 96%, 56%);
+    --radius: 0.75rem;
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, var(--color-primary) 0%, var(--color-neutral) 100%);
+    --gradient-card: linear-gradient(145deg, var(--color-primary) 0%, var(--color-neutral) 100%);
+    
+    /* Light Theme */
+    --background: hsl(0, 0%, 100%);
+    --foreground: hsl(217, 19%, 27%);
+    --card: hsl(0, 0%, 100%);
+    --card-foreground: hsl(217, 19%, 27%);
+    --popover: hsl(0, 0%, 100%);
+    --popover-foreground: hsl(217, 19%, 27%);
+    --primary: hsl(217, 91%, 33%);
+    --primary-foreground: hsl(0, 0%, 98%);
+    --secondary: hsl(210, 40%, 96%);
+    --secondary-foreground: hsl(217, 19%, 27%);
+    --muted: hsl(210, 40%, 96%);
+    --muted-foreground: hsl(215, 16%, 47%);
+    --accent: hsl(43, 96%, 56%);
+    --accent-foreground: hsl(217, 19%, 27%);
+    --destructive: hsl(0, 84%, 60%);
+    --destructive-foreground: hsl(0, 0%, 98%);
+    --border: hsl(214, 32%, 91%);
+    --input: hsl(214, 32%, 91%);
+    --ring: hsl(217, 91%, 33%);
+}
+
+.dark {
+    --background: hsl(217, 19%, 14%);
+    --foreground: hsl(0, 0%, 95%);
+    --card: hsl(217, 19%, 18%);
+    --card-foreground: hsl(0, 0%, 95%);
+    --popover: hsl(217, 19%, 18%);
+    --popover-foreground: hsl(0, 0%, 95%);
+    --primary: hsl(217, 91%, 60%);
+    --primary-foreground: hsl(217, 19%, 14%);
+    --secondary: hsl(217, 19%, 18%);
+    --secondary-foreground: hsl(0, 0%, 95%);
+    --muted: hsl(217, 19%, 18%);
+    --muted-foreground: hsl(215, 20%, 65%);
+    --accent: hsl(43, 96%, 56%);
+    --accent-foreground: hsl(217, 19%, 14%);
+    --destructive: hsl(0, 62%, 50%);
+    --destructive-foreground: hsl(0, 0%, 98%);
+    --border: hsl(217, 19%, 18%);
+    --input: hsl(217, 19%, 18%);
+    --ring: hsl(217, 91%, 60%);
+}
+
+* {
+    border-color: var(--border);
+}
+
+body {
+    font-family: 'Vazirmatn', sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+}
+
+/* Gradient backgrounds */
+.gradient-hero {
+    background: var(--gradient-hero);
+}
+
+.gradient-card {
+    background: var(--gradient-card);
+}
+
+/* Navigation styles */
+.nav-link {
+    color: var(--foreground);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.nav-link.active {
+    background: var(--accent);
+    color: var(--accent-foreground);
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Toast animations */
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+.toast {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    z-index: 60;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+.toast.show {
+    transform: translateX(0);
+}
+
+.toast.success {
+    background: hsl(134, 61%, 41%);
+}
+
+.toast.error {
+    background: var(--destructive);
+}
+
+.toast.warning {
+    background: hsl(45, 93%, 47%);
+}
+
+.toast.info {
+    background: hsl(213, 94%, 68%);
+}
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+/* Form styles */
+.input-field {
+    background: var(--input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+    width: 100%;
+    color: var(--foreground);
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--ring);
+    box-shadow: 0 0 0 3px hsla(217, 91%, 33%, 0.1);
+}
+
+/* Button styles */
+.btn-primary {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background: hsl(217, 91%, 25%);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.btn-accent {
+    background: var(--accent);
+    color: var(--accent-foreground);
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+}
+
+.btn-accent:hover {
+    background: hsl(43, 96%, 50%);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-ghost:hover {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+/* Card styles */
+.card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: translateY(-2px);
+}
+
+/* Table styles */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card);
+}
+
+.table th {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    padding: 1rem;
+    text-align: right;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.table tr:hover {
+    background: var(--muted);
+}
+
+/* Badge styles */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.badge-success {
+    background: hsl(134, 61%, 41%);
+    color: white;
+}
+
+.badge-warning {
+    background: hsl(45, 93%, 47%);
+    color: hsl(217, 19%, 27%);
+}
+
+.badge-error {
+    background: var(--destructive);
+    color: white;
+}
+
+.badge-primary {
+    background: var(--primary);
+    color: var(--primary-foreground);
+}
+
+/* Alert styles */
+.alert {
+    padding: 1rem;
+    border-radius: var(--radius);
+    border: 1px solid;
+    margin-bottom: 1rem;
+}
+
+.alert-success {
+    background: hsla(134, 61%, 41%, 0.1);
+    border-color: hsl(134, 61%, 41%);
+    color: hsl(134, 61%, 41%);
+}
+
+.alert-warning {
+    background: hsla(45, 93%, 47%, 0.1);
+    border-color: hsl(45, 93%, 47%);
+    color: hsl(45, 93%, 35%);
+}
+
+.alert-error {
+    background: hsla(0, 84%, 60%, 0.1);
+    border-color: var(--destructive);
+    color: var(--destructive);
+}
+
+/* RTL specific adjustments */
+.rtl-flip {
+    transform: scaleX(-1);
+}
+
+/* Responsive behavior */
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none;
+    }
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+
+/* File upload styles */
+.file-upload-area {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: var(--primary);
+    background: var(--muted);
+}
+
+.file-upload-area.dragover {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--primary-foreground);
+}

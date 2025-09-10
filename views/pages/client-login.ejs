@@ -1,0 +1,87 @@
+
+<div class="container mx-auto px-4 py-16">
+    <!-- Breadcrumb -->
+    <nav class="mb-8" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-reverse space-x-2 text-sm">
+            <li><a href="/" class="text-muted-foreground hover:text-foreground">خانه</a></li>
+            <li class="text-muted-foreground">/</li>
+            <li class="text-foreground font-medium">ورود موکلان</li>
+        </ol>
+    </nav>
+
+    <div class="max-w-md mx-auto">
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold mb-2">ورود موکلان</h1>
+            <p class="text-muted-foreground">برای مشاهده وضعیت پرونده وارد شوید</p>
+        </div>
+
+        <div class="card p-8">
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="clientId" class="block text-sm font-medium mb-2">شماره پرونده یا کد ملی</label>
+                    <input type="text" id="clientId" name="clientId" class="input-field" placeholder="مثال: ۱۲۳۴۵۶۷۸۹۰" required aria-describedby="clientId-error">
+                    <div id="clientId-error" class="text-destructive text-sm mt-1 hidden"></div>
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium mb-2">رمز عبور</label>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" class="input-field pl-12" placeholder="رمز عبور خود را وارد کنید" required aria-describedby="password-error">
+                        <button type="button" onclick="togglePassword('password')" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="password-error" class="text-destructive text-sm mt-1 hidden"></div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="remember" class="h-4 w-4 text-primary focus:ring-ring border-border ml-2">
+                        <span class="text-sm">مرا به خاطر بسپار</span>
+                    </label>
+                    <button type="button" class="text-sm text-primary hover:underline">
+                        فراموشی رمز عبور
+                    </button>
+                </div>
+
+                <button type="submit" class="btn-primary w-full" data-original-text="ورود به پنل">
+                    ورود به پنل
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-border">
+                <p class="text-center text-sm text-muted-foreground mb-4">
+                    حساب کاربری ندارید؟
+                </p>
+                <div class="space-y-3">
+                    <a href="/case-review" class="btn-ghost w-full block text-center">
+                        ثبت پرونده جدید
+                    </a>
+                    <a href="/contact" class="text-primary hover:bg-primary/5 py-3 rounded-lg font-semibold transition-colors w-full block text-center">
+                        تماس با پشتیبانی
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="mt-8 text-center">
+            <div class="card p-6">
+                <h3 class="font-semibold mb-3">راهنما</h3>
+                <div class="space-y-2 text-sm text-muted-foreground text-right">
+                    <p>• شماره پرونده را از پیامک یا ایمیل دریافتی کپی کنید</p>
+                    <p>• رمز عبور پیش‌فرض کد ملی ۱۰ رقمی شماست</p>
+                    <p>• در صورت مشکل با شماره ۰۲۱-۸۸۷۷۶۶۵۵ تماس بگیرید</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

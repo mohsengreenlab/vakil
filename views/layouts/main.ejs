@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <meta name="description" content="دفتر وکالت پیشرو - ارائه خدمات حقوقی تخصصی با بیش از ۱۵ سال تجربه در تمامی زمینه‌های حقوقی">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="<%= title %>">
+    <meta property="og:description" content="ارائه خدمات حقوقی تخصصی و مشاوره در تمامی زمینه‌های حقوق">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<%= process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 'http://localhost:5000' %>">
+    
+    <!-- Google Fonts - Vazirmatn -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)", 
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                },
+                fontFamily: {
+                    vazir: ["Vazirmatn", "sans-serif"],
+                }
+            },
+        }
+    };
+    </script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-background text-foreground min-h-screen">
+    <!-- Include Header -->
+    <%- include('../partials/header', { page: typeof page !== 'undefined' ? page : '' }) %>
+    
+    <!-- Main Content -->
+    <main class="flex-1">
+        <%- body %>
+    </main>
+    
+    <!-- Include Footer -->
+    <%- include('../partials/footer') %>
+    
+    <!-- Toast Container -->
+    <div id="toast" class="toast">
+        <span id="toast-message"></span>
+    </div>
+    
+    <!-- Custom JavaScript -->
+    <script src="/js/main.js"></script>
+</body>
+</html>
