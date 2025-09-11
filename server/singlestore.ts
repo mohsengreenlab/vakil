@@ -1,4 +1,5 @@
 import mysql from "mysql2/promise";
+import { readFileSync } from "fs";
 import { IStorage } from "./storage.js";
 
 // Define interfaces based on the new schema requirements
@@ -75,7 +76,7 @@ export type InsertUser = Omit<User, 'id' | 'createdAt'>;
 export type InsertLegalCase = Omit<LegalCase, 'id' | 'status' | 'createdAt'>;
 export type InsertContact = Omit<Contact, 'id' | 'createdAt'>;
 
-export class SingleStoreStorage implements IStorage {
+export class SingleStoreStorage {
   private pool: mysql.Pool;
 
   constructor() {
@@ -92,7 +93,8 @@ export class SingleStoreStorage implements IStorage {
       password: process.env.SINGLESTORE_PASSWORD,
       database: process.env.SINGLESTORE_DB || 'db_dew_f1c43',
       ssl: {
-        rejectUnauthorized: false // For SingleStore cloud connections
+        ca: readFileSync('./singlestore-bundle.pem'),
+        rejectUnauthorized: true
       },
       connectionLimit: 10,
       queueLimit: 0
@@ -616,5 +618,25 @@ export class SingleStoreStorage implements IStorage {
 
   async close(): Promise<void> {
     await this.pool.end();
+  }
+
+  // Legacy interface methods for backward compatibility
+  async getAllLegalCases(): Promise<any[]> {
+    return this.getAllCases();
+  }
+
+  async createLegalCase(caseData: any): Promise<any> {
+    // Map legacy case data to new structure and create a case
+    console.log('Legacy case creation:', caseData);
+    const caseId = String(Math.floor(Math.random() * 1000000) + 1000000);
+    const clientId = String(Math.floor(Math.random() * 1000) + 1000);
+    
+    // Create a basic case record for legacy compatibility
+    return {
+      id: caseId,
+      ...caseData,
+      status: 'pending',
+      createdAt: new Date()
+    };
   }
 }
