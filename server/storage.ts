@@ -1,5 +1,6 @@
 import { type User, type InsertUser, type Client, type InsertClient, type Case, type InsertCase, type Contact, type InsertContact } from "@shared/schema";
 import { randomUUID } from "crypto";
+import bcrypt from "bcrypt";
 
 export interface IStorage {
   // User methods
@@ -39,7 +40,6 @@ export class MemStorage implements IStorage {
     this.contacts = new Map();
     
     // Create default admin user with hashed password
-    const bcrypt = require('bcrypt');
     const adminId = randomUUID();
     const hashedPassword = bcrypt.hashSync("admin123", 10);
     const admin: User = {

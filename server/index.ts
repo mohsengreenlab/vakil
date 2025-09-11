@@ -150,7 +150,6 @@ app.post('/api/admin/login', async (req, res) => {
     }
     
     // Use bcrypt to properly hash and compare passwords
-    const bcrypt = require('bcrypt');
     const isPasswordValid = await bcrypt.compare(password, admin.password);
     if (!isPasswordValid) {
       return res.status(401).json({ 
