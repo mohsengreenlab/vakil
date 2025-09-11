@@ -114,13 +114,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { status } = req.body;
       
+      console.log(`🔄 Updating case ${id} status to ${status}`);
       const updatedCase = await storage.updateCaseStatus(id, status);
       if (updatedCase) {
+        console.log(`✅ Case ${id} status updated successfully to ${status}`);
         res.json({ success: true, case: updatedCase });
       } else {
+        console.log(`❌ Case ${id} not found`);
         res.status(404).json({ success: false, message: 'پرونده یافت نشد' });
       }
     } catch (error) {
+      console.error('❌ Error updating case status:', error);
       res.status(500).json({ success: false, message: 'خطا در به‌روزرسانی وضعیت' });
     }
   });

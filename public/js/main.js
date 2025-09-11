@@ -325,7 +325,7 @@ function removeFile(index) {
 // Admin functions
 async function updateCaseStatus(caseId, newStatus) {
     try {
-        const response = await fetch(`/api/cases/${caseId}/status`, {
+        const response = await fetch(`/api/admin/cases/${caseId}/status`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
