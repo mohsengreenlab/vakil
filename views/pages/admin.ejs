@@ -49,11 +49,11 @@
 
     <div class="container mx-auto px-4 py-8">
     
+    <script type="application/json" id="cases-data"><%- JSON.stringify(cases).replace(/</g,'\\u003c').replace(/--/g,'\\u002d\\u002d') %></script>
     <script>
         // Pass server data to JavaScript (XSS-safe)
         window.serverCases = JSON.parse(document.getElementById('cases-data').textContent);
     </script>
-    <script type="application/json" id="cases-data"><%- JSON.stringify(cases).replace(/</g,'\\u003c').replace(/--/g,'\\u002d\\u002d') %></script>
         <!-- Overview Tab -->
         <div id="overview-tab" class="tab-content">
             <h1 class="text-3xl font-bold mb-6">داشبورد مدیریت</h1>
@@ -896,59 +896,7 @@ function clearClientsFilter() {
     clearClientsSearch();
 }
 
-// Render cases table
-function renderCasesTable(casesData) {
-    const tbody = document.getElementById('cases-table-body');
-    
-    if (casesData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">هیچ پرونده‌ای یافت نشد</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = casesData.map(caseItem => {
-        const client = clients.find(c => c.client_id === caseItem.client_id);
-        const clientName = client ? `${client.first_name} ${client.last_name}` : 'نامشخص';
-        
-        const statusMap = {
-            'under-review': 'در انتظار بررسی',
-            'lawyer-study': 'در حال مطالعه وکیل',
-            'in-progress': 'در حال اقدام',
-            'awaiting-court': 'در انتظار رای دادگاه',
-            'verdict-issued': 'صدور رای'
-        };
-        
-        const statusClass = {
-            'under-review': 'badge-primary',
-            'lawyer-study': 'badge-warning',
-            'in-progress': 'badge-success',
-            'awaiting-court': 'badge-warning',
-            'verdict-issued': 'badge-success'
-        };
-        
-        return `
-            <tr class="hover:bg-muted/30" data-testid="case-row-${caseItem.case_id}">
-                <td class="p-4 font-medium">${caseItem.case_id}</td>
-                <td class="p-4">${caseItem.client_id}</td>
-                <td class="p-4">${clientName}</td>
-                <td class="p-4">
-                    <span class="badge ${statusClass[caseItem.last_case_status] || 'badge-primary'}">
-                        ${statusMap[caseItem.last_case_status] || caseItem.last_case_status}
-                    </span>
-                </td>
-                <td class="p-4">${new Date(caseItem.case_creation_date).toLocaleDateString('fa-IR')}</td>
-                <td class="p-4">
-                    <select onchange="updateCaseStatus('${caseItem.case_id}', this.value)" class="text-sm border border-border rounded p-1" data-testid="select-status-${caseItem.case_id}">
-                        <option value="under-review" ${caseItem.last_case_status === 'under-review' ? 'selected' : ''}>در انتظار بررسی</option>
-                        <option value="lawyer-study" ${caseItem.last_case_status === 'lawyer-study' ? 'selected' : ''}>در حال مطالعه وکیل</option>
-                        <option value="in-progress" ${caseItem.last_case_status === 'in-progress' ? 'selected' : ''}>در حال اقدام</option>
-                        <option value="awaiting-court" ${caseItem.last_case_status === 'awaiting-court' ? 'selected' : ''}>در انتظار رای دادگاه</option>
-                        <option value="verdict-issued" ${caseItem.last_case_status === 'verdict-issued' ? 'selected' : ''}>صدور رای</option>
-                    </select>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
+// renderCasesTable function moved to main.js to avoid conflicts
 
 // Form submission handlers
 document.getElementById('clientForm').addEventListener('submit', async function(e) {

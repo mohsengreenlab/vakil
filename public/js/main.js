@@ -515,10 +515,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Search when criteria changes
+    // Search when criteria changes (only if there's a search term)
     casesSearchCriteria.forEach(radio => {
         radio.addEventListener('change', function() {
-            performCasesLiveSearch();
+            const searchTerm = document.getElementById('cases-search').value.trim();
+            if (searchTerm.length > 0) {
+                performCasesLiveSearch();
+            }
         });
     });
 });
@@ -536,9 +539,15 @@ function performCasesLiveSearch() {
     const searchTerm = document.getElementById('cases-search').value.trim().toLowerCase();
     const selectedCriteria = document.querySelector('input[name="casesSearchCriteria"]:checked').value;
     
+    // Always show all cases if no search term
     if (searchTerm === '') {
         filteredCases = [...allCases];
-    } else {
+        renderCasesTable();
+        return;
+    }
+    
+    // Filter cases based on search criteria
+    if (searchTerm.length > 0) {
         filteredCases = allCases.filter(caseItem => {
             switch (selectedCriteria) {
                 case 'case_id':
@@ -573,25 +582,28 @@ function performCasesLiveSearch() {
     showToast(`نتایج جستجو: ${resultsCount} از ${totalCount} پرونده`, 'info');
 }
 
-function renderCasesTable() {
+function renderCasesTable(casesData = null) {
     const tableBody = document.getElementById('cases-table-body');
     
-    if (filteredCases.length === 0) {
+    // Use provided data or filtered data
+    const dataToRender = casesData || filteredCases;
+    
+    if (!dataToRender || dataToRender.length === 0) {
         tableBody.innerHTML = `
             <tr>
                 <td colspan="6" class="text-center py-8 text-muted-foreground">
-                    ${allCases.length === 0 ? 'هیچ پرونده‌ای یافت نشد' : 'هیچ نتیجه‌ای برای جستجوی شما یافت نشد'}
+                    ${(allCases && allCases.length === 0) ? 'هیچ پرونده‌ای یافت نشد' : 'هیچ نتیجه‌ای برای جستجوی شما یافت نشد'}
                 </td>
             </tr>
         `;
         return;
     }
     
-    tableBody.innerHTML = filteredCases.map(caseItem => `
+    tableBody.innerHTML = dataToRender.map(caseItem => `
         <tr data-testid="case-row-${caseItem.case_id}">
             <td class="font-medium">${caseItem.case_id}</td>
             <td>${caseItem.client_id}</td>
-            <td class="font-medium">نامشخص</td>
+            <td class="font-medium">${getClientName(caseItem.client_id)}</td>
             <td>
                 <select onchange="updateCaseStatus('${caseItem.case_id}', this.value)" 
                         class="status-select px-2 py-1 rounded border border-border text-sm min-w-[180px]" 
@@ -622,4 +634,12 @@ function getStatusText(status) {
         'verdict-issued': 'صدور رای'
     };
     return statusMap[status] || status;
+}
+
+function getClientName(clientId) {
+    if (typeof clients !== 'undefined' && clients && clients.length > 0) {
+        const client = clients.find(c => c.client_id === clientId);
+        return client ? `${client.first_name} ${client.last_name}` : 'نامشخص';
+    }
+    return 'نامشخص';
 }
