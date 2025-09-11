@@ -139,8 +139,13 @@ const requireClientAuth = (req: Request, res: Response, next: NextFunction) => {
 // Client portal route
 app.get('/client/portal', requireClientAuth, async (req, res) => {
   try {
+    console.log('Loading client portal for client ID:', req.session.clientId);
+    
     const clientCases = await storage.getClientCases(req.session.clientId);
+    console.log('Client cases loaded:', clientCases);
+    
     const client = await storage.getClient(req.session.clientId);
+    console.log('Client data loaded:', client);
     
     res.render('pages/client-portal', { 
       title: 'پورتال موکل - دفتر وکالت پیشرو',
@@ -233,25 +238,23 @@ app.get('/admin24/dashboard', requireAuth, async (req, res) => {
   }
 });
 
-// Debug endpoint to create a test client for login testing
-app.get('/api/debug/create-test-client', async (req, res) => {
+// Admin test endpoint to create a client for testing login
+app.post('/api/admin/create-test-client', requireAuth, async (req, res) => {
   try {
-    // Create a test client directly in database with minimal password
     const connection = await (storage as any).pool.getConnection();
     
-    // Generate a simple client ID
-    const clientId = '9999';
+    const clientId = Math.floor(1000 + Math.random() * 9000).toString();
+    const nationalId = '2222222222';
     
-    // Create client with plain text password for testing
+    // Insert client with plain text password for testing
     await connection.execute(
       'INSERT INTO clients (client_id, first_name, last_name, national_id, phone_numbers, password) VALUES (?, ?, ?, ?, ?, ?)',
-      [clientId, 'علی', 'احمدی', '1111111111', JSON.stringify(['09123456789']), 'test123']
+      [clientId, 'تست', 'موکل', nationalId, JSON.stringify(['09123456789']), 'test123']
     );
     
-    // Create national_id_registry entry
     await connection.execute(
       'INSERT INTO national_id_registry (national_id, client_id) VALUES (?, ?)',
-      ['1111111111', clientId]
+      [nationalId, clientId]
     );
     
     connection.release();
@@ -260,30 +263,10 @@ app.get('/api/debug/create-test-client', async (req, res) => {
       success: true,
       message: 'Test client created successfully',
       clientId: clientId,
-      nationalId: '1111111111',
-      password: 'test123',
-      note: 'Use these credentials to test login'
+      nationalId: nationalId
     });
   } catch (error) {
     console.error('Error creating test client:', error);
-    res.json({ 
-      success: false, 
-      error: error.message
-    });
-  }
-});
-
-// Debug endpoint to test authentication directly
-app.get('/api/debug/test-auth', async (req, res) => {
-  try {
-    const authResult = await storage.authenticateClient('1111111111', 'test123');
-    res.json({
-      success: !!authResult,
-      client: authResult,
-      message: authResult ? 'Authentication successful' : 'Authentication failed'
-    });
-  } catch (error) {
-    console.error('Error testing authentication:', error);
     res.json({ 
       success: false, 
       error: error.message

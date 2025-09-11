@@ -656,7 +656,16 @@ export class SingleStoreStorage {
         return null;
       }
       
-      const isPasswordValid = await bcrypt.compare(password, client.password);
+      // Check if password is already bcrypt hashed (starts with $2)
+      let isPasswordValid = false;
+      if (client.password.startsWith('$2')) {
+        // This is a bcrypt hash, use bcrypt.compare
+        isPasswordValid = await bcrypt.compare(password, client.password);
+      } else {
+        // This is plain text password, do direct comparison
+        isPasswordValid = password === client.password;
+      }
+      
       if (!isPasswordValid) {
         return null;
       }
