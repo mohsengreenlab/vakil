@@ -148,6 +148,34 @@
                 </form>
             </div>
 
+            <!-- Assign Case Form (Hidden by default) -->
+            <div id="assign-case-form" class="card p-6 mb-6 hidden">
+                <h2 class="text-xl font-bold mb-4">تخصیص پرونده جدید</h2>
+                <div class="mb-4 p-3 bg-muted/30 rounded-lg">
+                    <span class="text-sm text-muted-foreground">موکل انتخاب شده: </span>
+                    <span class="font-medium" id="selected-client-name"></span>
+                    <span class="text-sm text-muted-foreground mr-2">(شناسه: </span>
+                    <span class="font-medium" id="selected-client-id"></span>
+                    <span class="text-sm text-muted-foreground">)</span>
+                </div>
+                <form id="assignCaseForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="hidden" name="clientId" id="assign-client-id">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">وضعیت پرونده</label>
+                        <select name="status" required class="input-field" data-testid="select-assign-case-status">
+                            <option value="pending">در انتظار</option>
+                            <option value="reviewing">در حال بررسی</option>
+                            <option value="active">فعال</option>
+                            <option value="resolved">حل شده</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2 flex gap-4">
+                        <button type="submit" class="btn-primary" data-testid="button-save-assign-case">تخصیص پرونده</button>
+                        <button type="button" onclick="hideAssignCaseForm()" class="btn-secondary" data-testid="button-cancel-assign-case">لغو</button>
+                    </div>
+                </form>
+            </div>
+
             <!-- Clients List -->
             <div class="card p-6">
                 <div class="flex justify-between items-center mb-4">
@@ -691,9 +719,17 @@ function renderClientsTable(clientsData) {
                 <td class="p-4">${new Date(client.created_at).toLocaleDateString('fa-IR')}</td>
                 <td class="p-4">${caseCount}</td>
                 <td class="p-4">
-                    <button onclick="viewClient('${client.client_id}')" class="text-primary hover:underline text-sm" data-testid="button-view-client-${client.client_id}">
-                        مشاهده
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="viewClient('${client.client_id}')" class="text-primary hover:underline text-sm" data-testid="button-view-client-${client.client_id}">
+                            مشاهده
+                        </button>
+                        <button class="assign-case-btn text-accent hover:underline text-sm" 
+                                data-client-id="${client.client_id}" 
+                                data-client-name="${client.first_name} ${client.last_name}" 
+                                data-testid="button-assign-case-${client.client_id}">
+                            تخصیص پرونده
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -941,6 +977,40 @@ document.getElementById('caseForm').addEventListener('submit', async function(e)
     }
 });
 
+// Assign case form submission
+document.getElementById('assignCaseForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const caseData = {
+        clientId: formData.get('clientId'),
+        status: formData.get('status')
+    };
+    
+    try {
+        const response = await fetch('/api/admin/cases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(caseData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            hideAssignCaseForm();
+            loadCases();
+            loadClients(); // Refresh to update case count
+            loadDashboardStats();
+            showToast('پرونده با موفقیت به موکل تخصیص داده شد', 'success');
+        } else {
+            showToast(result.message || 'خطا در تخصیص پرونده', 'error');
+        }
+    } catch (error) {
+        console.error('Error assigning case:', error);
+        showToast('خطا در تخصیص پرونده', 'error');
+    }
+});
+
 // Update case status
 async function updateCaseStatus(caseId, newStatus) {
     try {
@@ -988,6 +1058,26 @@ async function convertToClient(contactId) {
         console.error('Error converting contact:', error);
         showToast('خطا در تبدیل پیام', 'error');
     }
+}
+
+// Show/Hide assign case form
+function showAssignCaseForm(clientId, clientName) {
+    document.getElementById('assign-case-form').classList.remove('hidden');
+    document.getElementById('selected-client-name').textContent = clientName;
+    document.getElementById('selected-client-id').textContent = clientId;
+    document.getElementById('assign-client-id').value = clientId;
+    
+    // Reset form
+    document.getElementById('assignCaseForm').reset();
+    document.getElementById('assign-client-id').value = clientId; // Set again after reset
+    
+    // Scroll to form
+    document.getElementById('assign-case-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function hideAssignCaseForm() {
+    document.getElementById('assign-case-form').classList.add('hidden');
+    document.getElementById('assignCaseForm').reset();
 }
 
 // Other functions
@@ -1039,6 +1129,15 @@ function showToast(message, type = 'info') {
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
     loadDashboardStats();
+    
+    // Add event delegation for assign case buttons (XSS fix)
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('assign-case-btn')) {
+            const clientId = e.target.dataset.clientId;
+            const clientName = e.target.dataset.clientName;
+            showAssignCaseForm(clientId, clientName);
+        }
+    });
     
     // Add event listeners for client search and filtering
     const clientsSearch = document.getElementById('clients-search');
