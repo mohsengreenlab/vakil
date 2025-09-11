@@ -79,13 +79,18 @@ export class SingleStoreStorage implements IStorage {
   private pool: mysql.Pool;
 
   constructor() {
+    // Check if required password is available
+    if (!process.env.SINGLESTORE_PASSWORD) {
+      throw new Error("SINGLESTORE_PASSWORD environment variable is required for SingleStore connection");
+    }
+
     // Connection configuration with SSL and proper pool settings
     this.pool = mysql.createPool({
-      host: 'svc-3482219c-a389-4079-b18b-d50662524e8a-shared-dml.aws-virginia-6.svc.singlestore.com',
-      port: 3333,
-      user: 'dew-7b1a1',
+      host: process.env.SINGLESTORE_HOST || 'svc-3482219c-a389-4079-b18b-d50662524e8a-shared-dml.aws-virginia-6.svc.singlestore.com',
+      port: parseInt(process.env.SINGLESTORE_PORT || '3333'),
+      user: process.env.SINGLESTORE_USER || 'dew-7b1a1',
       password: process.env.SINGLESTORE_PASSWORD,
-      database: 'db_dew_f1c43',
+      database: process.env.SINGLESTORE_DB || 'db_dew_f1c43',
       ssl: {
         rejectUnauthorized: false // For SingleStore cloud connections
       },
@@ -93,7 +98,11 @@ export class SingleStoreStorage implements IStorage {
       queueLimit: 0
     });
     
-    this.initializeTables();
+    // Initialize tables with error handling
+    this.initializeTables().catch(error => {
+      console.error('❌ Error initializing SingleStore tables:', error);
+      throw error;
+    });
   }
 
   private async initializeTables(): Promise<void> {

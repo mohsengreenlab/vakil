@@ -4,11 +4,27 @@ import expressEjsLayouts from "express-ejs-layouts";
 import session from "express-session";
 import bcrypt from "bcrypt";
 import { SingleStoreStorage } from "./singlestore.js";
+import { MemStorage } from "./storage.js";
+import type { IStorage } from "./storage.js";
 
 const app = express();
 
-// Initialize storage
-const storage = new SingleStoreStorage();
+// Initialize storage with fallback and error handling
+let storage: IStorage;
+
+try {
+  if (process.env.SINGLESTORE_PASSWORD) {
+    storage = new SingleStoreStorage();
+    console.log(`🗄️  Using SingleStore storage`);
+  } else {
+    storage = new MemStorage();
+    console.log(`🗄️  Using in-memory storage (SINGLESTORE_PASSWORD not set)`);
+  }
+} catch (error) {
+  console.error('❌ Error initializing primary storage, falling back to in-memory storage:', error);
+  storage = new MemStorage();
+  console.log(`🗄️  Using in-memory storage (fallback)`);
+}
 
 // Set EJS as templating engine with layouts
 app.set('view engine', 'ejs');
