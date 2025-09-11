@@ -13,7 +13,12 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
-                    <span class="text-muted-foreground text-sm">خوش آمدید</span>
+                    <% if (typeof adminUsername !== 'undefined' && adminUsername) { %>
+                    <span class="text-muted-foreground text-sm">خوش آمدید، <%= adminUsername %></span>
+                    <% } %>
+                    <button onclick="logout()" class="btn-secondary" data-testid="button-logout">
+                        خروج
+                    </button>
                     <a href="/" class="btn-primary">
                         بازگشت به سایت
                     </a>
@@ -22,24 +27,70 @@
         </div>
     </header>
 
+    <!-- Navigation Tabs -->
+    <div class="bg-card border-b border-border">
+        <div class="container mx-auto px-4">
+            <nav class="flex space-x-reverse space-x-8">
+                <button onclick="showTab('overview')" class="tab-btn active" data-tab="overview" data-testid="tab-overview">
+                    نمای کلی
+                </button>
+                <button onclick="showTab('clients')" class="tab-btn" data-tab="clients" data-testid="tab-clients">
+                    مدیریت موکلان
+                </button>
+                <button onclick="showTab('cases')" class="tab-btn" data-tab="cases" data-testid="tab-cases">
+                    مدیریت پرونده‌ها
+                </button>
+                <button onclick="showTab('contacts')" class="tab-btn" data-tab="contacts" data-testid="tab-contacts">
+                    پیام‌های تماس
+                </button>
+            </nav>
+        </div>
+    </div>
+
     <div class="container mx-auto px-4 py-8">
-        <!-- Dashboard Overview -->
-        <div class="mb-8">
+        <!-- Overview Tab -->
+        <div id="overview-tab" class="tab-content">
             <h1 class="text-3xl font-bold mb-6">داشبورد مدیریت</h1>
             
             <!-- KPI Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div class="card p-6">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-medium text-muted-foreground">پرونده‌های فعال</h3>
+                        <h3 class="text-sm font-medium text-muted-foreground">موکلان کل</h3>
                         <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
                             <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-primary mb-2" id="clients-count">0</div>
+                    <p class="text-sm text-muted-foreground">تعداد موکلان</p>
+                </div>
+
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-muted-foreground">پرونده‌های فعال</h3>
+                        <div class="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
                         </div>
                     </div>
-                    <div class="text-3xl font-bold text-primary mb-2"><%= cases.filter(c => c.status === 'pending').length %></div>
-                    <p class="text-sm text-muted-foreground">در انتظار بررسی</p>
+                    <div class="text-3xl font-bold text-accent mb-2" id="active-cases-count">0</div>
+                    <p class="text-sm text-muted-foreground">در حال پیگیری</p>
+                </div>
+
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-medium text-muted-foreground">کل پرونده‌ها</h3>
+                        <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-primary mb-2" id="total-cases-count">0</div>
+                    <p class="text-sm text-muted-foreground">تعداد کل</p>
                 </div>
 
                 <div class="card p-6">
@@ -54,218 +105,725 @@
                     <div class="text-3xl font-bold text-accent mb-2"><%= contacts.length %></div>
                     <p class="text-sm text-muted-foreground">پیام دریافتی</p>
                 </div>
+            </div>
+        </div>
 
-                <div class="card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-medium text-muted-foreground">کل پرونده‌ها</h3>
-                        <div class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                            <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                            </svg>
-                        </div>
+        <!-- Clients Management Tab -->
+        <div id="clients-tab" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold">مدیریت موکلان</h1>
+                <button onclick="showAddClientForm()" class="btn-primary" data-testid="button-add-client">
+                    + افزودن موکل جدید
+                </button>
+            </div>
+
+            <!-- Add Client Form (Hidden by default) -->
+            <div id="add-client-form" class="card p-6 mb-6 hidden">
+                <h2 class="text-xl font-bold mb-4">افزودن موکل جدید</h2>
+                <form id="clientForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">نام</label>
+                        <input type="text" name="firstName" required class="input-field" data-testid="input-client-firstname" placeholder="نام موکل">
                     </div>
-                    <div class="text-3xl font-bold text-primary mb-2"><%= cases.length %></div>
-                    <p class="text-sm text-muted-foreground">تعداد کل</p>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">نام خانوادگی</label>
+                        <input type="text" name="lastName" required class="input-field" data-testid="input-client-lastname" placeholder="نام خانوادگی موکل">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">کد ملی</label>
+                        <input type="text" name="nationalId" required maxlength="10" pattern="[0-9]{10}" class="input-field" data-testid="input-client-nationalid" placeholder="کد ملی ۱۰ رقمی">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">شماره تلفن اول</label>
+                        <input type="tel" name="phone1" required class="input-field" data-testid="input-client-phone1" placeholder="۰۹۱۲۳۴۵۶۷۸۹">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">شماره تلفن دوم (اختیاری)</label>
+                        <input type="tel" name="phone2" class="input-field" data-testid="input-client-phone2" placeholder="۰۹۱۲۳۴۵۶۷۸۹">
+                    </div>
+                    <div class="md:col-span-2 flex gap-4">
+                        <button type="submit" class="btn-primary" data-testid="button-save-client">ذخیره موکل</button>
+                        <button type="button" onclick="hideAddClientForm()" class="btn-secondary" data-testid="button-cancel-client">لغو</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Clients List -->
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">لیست موکلان</h2>
+                    <input type="search" id="clients-search" class="input-field w-64" placeholder="جستجو در موکلان..." data-testid="input-search-clients">
                 </div>
-
-                <div class="card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-medium text-muted-foreground">پرونده‌های حل شده</h3>
-                        <div class="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
-                            <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-3xl font-bold text-accent mb-2"><%= cases.filter(c => c.status === 'resolved').length %></div>
-                    <p class="text-sm text-muted-foreground">حل شده</p>
+                
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>شناسه موکل</th>
+                                <th>نام و نام خانوادگی</th>
+                                <th>کد ملی</th>
+                                <th>شماره تلفن</th>
+                                <th>تاریخ ثبت</th>
+                                <th>تعداد پرونده</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clients-table-body">
+                            <tr>
+                                <td colspan="7" class="text-center py-8 text-muted-foreground">در حال بارگذاری...</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Cases Table -->
-        <div class="card p-6 mb-8">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold">پرونده‌های اخیر</h2>
-                <div class="flex gap-2">
-                    <input type="search" class="input-field w-64" placeholder="جستجو در پرونده‌ها...">
-                    <select class="input-field w-32">
-                        <option>همه</option>
-                        <option>در انتظار</option>
-                        <option>در حال بررسی</option>
-                        <option>حل شده</option>
-                        <option>رد شده</option>
-                    </select>
-                </div>
+        <!-- Cases Management Tab -->
+        <div id="cases-tab" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold">مدیریت پرونده‌ها</h1>
+                <button onclick="showAddCaseForm()" class="btn-primary" data-testid="button-add-case">
+                    + افزودن پرونده جدید
+                </button>
             </div>
-            
-            <div class="overflow-x-auto">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>شماره پرونده</th>
-                            <th>نام موکل</th>
-                            <th>نوع پرونده</th>
-                            <th>وضعیت</th>
-                            <th>فوریت</th>
-                            <th>تاریخ ایجاد</th>
-                            <th>عملیات</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-border">
-                        <% if (cases.length === 0) { %>
-                        <tr>
-                            <td colspan="7" class="text-center py-8 text-muted-foreground">
-                                هیچ پرونده‌ای یافت نشد
-                            </td>
-                        </tr>
-                        <% } else { %>
-                        <% cases.slice(0, 10).forEach((caseItem, index) => { %>
-                        <tr class="hover:bg-muted/30">
-                            <td class="p-4 font-medium">
-                                <%= caseItem.id.substring(0, 8) %>...
-                            </td>
-                            <td class="p-4"><%= caseItem.clientName %></td>
-                            <td class="p-4">
-                                <% const caseTypeMap = {
-                                    'family': 'حقوق خانواده',
-                                    'commercial': 'حقوق تجاری',
-                                    'property': 'حقوق املاک',
-                                    'criminal': 'حقوق کیفری',
-                                    'labor': 'حقوق کار',
-                                    'civil': 'حقوق مدنی'
-                                } %>
-                                <%= caseTypeMap[caseItem.caseType] || caseItem.caseType %>
-                            </td>
-                            <td class="p-4">
-                                <% let statusClass = 'badge-primary'; %>
-                                <% let statusText = 'در انتظار'; %>
-                                <% if (caseItem.status === 'reviewing') { statusClass = 'badge-warning'; statusText = 'در حال بررسی'; } %>
-                                <% if (caseItem.status === 'resolved') { statusClass = 'badge-success'; statusText = 'حل شده'; } %>
-                                <% if (caseItem.status === 'rejected') { statusClass = 'badge-error'; statusText = 'رد شده'; } %>
-                                <span class="badge <%= statusClass %>">
-                                    <%= statusText %>
-                                </span>
-                            </td>
-                            <td class="p-4">
-                                <% let urgencyClass = 'badge-success'; %>
-                                <% let urgencyText = 'عادی'; %>
-                                <% if (caseItem.urgency === 'urgent') { urgencyClass = 'badge-warning'; urgencyText = 'فوری'; } %>
-                                <% if (caseItem.urgency === 'critical') { urgencyClass = 'badge-error'; urgencyText = 'بحرانی'; } %>
-                                <span class="badge <%= urgencyClass %>">
-                                    <%= urgencyText %>
-                                </span>
-                            </td>
-                            <td class="p-4 text-muted-foreground">
-                                <%= caseItem.createdAt ? new Date(caseItem.createdAt).toLocaleDateString('fa-IR') : 'نامشخص' %>
-                            </td>
-                            <td class="p-4 text-center">
-                                <div class="flex justify-center gap-2">
-                                    <button onclick="viewCase('<%= caseItem.id %>')" class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-colors" title="مشاهده">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                        </svg>
-                                    </button>
-                                    <select onchange="updateCaseStatus('<%= caseItem.id %>', this.value)" class="text-sm border border-border rounded p-1">
-                                        <option value="pending" <%= caseItem.status === 'pending' ? 'selected' : '' %>>در انتظار</option>
-                                        <option value="reviewing" <%= caseItem.status === 'reviewing' ? 'selected' : '' %>>در حال بررسی</option>
-                                        <option value="resolved" <%= caseItem.status === 'resolved' ? 'selected' : '' %>>حل شده</option>
-                                        <option value="rejected" <%= caseItem.status === 'rejected' ? 'selected' : '' %>>رد شده</option>
-                                    </select>
-                                </div>
-                            </td>
-                        </tr>
-                        <% }) %>
-                        <% } %>
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Pagination -->
-            <% if (cases.length > 10) { %>
-            <div class="p-6 border-t border-border">
-                <div class="flex items-center justify-between">
-                    <div class="text-sm text-muted-foreground">
-                        نمایش ۱ تا ۱۰ از <%= cases.length %> پرونده
+
+            <!-- Add Case Form (Hidden by default) -->
+            <div id="add-case-form" class="card p-6 mb-6 hidden">
+                <h2 class="text-xl font-bold mb-4">افزودن پرونده جدید</h2>
+                <form id="caseForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">انتخاب موکل</label>
+                        <select name="clientId" required class="input-field" data-testid="select-case-client" id="case-client-select">
+                            <option value="">در حال بارگذاری موکلان...</option>
+                        </select>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">وضعیت پرونده</label>
+                        <select name="status" required class="input-field" data-testid="select-case-status">
+                            <option value="pending">در انتظار</option>
+                            <option value="reviewing">در حال بررسی</option>
+                            <option value="active">فعال</option>
+                            <option value="resolved">حل شده</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2 flex gap-4">
+                        <button type="submit" class="btn-primary" data-testid="button-save-case">ذخیره پرونده</button>
+                        <button type="button" onclick="hideAddCaseForm()" class="btn-secondary" data-testid="button-cancel-case">لغو</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Cases List -->
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">لیست پرونده‌ها</h2>
                     <div class="flex gap-2">
-                        <button class="px-3 py-2 text-sm border border-border rounded-lg hover:bg-muted transition-colors" disabled>
-                            قبلی
-                        </button>
-                        <button class="px-3 py-2 text-sm bg-primary text-primary-foreground rounded-lg">
-                            ۱
-                        </button>
-                        <button class="px-3 py-2 text-sm border border-border rounded-lg hover:bg-muted transition-colors">
-                            بعدی
-                        </button>
+                        <input type="search" id="cases-search" class="input-field w-64" placeholder="جستجو در پرونده‌ها..." data-testid="input-search-cases">
+                        <select id="cases-filter" class="input-field w-32" data-testid="select-filter-cases">
+                            <option value="">همه</option>
+                            <option value="pending">در انتظار</option>
+                            <option value="reviewing">در حال بررسی</option>
+                            <option value="active">فعال</option>
+                            <option value="resolved">حل شده</option>
+                        </select>
                     </div>
                 </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>شناسه پرونده</th>
+                                <th>شناسه موکل</th>
+                                <th>نام موکل</th>
+                                <th>وضعیت</th>
+                                <th>تاریخ ایجاد</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cases-table-body">
+                            <tr>
+                                <td colspan="6" class="text-center py-8 text-muted-foreground">در حال بارگذاری...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <% } %>
         </div>
 
-        <!-- Recent Contacts -->
-        <div class="card p-6">
-            <h2 class="text-xl font-bold mb-4">پیام‌های اخیر</h2>
+        <!-- Contact Messages Tab -->
+        <div id="contacts-tab" class="tab-content hidden">
+            <h1 class="text-3xl font-bold mb-6">پیام‌های تماس</h1>
             
-            <% if (contacts.length === 0) { %>
-            <div class="text-center py-8 text-muted-foreground">
-                هیچ پیامی دریافت نشده است
-            </div>
-            <% } else { %>
-            <div class="space-y-4">
-                <% contacts.slice(0, 5).forEach((contact) => { %>
-                <div class="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors">
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="font-medium">
-                            <%= contact.firstName %> <%= contact.lastName %>
-                        </div>
-                        <div class="text-sm text-muted-foreground">
-                            <%= contact.createdAt ? new Date(contact.createdAt).toLocaleDateString('fa-IR') : 'نامشخص' %>
-                        </div>
-                    </div>
-                    <div class="text-sm text-muted-foreground mb-2">
-                        موضوع: 
-                        <% const subjectMap = {
-                            'consultation': 'درخواست مشاوره',
-                            'appointment': 'تعیین وقت ملاقات',
-                            'case-status': 'پیگیری پرونده',
-                            'information': 'درخواست اطلاعات',
-                            'other': 'سایر'
-                        } %>
-                        <%= subjectMap[contact.subject] || contact.subject %>
-                    </div>
-                    <div class="text-sm">
-                        <%= contact.message.length > 100 ? contact.message.substring(0, 100) + '...' : contact.message %>
-                    </div>
-                    <div class="flex justify-between items-center mt-3">
-                        <div class="text-sm text-muted-foreground">
-                            <span class="ml-4">📞 <%= contact.phone %></span>
-                            <% if (contact.email) { %>
-                            <span>📧 <%= contact.email %></span>
-                            <% } %>
-                        </div>
-                        <button onclick="replyToContact('<%= contact.id %>')" class="text-primary hover:underline text-sm">
-                            پاسخ
-                        </button>
-                    </div>
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">پیام‌های دریافتی</h2>
+                    <input type="search" id="contacts-search" class="input-field w-64" placeholder="جستجو در پیام‌ها..." data-testid="input-search-contacts">
                 </div>
-                <% }) %>
+                
+                <% if (contacts.length === 0) { %>
+                <div class="text-center py-8 text-muted-foreground">
+                    هیچ پیامی دریافت نشده است
+                </div>
+                <% } else { %>
+                <div class="space-y-4">
+                    <% contacts.forEach((contact) => { %>
+                    <div class="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors" data-testid="contact-item-<%= contact.id %>">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="font-medium">
+                                <%= contact.firstName %> <%= contact.lastName %>
+                            </div>
+                            <div class="text-sm text-muted-foreground">
+                                <%= contact.createdAt ? new Date(contact.createdAt).toLocaleDateString('fa-IR') : 'نامشخص' %>
+                            </div>
+                        </div>
+                        <div class="text-sm text-muted-foreground mb-2">
+                            موضوع: 
+                            <% const subjectMap = {
+                                'consultation': 'درخواست مشاوره',
+                                'appointment': 'تعیین وقت ملاقات',
+                                'case-status': 'پیگیری پرونده',
+                                'information': 'درخواست اطلاعات',
+                                'other': 'سایر'
+                            } %>
+                            <%= subjectMap[contact.subject] || contact.subject %>
+                        </div>
+                        <div class="text-sm mb-3">
+                            <%= contact.message.length > 150 ? contact.message.substring(0, 150) + '...' : contact.message %>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="text-sm text-muted-foreground">
+                                <span class="ml-4" data-testid="contact-phone-<%= contact.id %>">📞 <%= contact.phone %></span>
+                                <% if (contact.email) { %>
+                                <span data-testid="contact-email-<%= contact.id %>">📧 <%= contact.email %></span>
+                                <% } %>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="convertToClient('<%= contact.id %>')" class="text-primary hover:underline text-sm" data-testid="button-convert-<%= contact.id %>">
+                                    تبدیل به موکل
+                                </button>
+                                <button onclick="replyToContact('<%= contact.id %>')" class="text-accent hover:underline text-sm" data-testid="button-reply-<%= contact.id %>">
+                                    پاسخ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <% }) %>
+                </div>
+                <% } %>
             </div>
-            <% } %>
+        </div>
+
         </div>
     </div>
 </div>
 
+<style>
+.tab-btn {
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    color: #6b7280;
+}
+
+.tab-btn.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+}
+
+.tab-btn:hover {
+    color: #374151;
+}
+
+.tab-content {
+    display: block;
+}
+
+.tab-content.hidden {
+    display: none;
+}
+
+.btn-primary {
+    background-color: #3b82f6;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+}
+
+.btn-secondary {
+    background-color: #6b7280;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+    background-color: #4b5563;
+}
+
+.input-field {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    width: 100%;
+}
+
+.card {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    padding: 0.75rem;
+    text-align: right;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+}
+
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.badge-primary {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-success {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.badge-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-error {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+</style>
+
 <script>
-function viewCase(caseId) {
-    showToast(`مشاهده پرونده ${caseId}`, 'info');
-    // اینجا می‌توانید مودال یا صفحه جزئیات پرونده را باز کنید
+// Global variables
+let clients = [];
+let cases = [];
+
+// Tab management
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName + '-tab').classList.remove('hidden');
+    
+    // Add active class to selected tab button
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    
+    // Load data for the selected tab
+    if (tabName === 'clients') {
+        loadClients();
+    } else if (tabName === 'cases') {
+        loadCases();
+        loadClientsForSelect();
+    } else if (tabName === 'overview') {
+        loadDashboardStats();
+    }
+}
+
+// Client management
+function showAddClientForm() {
+    document.getElementById('add-client-form').classList.remove('hidden');
+}
+
+function hideAddClientForm() {
+    document.getElementById('add-client-form').classList.add('hidden');
+    document.getElementById('clientForm').reset();
+}
+
+// Case management
+function showAddCaseForm() {
+    document.getElementById('add-case-form').classList.remove('hidden');
+    loadClientsForSelect();
+}
+
+function hideAddCaseForm() {
+    document.getElementById('add-case-form').classList.add('hidden');
+    document.getElementById('caseForm').reset();
+}
+
+// Load clients for case assignment
+async function loadClientsForSelect() {
+    try {
+        const response = await fetch('/api/admin/clients');
+        const result = await response.json();
+        
+        if (result.success) {
+            const select = document.getElementById('case-client-select');
+            select.innerHTML = '<option value="">انتخاب موکل...</option>';
+            
+            result.clients.forEach(client => {
+                const option = document.createElement('option');
+                option.value = client.client_id;
+                option.textContent = `${client.client_id} - ${client.first_name} ${client.last_name}`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading clients for select:', error);
+    }
+}
+
+// Load dashboard statistics
+async function loadDashboardStats() {
+    try {
+        const [clientsResponse, casesResponse] = await Promise.all([
+            fetch('/api/admin/clients'),
+            fetch('/api/admin/cases')
+        ]);
+        
+        const clientsResult = await clientsResponse.json();
+        const casesResult = await casesResponse.json();
+        
+        if (clientsResult.success) {
+            document.getElementById('clients-count').textContent = clientsResult.clients.length;
+        }
+        
+        if (casesResult.success) {
+            const totalCases = casesResult.cases.length;
+            const activeCases = casesResult.cases.filter(c => c.last_case_status === 'pending' || c.last_case_status === 'reviewing' || c.last_case_status === 'active').length;
+            
+            document.getElementById('total-cases-count').textContent = totalCases;
+            document.getElementById('active-cases-count').textContent = activeCases;
+        }
+    } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+    }
+}
+
+// Load clients list
+async function loadClients() {
+    try {
+        const response = await fetch('/api/admin/clients');
+        const result = await response.json();
+        
+        if (result.success) {
+            clients = result.clients;
+            renderClientsTable(clients);
+        } else {
+            document.getElementById('clients-table-body').innerHTML = 
+                '<tr><td colspan="7" class="text-center py-8 text-muted-foreground">خطا در بارگذاری موکلان</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading clients:', error);
+        document.getElementById('clients-table-body').innerHTML = 
+            '<tr><td colspan="7" class="text-center py-8 text-muted-foreground">خطا در بارگذاری موکلان</td></tr>';
+    }
+}
+
+// Load cases list
+async function loadCases() {
+    try {
+        const response = await fetch('/api/admin/cases');
+        const result = await response.json();
+        
+        if (result.success) {
+            cases = result.cases;
+            renderCasesTable(cases);
+        } else {
+            document.getElementById('cases-table-body').innerHTML = 
+                '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">خطا در بارگذاری پرونده‌ها</td></tr>';
+        }
+    } catch (error) {
+        console.error('Error loading cases:', error);
+        document.getElementById('cases-table-body').innerHTML = 
+            '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">خطا در بارگذاری پرونده‌ها</td></tr>';
+    }
+}
+
+// Render clients table
+function renderClientsTable(clientsData) {
+    const tbody = document.getElementById('clients-table-body');
+    
+    if (clientsData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-muted-foreground">هیچ موکلی یافت نشد</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = clientsData.map(client => {
+        const phoneNumbers = JSON.parse(client.phone_numbers || '[]');
+        const caseCount = cases.filter(c => c.client_id === client.client_id).length;
+        
+        return `
+            <tr class="hover:bg-muted/30" data-testid="client-row-${client.client_id}">
+                <td class="p-4 font-medium">${client.client_id}</td>
+                <td class="p-4">${client.first_name} ${client.last_name}</td>
+                <td class="p-4">${client.national_id}</td>
+                <td class="p-4">${phoneNumbers.join(', ')}</td>
+                <td class="p-4">${new Date(client.created_at).toLocaleDateString('fa-IR')}</td>
+                <td class="p-4">${caseCount}</td>
+                <td class="p-4">
+                    <button onclick="viewClient('${client.client_id}')" class="text-primary hover:underline text-sm" data-testid="button-view-client-${client.client_id}">
+                        مشاهده
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Render cases table
+function renderCasesTable(casesData) {
+    const tbody = document.getElementById('cases-table-body');
+    
+    if (casesData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">هیچ پرونده‌ای یافت نشد</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = casesData.map(caseItem => {
+        const client = clients.find(c => c.client_id === caseItem.client_id);
+        const clientName = client ? `${client.first_name} ${client.last_name}` : 'نامشخص';
+        
+        const statusMap = {
+            'pending': 'در انتظار',
+            'reviewing': 'در حال بررسی',
+            'active': 'فعال',
+            'resolved': 'حل شده'
+        };
+        
+        const statusClass = {
+            'pending': 'badge-primary',
+            'reviewing': 'badge-warning',
+            'active': 'badge-success',
+            'resolved': 'badge-success'
+        };
+        
+        return `
+            <tr class="hover:bg-muted/30" data-testid="case-row-${caseItem.case_id}">
+                <td class="p-4 font-medium">${caseItem.case_id}</td>
+                <td class="p-4">${caseItem.client_id}</td>
+                <td class="p-4">${clientName}</td>
+                <td class="p-4">
+                    <span class="badge ${statusClass[caseItem.last_case_status] || 'badge-primary'}">
+                        ${statusMap[caseItem.last_case_status] || caseItem.last_case_status}
+                    </span>
+                </td>
+                <td class="p-4">${new Date(caseItem.case_creation_date).toLocaleDateString('fa-IR')}</td>
+                <td class="p-4">
+                    <select onchange="updateCaseStatus('${caseItem.case_id}', this.value)" class="text-sm border border-border rounded p-1" data-testid="select-status-${caseItem.case_id}">
+                        <option value="pending" ${caseItem.last_case_status === 'pending' ? 'selected' : ''}>در انتظار</option>
+                        <option value="reviewing" ${caseItem.last_case_status === 'reviewing' ? 'selected' : ''}>در حال بررسی</option>
+                        <option value="active" ${caseItem.last_case_status === 'active' ? 'selected' : ''}>فعال</option>
+                        <option value="resolved" ${caseItem.last_case_status === 'resolved' ? 'selected' : ''}>حل شده</option>
+                    </select>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Form submission handlers
+document.getElementById('clientForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const phoneNumbers = [formData.get('phone1')];
+    if (formData.get('phone2')) {
+        phoneNumbers.push(formData.get('phone2'));
+    }
+    
+    const clientData = {
+        firstName: formData.get('firstName'),
+        lastName: formData.get('lastName'),
+        nationalId: formData.get('nationalId'),
+        phoneNumbers: phoneNumbers
+    };
+    
+    try {
+        const response = await fetch('/api/admin/clients', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(clientData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            hideAddClientForm();
+            loadClients();
+            loadDashboardStats();
+            showToast('موکل جدید با موفقیت اضافه شد', 'success');
+        } else {
+            showToast(result.message || 'خطا در افزودن موکل', 'error');
+        }
+    } catch (error) {
+        console.error('Error creating client:', error);
+        showToast('خطا در افزودن موکل', 'error');
+    }
+});
+
+document.getElementById('caseForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const caseData = {
+        clientId: formData.get('clientId'),
+        status: formData.get('status')
+    };
+    
+    try {
+        const response = await fetch('/api/admin/cases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(caseData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            hideAddCaseForm();
+            loadCases();
+            loadDashboardStats();
+            showToast('پرونده جدید با موفقیت اضافه شد', 'success');
+        } else {
+            showToast(result.message || 'خطا در افزودن پرونده', 'error');
+        }
+    } catch (error) {
+        console.error('Error creating case:', error);
+        showToast('خطا در افزودن پرونده', 'error');
+    }
+});
+
+// Update case status
+async function updateCaseStatus(caseId, newStatus) {
+    try {
+        const response = await fetch(`/api/admin/cases/${caseId}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            loadCases();
+            loadDashboardStats();
+            showToast('وضعیت پرونده بروزرسانی شد', 'success');
+        } else {
+            showToast(result.message || 'خطا در بروزرسانی وضعیت', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating case status:', error);
+        showToast('خطا در بروزرسانی وضعیت', 'error');
+    }
+}
+
+// Convert contact to client
+async function convertToClient(contactId) {
+    if (!confirm('آیا می‌خواهید این پیام را به موکل تبدیل کنید؟')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/convert-contact/${contactId}`, {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('پیام با موفقیت به موکل تبدیل شد', 'success');
+            showTab('clients'); // Switch to clients tab
+        } else {
+            showToast(result.message || 'خطا در تبدیل پیام', 'error');
+        }
+    } catch (error) {
+        console.error('Error converting contact:', error);
+        showToast('خطا در تبدیل پیام', 'error');
+    }
+}
+
+// Other functions
+function viewClient(clientId) {
+    showToast(`مشاهده جزئیات موکل ${clientId}`, 'info');
 }
 
 function replyToContact(contactId) {
     showToast(`پاسخ به پیام ${contactId}`, 'info');
-    // اینجا می‌توانید فرم پاسخ یا مودال ایمیل را باز کنید
 }
+
+// Logout function
+async function logout() {
+    try {
+        const response = await fetch('/api/admin/logout', {
+            method: 'POST'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            window.location.href = '/admin24';
+        } else {
+            showToast('خطا در خروج', 'error');
+        }
+    } catch (error) {
+        console.error('Error logging out:', error);
+        showToast('خطا در خروج', 'error');
+    }
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 
+        type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+    }`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardStats();
+});
 </script>

@@ -193,6 +193,179 @@ app.post('/api/admin/logout', (req, res) => {
   });
 });
 
+// Admin API endpoints for clients management
+app.get('/api/admin/clients', requireAuth, async (req, res) => {
+  try {
+    const clients = await storage.getAllClients();
+    res.json({ 
+      success: true, 
+      clients: clients 
+    });
+  } catch (error) {
+    console.error('Error getting clients:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'خطا در بارگذاری موکلان' 
+    });
+  }
+});
+
+app.post('/api/admin/clients', requireAuth, async (req, res) => {
+  try {
+    const { firstName, lastName, nationalId, phoneNumbers } = req.body;
+    
+    if (!firstName || !lastName || !nationalId || !phoneNumbers || phoneNumbers.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'تمام فیلدهای الزامی باید پر شوند' 
+      });
+    }
+    
+    // Validate national ID format (10 digits)
+    if (!/^\d{10}$/.test(nationalId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'کد ملی باید ۱۰ رقم باشد' 
+      });
+    }
+    
+    const client = await storage.createClient(firstName, lastName, nationalId, phoneNumbers);
+    res.json({ 
+      success: true, 
+      message: 'موکل با موفقیت اضافه شد',
+      client: client 
+    });
+  } catch (error) {
+    console.error('Error creating client:', error);
+    if (error.message && error.message.includes('Duplicate entry')) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'کد ملی قبلاً ثبت شده است' 
+      });
+    } else {
+      res.status(500).json({ 
+        success: false, 
+        message: 'خطا در ایجاد موکل' 
+      });
+    }
+  }
+});
+
+// Admin API endpoints for cases management
+app.get('/api/admin/cases', requireAuth, async (req, res) => {
+  try {
+    const cases = await storage.getAllCases();
+    res.json({ 
+      success: true, 
+      cases: cases 
+    });
+  } catch (error) {
+    console.error('Error getting cases:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'خطا در بارگذاری پرونده‌ها' 
+    });
+  }
+});
+
+app.post('/api/admin/cases', requireAuth, async (req, res) => {
+  try {
+    const { clientId, status } = req.body;
+    
+    if (!clientId || !status) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'شناسه موکل و وضعیت الزامی است' 
+      });
+    }
+    
+    // Check if client exists
+    const client = await storage.getClient(clientId);
+    if (!client) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'موکل با این شناسه یافت نشد' 
+      });
+    }
+    
+    const case_ = await storage.createCase(clientId, status);
+    res.json({ 
+      success: true, 
+      message: 'پرونده با موفقیت اضافه شد',
+      case: case_ 
+    });
+  } catch (error) {
+    console.error('Error creating case:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'خطا در ایجاد پرونده' 
+    });
+  }
+});
+
+app.put('/api/admin/cases/:caseId/status', requireAuth, async (req, res) => {
+  try {
+    const { caseId } = req.params;
+    const { status } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'وضعیت الزامی است' 
+      });
+    }
+    
+    const updatedCase = await storage.updateCaseStatus(caseId, status);
+    if (!updatedCase) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'پرونده یافت نشد' 
+      });
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'وضعیت پرونده بروزرسانی شد',
+      case: updatedCase 
+    });
+  } catch (error) {
+    console.error('Error updating case status:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'خطا در بروزرسانی وضعیت پرونده' 
+    });
+  }
+});
+
+// Convert contact message to client
+app.post('/api/admin/convert-contact/:contactId', requireAuth, async (req, res) => {
+  try {
+    const { contactId } = req.params;
+    
+    const contact = await storage.getContact(contactId);
+    if (!contact) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'پیام یافت نشد' 
+      });
+    }
+    
+    // For now, we need a national ID to create a client
+    // Since contacts don't have national ID, we'll need to ask admin to provide it
+    // For this implementation, we'll use a placeholder
+    res.status(400).json({ 
+      success: false, 
+      message: 'برای تبدیل پیام به موکل، کد ملی مورد نیاز است. لطفاً موکل را به صورت دستی اضافه کنید.' 
+    });
+  } catch (error) {
+    console.error('Error converting contact:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'خطا در تبدیل پیام' 
+    });
+  }
+});
+
 // Form submission handlers (saving to SingleStore)
 app.post('/api/case-review', async (req, res) => {
   try {
