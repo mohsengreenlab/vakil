@@ -1,8 +1,12 @@
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
 import expressEjsLayouts from "express-ejs-layouts";
+import { SingleStoreStorage } from "./singlestore.js";
 
 const app = express();
+
+// Initialize storage
+const storage = new SingleStoreStorage();
 
 // Set EJS as templating engine with layouts
 app.set('view engine', 'ejs');
@@ -58,78 +62,67 @@ app.get('/client-login', (req, res) => {
   });
 });
 
-// Admin page (mock data for static prototype)
-app.get('/admin24', (req, res) => {
-  const mockCases = [
-    {
-      id: 'case-001',
-      clientName: 'احمد محمدی',
-      caseType: 'family',
-      status: 'pending',
-      urgency: 'normal',
-      description: 'موضوع طلاق توافقی',
-      createdAt: new Date('2024-01-15')
-    },
-    {
-      id: 'case-002', 
-      clientName: 'فاطمه احمدی',
-      caseType: 'commercial',
-      status: 'reviewing',
-      urgency: 'urgent',
-      description: 'تأسیس شرکت تجاری',
-      createdAt: new Date('2024-01-10')
-    },
-    {
-      id: 'case-003',
-      clientName: 'علی رضایی',
-      caseType: 'property',
-      status: 'resolved',
-      urgency: 'normal',
-      description: 'قرارداد خرید ملک',
-      createdAt: new Date('2024-01-05')
-    }
-  ];
-
-  const mockContacts = [
-    {
-      id: 'contact-001',
-      firstName: 'مریم',
-      lastName: 'حسینی',
-      phone: '09121234567',
-      email: 'maryam@email.com',
-      subject: 'consultation',
-      message: 'سلام، نیاز به مشاوره در مورد حقوق کار دارم.',
-      createdAt: new Date('2024-01-12')
-    },
-    {
-      id: 'contact-002',
-      firstName: 'حسن',
-      lastName: 'کریمی',
-      phone: '09127654321',
-      email: null,
-      subject: 'appointment',
-      message: 'می‌خواهم وقت ملاقات بگیرم.',
-      createdAt: new Date('2024-01-08')
-    }
-  ];
-  
-  res.render('pages/admin', { 
-    title: 'پنل مدیریت - دفتر وکالت پیشرو',
-    page: 'admin',
-    cases: mockCases,
-    contacts: mockContacts
-  });
+// Admin page (real data from SingleStore)
+app.get('/admin24', async (req, res) => {
+  try {
+    const cases = await storage.getAllLegalCases();
+    const contacts = await storage.getAllContacts();
+    
+    res.render('pages/admin', { 
+      title: 'پنل مدیریت - دفتر وکالت پیشرو',
+      page: 'admin',
+      cases: cases,
+      contacts: contacts
+    });
+  } catch (error) {
+    console.error('Error loading admin page:', error);
+    res.status(500).render('pages/500', {
+      title: 'خطای داخلی سرور',
+      error: 'خطا در بارگذاری اطلاعات'
+    });
+  }
 });
 
-// Form submission handlers (static responses for prototype)
-app.post('/api/case-review', (req, res) => {
-  // Mock successful response
-  res.json({ success: true, message: 'پرونده شما با موفقیت ثبت شد.' });
+// Form submission handlers (saving to SingleStore)
+app.post('/api/case-review', async (req, res) => {
+  try {
+    const { clientName, clientPhone, clientEmail, caseType, urgency, description, hasLawyer } = req.body;
+    
+    await storage.createLegalCase({
+      clientName,
+      clientPhone,
+      clientEmail: clientEmail || null,
+      caseType,
+      urgency: urgency || 'normal',
+      description,
+      hasLawyer: hasLawyer === 'true' || hasLawyer === true
+    });
+    
+    res.json({ success: true, message: 'پرونده شما با موفقیت ثبت شد.' });
+  } catch (error) {
+    console.error('Error creating legal case:', error);
+    res.status(500).json({ success: false, message: 'خطا در ثبت پرونده. لطفاً مجدداً تلاش کنید.' });
+  }
 });
 
-app.post('/api/contact', (req, res) => {
-  // Mock successful response
-  res.json({ success: true, message: 'پیام شما با موفقیت ارسال شد.' });
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { firstName, lastName, phone, email, subject, message } = req.body;
+    
+    await storage.createContact({
+      firstName,
+      lastName,
+      phone,
+      email: email || null,
+      subject,
+      message
+    });
+    
+    res.json({ success: true, message: 'پیام شما با موفقیت ارسال شد.' });
+  } catch (error) {
+    console.error('Error creating contact:', error);
+    res.status(500).json({ success: false, message: 'خطا در ارسال پیام. لطفاً مجدداً تلاش کنید.' });
+  }
 });
 
 // Error handling middleware
