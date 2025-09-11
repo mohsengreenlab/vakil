@@ -48,6 +48,12 @@
     </div>
 
     <div class="container mx-auto px-4 py-8">
+    
+    <script>
+        // Pass server data to JavaScript (XSS-safe)
+        window.serverCases = JSON.parse(document.getElementById('cases-data').textContent);
+    </script>
+    <script type="application/json" id="cases-data"><%- JSON.stringify(cases).replace(/</g,'\\u003c').replace(/--/g,'\\u002d\\u002d') %></script>
         <!-- Overview Tab -->
         <div id="overview-tab" class="tab-content">
             <h1 class="text-3xl font-bold mb-6">داشبورد مدیریت</h1>
@@ -273,9 +279,6 @@
         <div id="cases-tab" class="tab-content hidden">
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-3xl font-bold">مدیریت پرونده‌ها</h1>
-                <button onclick="showAddCaseForm()" class="btn-primary" data-testid="button-add-case">
-                    + افزودن پرونده جدید
-                </button>
             </div>
 
             <!-- Add Case Form (Hidden by default) -->
@@ -309,16 +312,48 @@
             <div class="card p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold">لیست پرونده‌ها</h2>
+                </div>
+                
+                <!-- Enhanced Search Controls -->
+                <div class="card p-4 mb-4 bg-muted/30">
+                    <h3 class="text-md font-semibold mb-3">جستجو در پرونده‌ها</h3>
+                    
+                    <!-- Search Criteria Radio Buttons -->
+                    <div class="mb-3">
+                        <label class="text-sm font-medium mb-2 block">معیار جستجو:</label>
+                        <div class="flex flex-wrap gap-4" data-testid="cases-search-criteria-options">
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="casesSearchCriteria" value="case_id" class="radio" data-testid="radio-case-id">
+                                <span class="text-sm">شناسه پرونده</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="casesSearchCriteria" value="client_id" class="radio" data-testid="radio-case-client-id">
+                                <span class="text-sm">شناسه موکل</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="casesSearchCriteria" value="last_case_status" class="radio" data-testid="radio-case-status">
+                                <span class="text-sm">وضعیت پرونده</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="casesSearchCriteria" value="case_creation_date" class="radio" data-testid="radio-case-date">
+                                <span class="text-sm">تاریخ ایجاد</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="casesSearchCriteria" value="all" class="radio" checked data-testid="radio-cases-all">
+                                <span class="text-sm">همه موارد</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Input and Controls -->
                     <div class="flex gap-2">
-                        <input type="search" id="cases-search" class="input-field w-64" placeholder="جستجو در پرونده‌ها..." data-testid="input-search-cases">
-                        <select id="cases-filter" class="input-field w-32" data-testid="select-filter-cases">
-                            <option value="">همه</option>
-                            <option value="under-review">در انتظار بررسی</option>
-                            <option value="lawyer-study">در حال مطالعه وکیل</option>
-                            <option value="in-progress">در حال اقدام</option>
-                            <option value="awaiting-court">در انتظار رای دادگاه</option>
-                            <option value="verdict-issued">صدور رای</option>
-                        </select>
+                        <input type="search" id="cases-search" class="input-field flex-1" placeholder="عبارت جستجو را وارد کنید..." data-testid="input-search-cases">
+                        <button onclick="clearCasesSearch()" class="btn-secondary text-sm px-3" data-testid="button-clear-cases-search">
+                            پاک کردن
+                        </button>
+                        <button onclick="performCasesLiveSearch()" class="btn-primary text-sm px-4" data-testid="button-search-cases">
+                            جستجو
+                        </button>
                     </div>
                 </div>
                 

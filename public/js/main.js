@@ -475,3 +475,151 @@ function loadFormDraft(formId) {
 function clearFormDraft(formId) {
     localStorage.removeItem('form_draft_' + formId);
 }
+
+// Global variables for case filtering
+let allCases = [];
+let filteredCases = [];
+
+// Initialize cases from server data and add event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize cases search functionality
+    if (typeof window.serverCases !== 'undefined') {
+        allCases = [...window.serverCases];
+        filteredCases = [...allCases];
+        // Render initial table if we're on the cases tab
+        setTimeout(() => {
+            if (document.getElementById('cases-table-body')) {
+                renderCasesTable();
+            }
+        }, 100);
+    }
+    
+    // Add live search event listeners
+    const casesSearchInput = document.getElementById('cases-search');
+    const casesSearchCriteria = document.querySelectorAll('input[name="casesSearchCriteria"]');
+    
+    if (casesSearchInput) {
+        // Live search on typing (debounced)
+        let searchTimeout;
+        casesSearchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(performCasesLiveSearch, 300);
+        });
+        
+        // Search on Enter key
+        casesSearchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performCasesLiveSearch();
+            }
+        });
+    }
+    
+    // Search when criteria changes
+    casesSearchCriteria.forEach(radio => {
+        radio.addEventListener('change', function() {
+            performCasesLiveSearch();
+        });
+    });
+});
+
+// Enhanced Cases Search Functionality
+function clearCasesSearch() {
+    document.getElementById('cases-search').value = '';
+    document.querySelector('input[name="casesSearchCriteria"][value="all"]').checked = true;
+    filteredCases = [...allCases];
+    renderCasesTable();
+    showToast('جستجو پاک شد', 'info');
+}
+
+function performCasesLiveSearch() {
+    const searchTerm = document.getElementById('cases-search').value.trim().toLowerCase();
+    const selectedCriteria = document.querySelector('input[name="casesSearchCriteria"]:checked').value;
+    
+    if (searchTerm === '') {
+        filteredCases = [...allCases];
+    } else {
+        filteredCases = allCases.filter(caseItem => {
+            switch (selectedCriteria) {
+                case 'case_id':
+                    return String(caseItem.case_id || '').toLowerCase().includes(searchTerm);
+                case 'client_id':
+                    return String(caseItem.client_id || '').toLowerCase().includes(searchTerm);
+                case 'last_case_status':
+                    const statusText = getStatusText(caseItem.last_case_status) || caseItem.last_case_status || '';
+                    return statusText.toLowerCase().includes(searchTerm);
+                case 'case_creation_date':
+                    return new Date(caseItem.case_creation_date).toLocaleDateString('fa-IR').includes(searchTerm);
+                case 'all':
+                default:
+                    const caseId = String(caseItem.case_id || '').toLowerCase();
+                    const clientId = String(caseItem.client_id || '').toLowerCase();
+                    const status = (getStatusText(caseItem.last_case_status) || caseItem.last_case_status || '').toLowerCase();
+                    const date = new Date(caseItem.case_creation_date).toLocaleDateString('fa-IR');
+                    return (
+                        caseId.includes(searchTerm) ||
+                        clientId.includes(searchTerm) ||
+                        status.includes(searchTerm) ||
+                        date.includes(searchTerm)
+                    );
+            }
+        });
+    }
+    
+    renderCasesTable();
+    
+    const resultsCount = filteredCases.length;
+    const totalCount = allCases.length;
+    showToast(`نتایج جستجو: ${resultsCount} از ${totalCount} پرونده`, 'info');
+}
+
+function renderCasesTable() {
+    const tableBody = document.getElementById('cases-table-body');
+    
+    if (filteredCases.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-8 text-muted-foreground">
+                    ${allCases.length === 0 ? 'هیچ پرونده‌ای یافت نشد' : 'هیچ نتیجه‌ای برای جستجوی شما یافت نشد'}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tableBody.innerHTML = filteredCases.map(caseItem => `
+        <tr data-testid="case-row-${caseItem.case_id}">
+            <td class="font-medium">${caseItem.case_id}</td>
+            <td>${caseItem.client_id}</td>
+            <td class="font-medium">نامشخص</td>
+            <td>
+                <select onchange="updateCaseStatus('${caseItem.case_id}', this.value)" 
+                        class="status-select px-2 py-1 rounded border border-border text-sm min-w-[180px]" 
+                        data-testid="select-case-status-${caseItem.case_id}">
+                    <option value="under-review" ${caseItem.last_case_status === 'under-review' ? 'selected' : ''}>در انتظار بررسی</option>
+                    <option value="lawyer-study" ${caseItem.last_case_status === 'lawyer-study' ? 'selected' : ''}>در حال مطالعه وکیل</option>
+                    <option value="in-progress" ${caseItem.last_case_status === 'in-progress' ? 'selected' : ''}>در حال اقدام</option>
+                    <option value="awaiting-court" ${caseItem.last_case_status === 'awaiting-court' ? 'selected' : ''}>در انتظار رای دادگاه</option>
+                    <option value="verdict-issued" ${caseItem.last_case_status === 'verdict-issued' ? 'selected' : ''}>صدور رای</option>
+                </select>
+            </td>
+            <td>${new Date(caseItem.case_creation_date).toLocaleDateString('fa-IR')}</td>
+            <td>
+                <button onclick="viewCaseDetails('${caseItem.case_id}')" class="text-primary hover:underline text-sm" data-testid="button-view-case-${caseItem.case_id}">
+                    نمایش جزئیات
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'under-review': 'در انتظار بررسی',
+        'lawyer-study': 'در حال مطالعه وکیل',
+        'in-progress': 'در حال اقدام',
+        'awaiting-court': 'در انتظار رای دادگاه',
+        'verdict-issued': 'صدور رای'
+    };
+    return statusMap[status] || status;
+}
