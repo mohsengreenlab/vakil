@@ -611,15 +611,29 @@ async function loadClients() {
             return;
         }
         
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const result = await response.json();
         
-        if (result.success) {
-            clients = result.clients;
-            allClients = [...result.clients]; // Keep original copy for filtering
+        if (result.success && result.clients) {
+            // Normalize phone numbers on the client side to handle database inconsistencies
+            const normalizedClients = result.clients.map(client => ({
+                ...client,
+                phone_numbers: Array.isArray(client.phone_numbers) 
+                    ? client.phone_numbers 
+                    : (typeof client.phone_numbers === 'string' 
+                        ? JSON.parse(client.phone_numbers || '[]') 
+                        : [])
+            }));
+            
+            clients = normalizedClients;
+            allClients = [...normalizedClients]; // Keep original copy for filtering
             renderClientsTable(clients);
         } else {
             document.getElementById('clients-table-body').innerHTML = 
-                '<tr><td colspan="7" class="text-center py-8 text-muted-foreground">خطا در بارگذاری موکلان</td></tr>';
+                '<tr><td colspan="7" class="text-center py-8 text-muted-foreground">هیچ موکلی یافت نشد</td></tr>';
         }
     } catch (error) {
         console.error('Error loading clients:', error);
@@ -664,20 +678,8 @@ function renderClientsTable(clientsData) {
     const pageData = clientsData.slice(startIndex, endIndex);
     
     tbody.innerHTML = pageData.map(client => {
-        // Handle phone numbers safely - check if it's already an array or needs parsing
-        let phoneNumbers;
-        try {
-            if (Array.isArray(client.phone_numbers)) {
-                phoneNumbers = client.phone_numbers;
-            } else if (typeof client.phone_numbers === 'string') {
-                phoneNumbers = JSON.parse(client.phone_numbers || '[]');
-            } else {
-                phoneNumbers = [];
-            }
-        } catch (e) {
-            console.warn('Failed to parse phone numbers for client:', client.client_id, e);
-            phoneNumbers = [];
-        }
+        // Phone numbers are already normalized in loadClients()
+        const phoneNumbers = client.phone_numbers || [];
         const caseCount = cases.filter(c => c.client_id === client.client_id).length;
         
         return `
@@ -769,36 +771,14 @@ function performLiveSearch() {
                 case 'national_id':
                     return client.national_id.toLowerCase().includes(searchTerm);
                 case 'phone_numbers':
-                    let clientPhones;
-                    try {
-                        if (Array.isArray(client.phone_numbers)) {
-                            clientPhones = client.phone_numbers;
-                        } else if (typeof client.phone_numbers === 'string') {
-                            clientPhones = JSON.parse(client.phone_numbers || '[]');
-                        } else {
-                            clientPhones = [];
-                        }
-                    } catch (e) {
-                        clientPhones = [];
-                    }
+                    const clientPhones = client.phone_numbers || [];
                     return clientPhones.some(phone => phone.toLowerCase().includes(searchTerm));
                 case 'all':
                 default:
                     const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
                     const nationalId = client.national_id.toLowerCase();
                     const clientId = client.client_id.toString().toLowerCase();
-                    let allPhones;
-                    try {
-                        if (Array.isArray(client.phone_numbers)) {
-                            allPhones = client.phone_numbers;
-                        } else if (typeof client.phone_numbers === 'string') {
-                            allPhones = JSON.parse(client.phone_numbers || '[]');
-                        } else {
-                            allPhones = [];
-                        }
-                    } catch (e) {
-                        allPhones = [];
-                    }
+                    const allPhones = client.phone_numbers || [];
                     const phoneMatch = allPhones.some(phone => phone.toLowerCase().includes(searchTerm));
                     return fullName.includes(searchTerm) || nationalId.includes(searchTerm) || 
                            clientId.includes(searchTerm) || phoneMatch;
