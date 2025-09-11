@@ -231,6 +231,47 @@ app.get('/admin24/dashboard', requireAuth, async (req, res) => {
   }
 });
 
+// Debug endpoint to test password functionality
+app.get('/api/debug/test-password', async (req, res) => {
+  try {
+    // Test creating a client with password and then authenticating
+    const testClient = await storage.createClient(
+      'Test', 
+      'Client', 
+      '1234567890', 
+      ['09123456789'], 
+      'test123'
+    );
+    
+    // Try to authenticate
+    const authResult = await storage.authenticateClient('1234567890', 'test123');
+    
+    if (authResult) {
+      res.json({
+        success: true,
+        message: 'Password functionality working correctly',
+        passwordColumnExists: true,
+        testClientId: testClient.client_id,
+        authenticationWorks: true
+      });
+    } else {
+      res.json({
+        success: false,
+        message: 'Password column exists but authentication failed',
+        passwordColumnExists: true,
+        authenticationWorks: false
+      });
+    }
+  } catch (error) {
+    console.error('Error testing password functionality:', error);
+    res.json({ 
+      success: false, 
+      error: error.message,
+      passwordColumnExists: error.message.includes('password') ? false : 'unknown'
+    });
+  }
+});
+
 // Admin login API endpoint
 app.post('/api/admin/login', async (req, res) => {
   try {
