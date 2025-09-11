@@ -3,21 +3,21 @@ import path from "path";
 import expressEjsLayouts from "express-ejs-layouts";
 import session from "express-session";
 import bcrypt from "bcrypt";
-import { SingleStoreStorage } from "./singlestore.js";
+import { PostgresStorage } from "./postgres.js";
 import type { IStorage } from "./storage.js";
 
 const app = express();
 
-// Initialize storage with external SingleStore database
+// Initialize storage with PostgreSQL database
 let storage: IStorage;
 
-// Initialize SingleStore database connection
-if (!process.env.SINGLESTORE_PASSWORD) {
-  throw new Error("SINGLESTORE_PASSWORD environment variable is required");
+// Initialize PostgreSQL database connection
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL environment variable is required");
 }
 
-storage = new SingleStoreStorage() as any; // Type assertion for interface compatibility
-console.log(`🗄️  Using external SingleStore database connection`);
+storage = new PostgresStorage();
+console.log(`🗄️  Using PostgreSQL database connection`);
 
 // Set EJS as templating engine with layouts
 app.set('view engine', 'ejs');
@@ -48,6 +48,8 @@ declare module 'express-session' {
   interface SessionData {
     adminId?: string;
     adminUsername?: string;
+    clientId?: string;
+    clientNationalId?: string;
   }
 }
 

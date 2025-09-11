@@ -145,13 +145,19 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[]): Promise<any> {
+  async createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[], password?: string): Promise<any> {
     try {
+      let hashedPassword = null;
+      if (password) {
+        hashedPassword = await bcrypt.hash(password, 10);
+      }
+
       const result = await this.db.insert(clients).values({
         firstName,
         lastName,
         nationalId,
-        phoneNumbers: phoneNumbers as any
+        phoneNumbers: phoneNumbers as any,
+        password: hashedPassword
       }).returning();
       
       const client = result[0];
@@ -378,6 +384,78 @@ export class PostgresStorage implements IStorage {
       };
     } catch (error) {
       console.error('Error creating legal case:', error);
+      throw error;
+    }
+  }
+
+  // Client authentication methods
+  async authenticateClient(nationalId: string, password: string): Promise<any> {
+    try {
+      const result = await this.db.select().from(clients).where(eq(clients.nationalId, nationalId));
+      const client = result[0];
+      
+      if (!client || !client.password) {
+        return null;
+      }
+      
+      const isPasswordValid = await bcrypt.compare(password, client.password);
+      if (!isPasswordValid) {
+        return null;
+      }
+      
+      return {
+        client_id: client.clientId.toString(),
+        first_name: client.firstName,
+        last_name: client.lastName,
+        national_id: client.nationalId,
+        phone_numbers: JSON.stringify(client.phoneNumbers),
+        created_at: client.createdAt
+      };
+    } catch (error) {
+      console.error('Error authenticating client:', error);
+      throw error;
+    }
+  }
+
+  async updateClientPassword(clientId: string, newPassword: string): Promise<void> {
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await this.db
+        .update(clients)
+        .set({ password: hashedPassword })
+        .where(eq(clients.clientId, Number(clientId)));
+    } catch (error) {
+      console.error('Error updating client password:', error);
+      throw error;
+    }
+  }
+
+  async setClientPasswordByNationalId(nationalId: string, password: string): Promise<void> {
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await this.db
+        .update(clients)
+        .set({ password: hashedPassword })
+        .where(eq(clients.nationalId, nationalId));
+    } catch (error) {
+      console.error('Error setting client password by national ID:', error);
+      throw error;
+    }
+  }
+
+  async getClientCases(clientId: string): Promise<any[]> {
+    try {
+      const result = await this.db.select().from(cases).where(eq(cases.clientId, Number(clientId))).orderBy(desc(cases.createdAt));
+      
+      return result.map(case_ => ({
+        case_id: case_.caseId.toString(),
+        client_id: case_.clientId.toString(),
+        case_creation_date: case_.caseCreationDate,
+        last_case_status: case_.lastCaseStatus,
+        created_at: case_.createdAt
+      }));
+    } catch (error) {
+      console.error('Error getting client cases:', error);
       throw error;
     }
   }

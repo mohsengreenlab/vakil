@@ -19,6 +19,7 @@ export const clients = pgTable("clients", {
   lastName: text("last_name").notNull(),
   nationalId: varchar("national_id", { length: 10 }).notNull().unique(),
   phoneNumbers: json("phone_numbers").notNull(),
+  password: text("password"), // Add password field for authentication
   createdAt: timestamp("created_at").defaultNow(),
 });
 
