@@ -233,43 +233,60 @@ app.get('/admin24/dashboard', requireAuth, async (req, res) => {
   }
 });
 
-// Debug endpoint to test password functionality
-app.get('/api/debug/test-password', async (req, res) => {
+// Debug endpoint to create a test client for login testing
+app.get('/api/debug/create-test-client', async (req, res) => {
   try {
-    // Test creating a client with password and then authenticating
-    const testClient = await storage.createClient(
-      'Test', 
-      'Client', 
-      '1234567890', 
-      ['09123456789'], 
-      'test123'
+    // Create a test client directly in database with minimal password
+    const connection = await (storage as any).pool.getConnection();
+    
+    // Generate a simple client ID
+    const clientId = '9999';
+    
+    // Create client with plain text password for testing
+    await connection.execute(
+      'INSERT INTO clients (client_id, first_name, last_name, national_id, phone_numbers, password) VALUES (?, ?, ?, ?, ?, ?)',
+      [clientId, 'علی', 'احمدی', '1111111111', JSON.stringify(['09123456789']), 'test123']
     );
     
-    // Try to authenticate
-    const authResult = await storage.authenticateClient('1234567890', 'test123');
+    // Create national_id_registry entry
+    await connection.execute(
+      'INSERT INTO national_id_registry (national_id, client_id) VALUES (?, ?)',
+      ['1111111111', clientId]
+    );
     
-    if (authResult) {
-      res.json({
-        success: true,
-        message: 'Password functionality working correctly',
-        passwordColumnExists: true,
-        testClientId: testClient.client_id,
-        authenticationWorks: true
-      });
-    } else {
-      res.json({
-        success: false,
-        message: 'Password column exists but authentication failed',
-        passwordColumnExists: true,
-        authenticationWorks: false
-      });
-    }
+    connection.release();
+    
+    res.json({
+      success: true,
+      message: 'Test client created successfully',
+      clientId: clientId,
+      nationalId: '1111111111',
+      password: 'test123',
+      note: 'Use these credentials to test login'
+    });
   } catch (error) {
-    console.error('Error testing password functionality:', error);
+    console.error('Error creating test client:', error);
     res.json({ 
       success: false, 
-      error: error.message,
-      passwordColumnExists: error.message.includes('password') ? false : 'unknown'
+      error: error.message
+    });
+  }
+});
+
+// Debug endpoint to test authentication directly
+app.get('/api/debug/test-auth', async (req, res) => {
+  try {
+    const authResult = await storage.authenticateClient('1111111111', 'test123');
+    res.json({
+      success: !!authResult,
+      client: authResult,
+      message: authResult ? 'Authentication successful' : 'Authentication failed'
+    });
+  } catch (error) {
+    console.error('Error testing authentication:', error);
+    res.json({ 
+      success: false, 
+      error: error.message
     });
   }
 });

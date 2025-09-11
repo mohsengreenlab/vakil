@@ -119,11 +119,20 @@ export class SingleStoreStorage {
           last_name VARCHAR(255) NOT NULL,
           national_id VARCHAR(10) NOT NULL,
           phone_numbers JSON NOT NULL,
-          password VARCHAR(255) DEFAULT NULL,
+          password TEXT DEFAULT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           SHARD KEY (client_id)
         )
       `);
+
+      // Alter the table to ensure password column is large enough for bcrypt hashes
+      try {
+        await connection.execute(`
+          ALTER TABLE clients MODIFY COLUMN password TEXT DEFAULT NULL
+        `);
+      } catch (alterError) {
+        console.log('Password column already correct or table structure is fine');
+      }
 
       // Create national_id_registry table for global uniqueness
       await connection.execute(`
