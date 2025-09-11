@@ -4,193 +4,69 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %></title>
-    <meta name="description" content="پورتال موکل - دفتر وکالت پیشرو">
-    
-    <!-- Google Fonts - Vazirmatn -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-    tailwind.config = {
-        theme: {
-            extend: {
-                borderRadius: {
-                    lg: "var(--radius)",
-                    md: "calc(var(--radius) - 2px)", 
-                    sm: "calc(var(--radius) - 4px)",
-                },
-                colors: {
-                    background: "var(--background)",
-                    foreground: "var(--foreground)",
-                    card: {
-                        DEFAULT: "var(--card)",
-                        foreground: "var(--card-foreground)",
-                    },
-                    popover: {
-                        DEFAULT: "var(--popover)",
-                        foreground: "var(--popover-foreground)",
-                    },
-                    primary: {
-                        DEFAULT: "var(--primary)",
-                        foreground: "var(--primary-foreground)",
-                    },
-                    secondary: {
-                        DEFAULT: "var(--secondary)",
-                        foreground: "var(--secondary-foreground)",
-                    },
-                    muted: {
-                        DEFAULT: "var(--muted)",
-                        foreground: "var(--muted-foreground)",
-                    },
-                    accent: {
-                        DEFAULT: "var(--accent)",
-                        foreground: "var(--accent-foreground)",
-                    },
-                    destructive: {
-                        DEFAULT: "var(--destructive)",
-                        foreground: "var(--destructive-foreground)",
-                    },
-                    border: "var(--border)",
-                    input: "var(--input)",
-                    ring: "var(--ring)",
-                },
-                fontFamily: {
-                    vazir: ["Vazirmatn", "sans-serif"],
-                }
-            },
-        }
-    };
-    </script>
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        * { font-family: 'Tahoma', sans-serif; }
+        body { margin: 0; padding: 20px; background: #f5f5f5; direction: rtl; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background: #2563eb; color: white; padding: 20px; margin: -20px -20px 20px -20px; border-radius: 8px 8px 0 0; }
+        .case { border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .status { padding: 5px 10px; border-radius: 15px; font-size: 12px; }
+        .status.active { background: #dcfce7; color: #166534; }
+        .status.study { background: #f3e8ff; color: #7c3aed; }
+        button { background: #dc2626; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    </style>
 </head>
-<body class="bg-background text-foreground min-h-screen">
-    <!-- Client Portal Header -->
-    <header class="bg-primary text-primary-foreground shadow-sm">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold">پورتال موکل</h1>
-                    <p class="text-primary-foreground/80">خوش آمدید، <%= client.first_name %> <%= client.last_name %></p>
-                </div>
-                <div class="flex items-center space-x-reverse space-x-4">
-                    <span class="text-sm text-primary-foreground/80">کد ملی: <%= client.national_id %></span>
-                    <button id="logoutBtn" class="bg-primary-foreground text-primary px-4 py-2 rounded-md hover:bg-primary-foreground/90 transition-colors">
-                        خروج
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <main class="container mx-auto px-4 py-8">
-        <!-- Cases Section -->
-        <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
-            <div class="border-b border-border bg-muted/50 px-6 py-4">
-                <h2 class="text-xl font-semibold text-card-foreground">پرونده‌های شما</h2>
-            </div>
-            
-            <div class="p-6">
-                <% if (cases && cases.length > 0) { %>
-                    <div class="space-y-4">
-                        <% cases.forEach(function(caseItem) { %>
-                            <div class="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                                <div class="flex justify-between items-start">
-                                    <div class="flex-1">
-                                        <div class="flex items-center space-x-reverse space-x-4 mb-2">
-                                            <h3 class="font-semibold text-card-foreground">شماره پرونده: <%= caseItem.case_id %></h3>
-                                            <span class="px-3 py-1 rounded-full text-sm font-medium
-                                                <% if (caseItem.last_case_status === 'completed') { %>
-                                                    bg-green-100 text-green-800
-                                                <% } else if (caseItem.last_case_status === 'در حال بررسی' || caseItem.last_case_status === 'under-review') { %>
-                                                    bg-yellow-100 text-yellow-800
-                                                <% } else if (caseItem.last_case_status === 'pending') { %>
-                                                    bg-blue-100 text-blue-800
-                                                <% } else { %>
-                                                    bg-gray-100 text-gray-800
-                                                <% } %>
-                                            ">
-                                                <%= caseItem.last_case_status %>
-                                            </span>
-                                        </div>
-                                        <div class="text-sm text-muted-foreground space-y-1">
-                                            <p>تاریخ ایجاد: <%= new Date(caseItem.case_creation_date).toLocaleDateString('fa-IR') %></p>
-                                            <% if (caseItem.created_at) { %>
-                                                <p>آخرین بروزرسانی: <%= new Date(caseItem.created_at).toLocaleDateString('fa-IR') %></p>
-                                            <% } %>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <% }); %>
-                    </div>
-                <% } else { %>
-                    <div class="text-center py-8">
-                        <div class="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
-                            <svg class="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                        </div>
-                        <h3 class="text-lg font-medium text-card-foreground mb-2">هنوز پرونده‌ای ثبت نشده</h3>
-                        <p class="text-muted-foreground">در حال حاضر هیچ پرونده‌ای برای شما ثبت نشده است.</p>
-                    </div>
-                <% } %>
-            </div>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>پورتال موکل - دفتر وکالت پیشرو</h1>
+            <p>خوش آمدید، <%= client.first_name %> <%= client.last_name %></p>
+            <p>کد ملی: <%= client.national_id %></p>
+            <button onclick="logout()">خروج</button>
         </div>
 
-        <!-- Contact Information -->
-        <div class="mt-8 bg-card rounded-lg shadow-sm border border-border overflow-hidden">
-            <div class="border-b border-border bg-muted/50 px-6 py-4">
-                <h2 class="text-xl font-semibold text-card-foreground">اطلاعات تماس</h2>
-            </div>
-            
-            <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="flex items-center space-x-reverse space-x-3">
-                        <svg class="w-5 h-5 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
-                        </svg>
-                        <span class="text-card-foreground">۰۲۱-۸۸۷۷۶۶۵۵</span>
-                    </div>
-                    <div class="flex items-center space-x-reverse space-x-3">
-                        <svg class="w-5 h-5 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-                        </svg>
-                        <span class="text-card-foreground">info@pishrolawfirm.ir</span>
-                    </div>
+        <h2>پرونده‌های شما</h2>
+        <% if (cases && cases.length > 0) { %>
+            <% cases.forEach(function(caseItem) { %>
+                <div class="case">
+                    <h3>شماره پرونده: <%= caseItem.case_id %></h3>
+                    <span class="status <%= caseItem.last_case_status === 'active' ? 'active' : 'study' %>">
+                        <%= caseItem.last_case_status === 'lawyer-study' ? 'در حال مطالعه وکیل' : 
+                            caseItem.last_case_status === 'active' ? 'فعال' : 
+                            caseItem.last_case_status %>
+                    </span>
+                    <p>تاریخ ایجاد: <%= new Date(caseItem.case_creation_date).toLocaleDateString('fa-IR') %></p>
+                    <% if (caseItem.created_at) { %>
+                        <p>آخرین بروزرسانی: <%= new Date(caseItem.created_at).toLocaleDateString('fa-IR') %></p>
+                    <% } %>
                 </div>
-            </div>
-        </div>
-    </main>
+            <% }); %>
+        <% } else { %>
+            <p>هنوز پرونده‌ای ثبت نشده است.</p>
+        <% } %>
 
-    <!-- Scripts -->
+        <h2>اطلاعات تماس</h2>
+        <p>تلفن: ۰۲۱-۸۸۷۷۶۶۵۵</p>
+        <p>ایمیل: info@pishrolawfirm.ir</p>
+    </div>
+
     <script>
-        // Logout functionality
-        document.getElementById('logoutBtn').addEventListener('click', async function() {
+        async function logout() {
             try {
                 const response = await fetch('/api/client/logout', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' }
                 });
-
                 if (response.ok) {
                     window.location.href = '/login';
                 } else {
-                    console.error('خطا در خروج');
+                    alert('خطا در خروج');
                 }
             } catch (error) {
                 console.error('خطا در خروج:', error);
+                alert('خطا در خروج');
             }
-        });
-
-        console.log('Client Portal Loaded');
+        }
     </script>
 </body>
 </html>

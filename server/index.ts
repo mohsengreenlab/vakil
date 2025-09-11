@@ -146,19 +146,78 @@ app.get('/client/portal', requireClientAuth, async (req, res) => {
     
     const client = await storage.getClient(req.session.clientId);
     console.log('Client data loaded:', client);
+    console.log('About to render HTML directly...');
     
-    res.render('pages/client-portal', { 
-      title: 'پورتال موکل - دفتر وکالت پیشرو',
-      page: 'client-portal',
-      client: client,
-      cases: clientCases
-    });
+    try {
+      // Build cases HTML
+      let casesHtml = '';
+      if (clientCases && clientCases.length > 0) {
+        for (const caseItem of clientCases) {
+          const status = caseItem.last_case_status === 'lawyer-study' ? 'در حال مطالعه وکیل' : 
+                        caseItem.last_case_status === 'active' ? 'فعال' : 
+                        caseItem.last_case_status;
+          
+          casesHtml += `
+            <div class="case">
+              <h3>شماره پرونده: ${caseItem.case_id}</h3>
+              <span class="status">${status}</span>
+              <p>تاریخ ایجاد: ${new Date(caseItem.case_creation_date).toLocaleDateString('fa-IR')}</p>
+            </div>
+          `;
+        }
+      } else {
+        casesHtml = '<p>هنوز پرونده‌ای ثبت نشده است.</p>';
+      }
+      
+      const html = `
+        <!DOCTYPE html>
+        <html lang="fa" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <title>پورتال موکل</title>
+            <style>
+                body { font-family: Tahoma; margin: 20px; background: #f5f5f5; direction: rtl; }
+                .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; }
+                .header { background: #2563eb; color: white; padding: 20px; margin-bottom: 20px; }
+                .case { border: 1px solid #ddd; padding: 15px; margin: 10px 0; }
+                .status { background: #f3e8ff; color: #7c3aed; padding: 5px 10px; border-radius: 15px; font-size: 12px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>پورتال موکل - دفتر وکالت پیشرو</h1>
+                    <p>خوش آمدید، ${client.first_name} ${client.last_name}</p>
+                    <p>کد ملی: ${client.national_id}</p>
+                </div>
+                <h2>پرونده‌های شما</h2>
+                ${casesHtml}
+                <h2>اطلاعات تماس</h2>
+                <p>تلفن: ۰۲۱-۸۸۷۷۶۶۵۵</p>
+                <p>ایمیل: info@pishrolawfirm.ir</p>
+            </div>
+        </body>
+        </html>
+      `;
+    
+      console.log('HTML generated, sending response...');
+      res.send(html);
+      console.log('Response sent successfully!');
+    } catch (htmlError) {
+      console.error('Error generating HTML:', htmlError);
+      res.send(`<html><body><h1>Client Portal - ${client.first_name} ${client.last_name}</h1><p>National ID: ${client.national_id}</p><p>Cases: ${clientCases.length}</p></body></html>`);
+    }
   } catch (error) {
-    console.error('Error loading client portal:', error);
-    res.status(500).render('pages/500', {
-      title: 'خطای داخلی سرور',
-      error: 'خطا در بارگذاری اطلاعات'
-    });
+    console.error('CATCH BLOCK EXECUTED! Error loading client portal:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).send(`
+      <html><head><meta charset="UTF-8"><title>Debug Error</title></head><body>
+      <h1>Debug Error Information</h1>
+      <p><strong>Error:</strong> ${error.message}</p>
+      <p><strong>Stack:</strong></p>
+      <pre>${error.stack}</pre>
+      </body></html>
+    `);
   }
 });
 
