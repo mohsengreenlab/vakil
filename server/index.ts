@@ -3,21 +3,21 @@ import path from "path";
 import expressEjsLayouts from "express-ejs-layouts";
 import session from "express-session";
 import bcrypt from "bcrypt";
-import { PostgresStorage } from "./postgres.js";
+import { SingleStoreStorage } from "./singlestore.js";
 import type { IStorage } from "./storage.js";
 
 const app = express();
 
-// Initialize storage with PostgreSQL database
+// Initialize storage with SingleStore database
 let storage: IStorage;
 
-// Initialize PostgreSQL database connection
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable is required");
+// Initialize SingleStore database connection
+if (!process.env.SINGLESTORE_PASSWORD) {
+  throw new Error("SINGLESTORE_PASSWORD environment variable is required");
 }
 
-storage = new PostgresStorage();
-console.log(`🗄️  Using PostgreSQL database connection`);
+storage = new SingleStoreStorage() as any;
+console.log(`🗄️  Using SingleStore database connection`);
 
 // Set EJS as templating engine with layouts
 app.set('view engine', 'ejs');
