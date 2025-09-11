@@ -1,10 +1,10 @@
 import { sql } from "drizzle-orm";
-import { mysqlTable, text, varchar, timestamp, json, int } from "drizzle-orm/mysql-core";
+import { pgTable, text, varchar, timestamp, json, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = mysqlTable("users", {
-  id: varchar("id", { length: 36 }).primaryKey(),
+export const users = pgTable("users", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   email: text("email"),
@@ -12,9 +12,9 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// SingleStore clients table structure
-export const clients = mysqlTable("clients", {
-  clientId: int("client_id").primaryKey(),
+// PostgreSQL clients table structure
+export const clients = pgTable("clients", {
+  clientId: serial("client_id").primaryKey(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   nationalId: varchar("national_id", { length: 10 }).notNull().unique(),
@@ -22,17 +22,18 @@ export const clients = mysqlTable("clients", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// SingleStore cases table structure  
-export const cases = mysqlTable("cases", {
-  caseId: int("case_id").primaryKey(),
-  clientId: int("client_id").notNull(),
+// PostgreSQL cases table structure  
+export const cases = pgTable("cases", {
+  caseId: serial("case_id").primaryKey(),
+  clientId: serial("client_id").notNull(),
   caseCreationDate: timestamp("case_creation_date").defaultNow(),
   lastCaseStatus: text("last_case_status").notNull().default("pending"),
   lastStatusDate: timestamp("last_status_date").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const contacts = mysqlTable("contacts", {
-  id: varchar("id", { length: 36 }).primaryKey(),
+export const contacts = pgTable("contacts", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   phone: text("phone").notNull(),

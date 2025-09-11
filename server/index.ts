@@ -3,22 +3,21 @@ import path from "path";
 import expressEjsLayouts from "express-ejs-layouts";
 import session from "express-session";
 import bcrypt from "bcrypt";
-import { SingleStoreStorage } from "./singlestore.js";
-// Removed MemStorage - using only external database
+import { PostgresStorage } from "./postgres.js";
 import type { IStorage } from "./storage.js";
 
 const app = express();
 
-// Initialize storage with fallback and error handling
+// Initialize storage with PostgreSQL
 let storage: IStorage;
 
-// Initialize SingleStore database connection
-if (!process.env.SINGLESTORE_PASSWORD) {
-  throw new Error("SINGLESTORE_PASSWORD environment variable is required");
+// Initialize PostgreSQL database connection
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL environment variable is required");
 }
 
-storage = new SingleStoreStorage() as any; // Type assertion for interface compatibility
-console.log(`🗄️  Using SingleStore database connection exclusively`);
+storage = new PostgresStorage();
+console.log(`🗄️  Using PostgreSQL database connection (Replit built-in)`);
 
 // Set EJS as templating engine with layouts
 app.set('view engine', 'ejs');
