@@ -1,6 +1,8 @@
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
 import expressEjsLayouts from "express-ejs-layouts";
+import session from "express-session";
+import bcrypt from "bcrypt";
 import { SingleStoreStorage } from "./singlestore.js";
 
 const app = express();
@@ -20,6 +22,34 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 // Body parsing middleware (for form submissions)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-secret-key-here',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    secure: false, // Set to true in production with HTTPS
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
+
+// Extend session type
+declare module 'express-session' {
+  interface SessionData {
+    adminId?: string;
+    adminUsername?: string;
+  }
+}
+
+// Authentication middleware
+const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  if (req.session.adminId) {
+    next();
+  } else {
+    res.redirect('/admin24');
+  }
+};
 
 // Static Routes
 // Home page
@@ -62,8 +92,21 @@ app.get('/client-login', (req, res) => {
   });
 });
 
-// Admin page (real data from SingleStore)
-app.get('/admin24', async (req, res) => {
+// Admin login page
+app.get('/admin24', (req, res) => {
+  // If already logged in, redirect to dashboard
+  if (req.session.adminId) {
+    return res.redirect('/admin24/dashboard');
+  }
+  
+  res.render('pages/admin-login', { 
+    title: 'ورود مدیر - دفتر وکالت پیشرو',
+    layout: false // Don't use main layout for login page
+  });
+});
+
+// Admin dashboard (protected route)
+app.get('/admin24/dashboard', requireAuth, async (req, res) => {
   try {
     const cases = await storage.getAllLegalCases();
     const contacts = await storage.getAllContacts();
@@ -72,15 +115,82 @@ app.get('/admin24', async (req, res) => {
       title: 'پنل مدیریت - دفتر وکالت پیشرو',
       page: 'admin',
       cases: cases,
-      contacts: contacts
+      contacts: contacts,
+      adminUsername: req.session.adminUsername
     });
   } catch (error) {
-    console.error('Error loading admin page:', error);
+    console.error('Error loading admin dashboard:', error);
     res.status(500).render('pages/500', {
       title: 'خطای داخلی سرور',
       error: 'خطا در بارگذاری اطلاعات'
     });
   }
+});
+
+// Admin login API endpoint
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'نام کاربری و رمز عبور الزامی است' 
+      });
+    }
+    
+    // Fetch admin from database
+    const admin = await storage.getUserByUsername(username);
+    
+    if (!admin) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'نام کاربری یا رمز عبور اشتباه است' 
+      });
+    }
+    
+    // For now, compare plain text passwords (should be hashed in production)
+    // TODO: Implement password hashing
+    if (admin.password !== password) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'نام کاربری یا رمز عبور اشتباه است' 
+      });
+    }
+    
+    // Set session
+    req.session.adminId = admin.id;
+    req.session.adminUsername = admin.username;
+    
+    res.json({ 
+      success: true, 
+      message: 'ورود موفقیت‌آمیز' 
+    });
+    
+  } catch (error) {
+    console.error('Error during admin login:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'خطای سرور. لطفاً مجدداً تلاش کنید.' 
+    });
+  }
+});
+
+// Admin logout API endpoint
+app.post('/api/admin/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'خطا در خروج' 
+      });
+    }
+    res.json({ 
+      success: true, 
+      message: 'خروج موفقیت‌آمیز' 
+    });
+  });
 });
 
 // Form submission handlers (saving to SingleStore)
