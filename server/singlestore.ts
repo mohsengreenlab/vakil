@@ -98,10 +98,10 @@ export class SingleStoreStorage implements IStorage {
       queueLimit: 0
     });
     
-    // Initialize tables with error handling
+    // Initialize tables with error handling (don't throw to avoid crashing)
     this.initializeTables().catch(error => {
       console.error('❌ Error initializing SingleStore tables:', error);
-      throw error;
+      // Don't throw here - let the application continue with degraded functionality
     });
   }
 

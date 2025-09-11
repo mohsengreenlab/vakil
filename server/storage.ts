@@ -157,6 +157,18 @@ export class MemStorage implements IStorage {
     this.contacts.set(id, contact);
     return contact;
   }
+
+  // Legacy interface methods for backward compatibility
+  async getAllLegalCases(): Promise<any[]> {
+    // For now, return empty array since we don't have legacy cases structure
+    return [];
+  }
+
+  async createLegalCase(caseData: any): Promise<any> {
+    // For now, just log and return a mock response
+    console.log('Legacy case creation:', caseData);
+    return { id: randomUUID(), ...caseData, status: 'pending', createdAt: new Date() };
+  }
 }
 
 export const storage = new MemStorage();

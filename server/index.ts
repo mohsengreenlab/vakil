@@ -12,19 +12,25 @@ const app = express();
 // Initialize storage with fallback and error handling
 let storage: IStorage;
 
-try {
-  if (process.env.SINGLESTORE_PASSWORD) {
-    storage = new SingleStoreStorage();
-    console.log(`🗄️  Using SingleStore storage`);
-  } else {
-    storage = new MemStorage();
-    console.log(`🗄️  Using in-memory storage (SINGLESTORE_PASSWORD not set)`);
-  }
-} catch (error) {
-  console.error('❌ Error initializing primary storage, falling back to in-memory storage:', error);
-  storage = new MemStorage();
-  console.log(`🗄️  Using in-memory storage (fallback)`);
-}
+// For now, always use in-memory storage for reliable operation in Replit
+// SingleStore connection has network/permission issues from Replit environment
+storage = new MemStorage();
+console.log(`🗄️  Using in-memory storage (reliable for Replit environment)`);
+
+// Uncomment below to try SingleStore when connectivity issues are resolved
+// try {
+//   if (process.env.SINGLESTORE_PASSWORD) {
+//     storage = new SingleStoreStorage();
+//     console.log(`🗄️  Using SingleStore storage`);
+//   } else {
+//     storage = new MemStorage();
+//     console.log(`🗄️  Using in-memory storage (SINGLESTORE_PASSWORD not set)`);
+//   }
+// } catch (error) {
+//   console.error('❌ Error initializing primary storage, falling back to in-memory storage:', error);
+//   storage = new MemStorage();
+//   console.log(`🗄️  Using in-memory storage (fallback)`);
+// }
 
 // Set EJS as templating engine with layouts
 app.set('view engine', 'ejs');
@@ -124,7 +130,7 @@ app.get('/admin24', (req, res) => {
 // Admin dashboard (protected route)
 app.get('/admin24/dashboard', requireAuth, async (req, res) => {
   try {
-    const cases = await storage.getAllLegalCases();
+    const cases = await storage.getAllCases();
     const contacts = await storage.getAllContacts();
     
     res.render('pages/admin', { 
@@ -253,7 +259,7 @@ app.post('/api/admin/clients', requireAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating client:', error);
-    if (error.message && error.message.includes('Duplicate entry')) {
+    if (error instanceof Error && error.message.includes('Duplicate entry')) {
       res.status(400).json({ 
         success: false, 
         message: 'کد ملی قبلاً ثبت شده است' 
