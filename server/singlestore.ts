@@ -170,10 +170,20 @@ export class SingleStoreStorage implements IStorage {
       );
       
       if ((adminExists as any)[0].count === 0) {
+        const bcrypt = await import('bcrypt');
         const adminId = this.generateUUID();
+        const hashedPassword = bcrypt.hashSync('admin123', 10);
         await connection.execute(
           'INSERT INTO admins (id, username, password) VALUES (?, ?, ?)',
-          [adminId, 'admin', 'admin123']
+          [adminId, 'admin', hashedPassword]
+        );
+      } else {
+        // Rehash existing plaintext passwords (migration fix)
+        const bcrypt = await import('bcrypt');
+        const hashedPassword = bcrypt.hashSync('admin123', 10);
+        await connection.execute(
+          'UPDATE admins SET password = ? WHERE username = ? AND password NOT LIKE "$2%"',
+          [hashedPassword, 'admin']
         );
       }
 
@@ -255,7 +265,7 @@ export class SingleStoreStorage implements IStorage {
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
       const [rows] = await this.pool.execute(
-        'SELECT * FROM admins WHERE username = ?',
+        'SELECT * FROM admins WHERE username = ? ORDER BY created_at DESC LIMIT 1',
         [username]
       );
       const admin = (rows as any)[0];
@@ -278,10 +288,12 @@ export class SingleStoreStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     try {
+      const bcrypt = await import('bcrypt');
       const id = this.generateUUID();
+      const hashedPassword = bcrypt.hashSync(user.password, 10);
       await this.pool.execute(
         'INSERT INTO admins (id, username, password) VALUES (?, ?, ?)',
-        [id, user.username, user.password]
+        [id, user.username, hashedPassword]
       );
       return {
         id,
