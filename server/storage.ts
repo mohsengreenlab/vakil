@@ -11,7 +11,11 @@ export interface IStorage {
   // Client methods
   getClient(clientId: string | number): Promise<Client | undefined>;
   getAllClients(): Promise<Client[]>;
-  createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[]): Promise<Client>;
+  createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[], password?: string): Promise<Client>;
+  authenticateClient(nationalId: string, password: string): Promise<Client | null>;
+  updateClientPassword(clientId: string, newPassword: string): Promise<void>;
+  setClientPasswordByNationalId(nationalId: string, password: string): Promise<void>;
+  getClientCases(clientId: string): Promise<Case[]>;
   
   // Case methods
   getCase(caseId: string | number): Promise<Case | undefined>;
@@ -91,7 +95,7 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[]): Promise<Client> {
+  async createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[], password?: string): Promise<Client> {
     const clientId = this.nextClientId++;
     const client: Client = {
       clientId,

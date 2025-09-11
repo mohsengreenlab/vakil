@@ -1,6 +1,7 @@
 import mysql from "mysql2/promise";
 import { readFileSync } from "fs";
 import { IStorage } from "./storage.js";
+import * as bcrypt from 'bcrypt';
 
 // Define interfaces based on the new schema requirements
 export interface Client {
@@ -9,6 +10,7 @@ export interface Client {
   last_name: string;
   national_id: string;
   phone_numbers: string; // JSON string of phone numbers array
+  password?: string;
   created_at: Date;
 }
 
@@ -117,6 +119,7 @@ export class SingleStoreStorage {
           last_name VARCHAR(255) NOT NULL,
           national_id VARCHAR(10) NOT NULL,
           phone_numbers JSON NOT NULL,
+          password VARCHAR(255) DEFAULT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           SHARD KEY (client_id)
         )
@@ -483,7 +486,7 @@ export class SingleStoreStorage {
   }
 
   // New methods specific to SingleStore schema
-  async createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[]): Promise<Client> {
+  async createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[], password?: string): Promise<Client> {
     const connection = await this.pool.getConnection();
     try {
       await connection.beginTransaction();
@@ -493,16 +496,22 @@ export class SingleStoreStorage {
         clientId = this.generateClientId();
       } while (!(await this.isClientIdUnique(clientId)));
 
+      // Hash password if provided
+      let hashedPassword = null;
+      if (password) {
+        hashedPassword = await bcrypt.hash(password, 10);
+      }
+
       // First, insert into national_id_registry to enforce global uniqueness
       await connection.execute(
         'INSERT INTO national_id_registry (national_id, client_id) VALUES (?, ?)',
         [nationalId, clientId]
       );
 
-      // Then, insert into clients table
+      // Then, insert into clients table with password
       await connection.execute(
-        'INSERT INTO clients (client_id, first_name, last_name, national_id, phone_numbers) VALUES (?, ?, ?, ?, ?)',
-        [clientId, firstName, lastName, nationalId, JSON.stringify(phoneNumbers)]
+        'INSERT INTO clients (client_id, first_name, last_name, national_id, phone_numbers, password) VALUES (?, ?, ?, ?, ?, ?)',
+        [clientId, firstName, lastName, nationalId, JSON.stringify(phoneNumbers), hashedPassword]
       );
 
       await connection.commit();
@@ -513,6 +522,7 @@ export class SingleStoreStorage {
         last_name: lastName,
         national_id: nationalId,
         phone_numbers: JSON.stringify(phoneNumbers),
+        password: hashedPassword || undefined,
         created_at: new Date()
       };
     } catch (error) {
@@ -620,6 +630,78 @@ export class SingleStoreStorage {
       return await this.getCase(caseId);
     } catch (error) {
       console.error('Error updating case status:', error);
+      throw error;
+    }
+  }
+
+  // Client authentication and password management methods
+  async authenticateClient(nationalId: string, password: string): Promise<Client | null> {
+    try {
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM clients WHERE national_id = ?',
+        [nationalId]
+      );
+      
+      const client = (rows as any)[0];
+      if (!client || !client.password) {
+        return null;
+      }
+      
+      const isPasswordValid = await bcrypt.compare(password, client.password);
+      if (!isPasswordValid) {
+        return null;
+      }
+      
+      return {
+        client_id: client.client_id,
+        first_name: client.first_name,
+        last_name: client.last_name,
+        national_id: client.national_id,
+        phone_numbers: client.phone_numbers,
+        password: undefined, // Don't return password
+        created_at: client.created_at
+      };
+    } catch (error) {
+      console.error('Error authenticating client:', error);
+      throw error;
+    }
+  }
+
+  async updateClientPassword(clientId: string, newPassword: string): Promise<void> {
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await this.pool.execute(
+        'UPDATE clients SET password = ? WHERE client_id = ?',
+        [hashedPassword, clientId]
+      );
+    } catch (error) {
+      console.error('Error updating client password:', error);
+      throw error;
+    }
+  }
+
+  async setClientPasswordByNationalId(nationalId: string, password: string): Promise<void> {
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await this.pool.execute(
+        'UPDATE clients SET password = ? WHERE national_id = ?',
+        [hashedPassword, nationalId]
+      );
+    } catch (error) {
+      console.error('Error setting client password:', error);
+      throw error;
+    }
+  }
+
+  async getClientCases(clientId: string): Promise<Case[]> {
+    try {
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM cases WHERE client_id = ? ORDER BY created_at DESC',
+        [clientId]
+      );
+      return rows as Case[];
+    } catch (error) {
+      console.error('Error getting client cases:', error);
       throw error;
     }
   }

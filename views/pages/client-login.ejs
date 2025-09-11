@@ -23,15 +23,15 @@
         <div class="card p-8">
             <form id="login-form" class="space-y-6">
                 <div>
-                    <label for="clientId" class="block text-sm font-medium mb-2">شماره پرونده یا کد ملی</label>
-                    <input type="text" id="clientId" name="clientId" class="input-field" placeholder="مثال: ۱۲۳۴۵۶۷۸۹۰" required aria-describedby="clientId-error">
-                    <div id="clientId-error" class="text-destructive text-sm mt-1 hidden"></div>
+                    <label for="nationalId" class="block text-sm font-medium mb-2">کد ملی</label>
+                    <input type="text" id="nationalId" name="nationalId" class="input-field" placeholder="کد ملی ۱۰ رقمی" required maxlength="10" pattern="[0-9]{10}" aria-describedby="nationalId-error">
+                    <div id="nationalId-error" class="text-destructive text-sm mt-1 hidden"></div>
                 </div>
 
                 <div>
                     <label for="password" class="block text-sm font-medium mb-2">رمز عبور</label>
                     <div class="relative">
-                        <input type="password" id="password" name="password" class="input-field pl-12" placeholder="رمز عبور خود را وارد کنید" required aria-describedby="password-error">
+                        <input type="password" id="password" name="password" class="input-field pl-12" placeholder="رمز عبور خود را وارد کنید" required minlength="6" aria-describedby="password-error">
                         <button type="button" onclick="togglePassword('password')" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -56,6 +56,57 @@
                     ورود به پنل
                 </button>
             </form>
+            
+            <script>
+                document.getElementById('login-form').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const button = this.querySelector('button[type="submit"]');
+                    const originalText = button.getAttribute('data-original-text') || button.textContent;
+                    
+                    // Show loading state
+                    button.disabled = true;
+                    button.textContent = 'در حال ورود...';
+                    
+                    const formData = new FormData(this);
+                    const loginData = {
+                        nationalId: formData.get('nationalId'),
+                        password: formData.get('password')
+                    };
+                    
+                    try {
+                        const response = await fetch('/api/client/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(loginData)
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            showToast('ورود موفقیت‌آمیز بود. در حال انتقال...', 'success');
+                            
+                            // Redirect to portal
+                            setTimeout(() => {
+                                window.location.href = result.redirectUrl || '/client/portal';
+                            }, 1000);
+                        } else {
+                            showToast(result.message || 'خطا در ورود', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Login error:', error);
+                        showToast('خطای ارتباط با سرور', 'error');
+                    } finally {
+                        button.disabled = false;
+                        button.textContent = originalText;
+                    }
+                });
+                
+                // Auto-format national ID input
+                document.getElementById('nationalId').addEventListener('input', function(e) {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                });
+            </script>
 
             <div class="mt-8 pt-6 border-t border-border">
                 <p class="text-center text-sm text-muted-foreground mb-4">

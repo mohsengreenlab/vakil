@@ -147,6 +147,10 @@
                         <label class="block text-sm font-medium mb-2">شماره تلفن دوم (اختیاری)</label>
                         <input type="tel" name="phone2" class="input-field" data-testid="input-client-phone2" placeholder="۰۹۱۲۳۴۵۶۷۸۹">
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">رمز عبور موکل <span class="text-red-500">*</span></label>
+                        <input type="password" name="password" required minlength="6" class="input-field" data-testid="input-client-password" placeholder="حداقل ۶ کاراکتر">
+                    </div>
                     <div class="md:col-span-2 flex gap-4">
                         <button type="submit" class="btn-primary" data-testid="button-save-client">ذخیره موکل</button>
                         <button type="button" onclick="hideAddClientForm()" class="btn-secondary" data-testid="button-cancel-client">لغو</button>
@@ -912,7 +916,8 @@ document.getElementById('clientForm').addEventListener('submit', async function(
         firstName: formData.get('firstName'),
         lastName: formData.get('lastName'),
         nationalId: formData.get('nationalId'),
-        phoneNumbers: formPhoneNumbers
+        phoneNumbers: formPhoneNumbers,
+        password: formData.get('password')
     };
     
     try {

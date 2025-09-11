@@ -60,6 +60,101 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+// Client login routes
+app.get('/login', (req, res) => {
+  res.render('pages/client-login', { 
+    title: 'ورود موکلان - دفتر وکالت پیشرو',
+    page: 'client-login',
+    error: null
+  });
+});
+
+app.post('/api/client/login', async (req, res) => {
+  try {
+    const { nationalId, password } = req.body;
+    
+    if (!nationalId || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'کد ملی و رمز عبور الزامی است' 
+      });
+    }
+
+    // Authenticate client
+    const client = await storage.authenticateClient(nationalId, password);
+    
+    if (!client) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'کد ملی یا رمز عبور اشتباه است' 
+      });
+    }
+    
+    // Set session
+    req.session.clientId = client.client_id;
+    req.session.clientNationalId = client.national_id;
+    
+    res.json({ 
+      success: true, 
+      message: 'ورود موفقیت‌آمیز',
+      redirectUrl: '/client/portal'
+    });
+    
+  } catch (error) {
+    console.error('Error during client login:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'خطای سرور. لطفاً مجدداً تلاش کنید.' 
+    });
+  }
+});
+
+app.post('/api/client/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying client session:', err);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'خطا در خروج' 
+      });
+    }
+    res.json({ 
+      success: true, 
+      message: 'خروج موفقیت‌آمیز' 
+    });
+  });
+});
+
+// Client authentication middleware
+const requireClientAuth = (req: Request, res: Response, next: NextFunction) => {
+  if (req.session.clientId) {
+    next();
+  } else {
+    res.redirect('/login');
+  }
+};
+
+// Client portal route
+app.get('/client/portal', requireClientAuth, async (req, res) => {
+  try {
+    const clientCases = await storage.getClientCases(req.session.clientId);
+    const client = await storage.getClient(req.session.clientId);
+    
+    res.render('pages/client-portal', { 
+      title: 'پورتال موکل - دفتر وکالت پیشرو',
+      page: 'client-portal',
+      client: client,
+      cases: clientCases
+    });
+  } catch (error) {
+    console.error('Error loading client portal:', error);
+    res.status(500).render('pages/500', {
+      title: 'خطای داخلی سرور',
+      error: 'خطا در بارگذاری اطلاعات'
+    });
+  }
+});
+
 // Static Routes
 // Home page
 app.get('/', (req, res) => {
@@ -221,12 +316,19 @@ app.get('/api/admin/clients', requireAuth, async (req, res) => {
 
 app.post('/api/admin/clients', requireAuth, async (req, res) => {
   try {
-    const { firstName, lastName, nationalId, phoneNumbers } = req.body;
+    const { firstName, lastName, nationalId, phoneNumbers, password } = req.body;
     
-    if (!firstName || !lastName || !nationalId || !phoneNumbers || phoneNumbers.length === 0) {
+    if (!firstName || !lastName || !nationalId || !phoneNumbers || phoneNumbers.length === 0 || !password) {
       return res.status(400).json({ 
         success: false, 
         message: 'تمام فیلدهای الزامی باید پر شوند' 
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'رمز عبور باید حداقل ۶ کاراکتر باشد' 
       });
     }
     
@@ -238,7 +340,7 @@ app.post('/api/admin/clients', requireAuth, async (req, res) => {
       });
     }
     
-    const client = await storage.createClient(firstName, lastName, nationalId, phoneNumbers);
+    const client = await storage.createClient(firstName, lastName, nationalId, phoneNumbers, password);
     res.json({ 
       success: true, 
       message: 'موکل با موفقیت اضافه شد',
