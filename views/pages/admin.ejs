@@ -192,12 +192,6 @@
                     <!-- Search Input and Controls -->
                     <div class="flex gap-2">
                         <input type="search" id="clients-search" class="input-field flex-1" placeholder="عبارت جستجو را وارد کنید..." data-testid="input-search-clients">
-                        <select id="clients-sort" class="input-field w-32" data-testid="select-sort-clients">
-                            <option value="">بدون مرتب‌سازی</option>
-                            <option value="alphabetical">الفبا</option>
-                            <option value="recent">جدیدترین</option>
-                            <option value="client_id">بر اساس شناسه</option>
-                        </select>
                         <button onclick="clearClientsSearch()" class="btn-secondary text-sm px-3" data-testid="button-clear-search">
                             پاک کردن
                         </button>
@@ -670,7 +664,20 @@ function renderClientsTable(clientsData) {
     const pageData = clientsData.slice(startIndex, endIndex);
     
     tbody.innerHTML = pageData.map(client => {
-        const phoneNumbers = JSON.parse(client.phone_numbers || '[]');
+        // Handle phone numbers safely - check if it's already an array or needs parsing
+        let phoneNumbers;
+        try {
+            if (Array.isArray(client.phone_numbers)) {
+                phoneNumbers = client.phone_numbers;
+            } else if (typeof client.phone_numbers === 'string') {
+                phoneNumbers = JSON.parse(client.phone_numbers || '[]');
+            } else {
+                phoneNumbers = [];
+            }
+        } catch (e) {
+            console.warn('Failed to parse phone numbers for client:', client.client_id, e);
+            phoneNumbers = [];
+        }
         const caseCount = cases.filter(c => c.client_id === client.client_id).length;
         
         return `
@@ -746,7 +753,6 @@ function goToClientsPage(page) {
 function performLiveSearch() {
     const searchTerm = document.getElementById('clients-search').value.toLowerCase().trim();
     const selectedCriteria = document.querySelector('input[name="searchCriteria"]:checked').value;
-    const sortBy = document.getElementById('clients-sort').value;
     
     let filteredClients = [...allClients];
     
@@ -763,14 +769,36 @@ function performLiveSearch() {
                 case 'national_id':
                     return client.national_id.toLowerCase().includes(searchTerm);
                 case 'phone_numbers':
-                    const clientPhones = Array.isArray(client.phone_numbers) ? client.phone_numbers : JSON.parse(client.phone_numbers || '[]');
+                    let clientPhones;
+                    try {
+                        if (Array.isArray(client.phone_numbers)) {
+                            clientPhones = client.phone_numbers;
+                        } else if (typeof client.phone_numbers === 'string') {
+                            clientPhones = JSON.parse(client.phone_numbers || '[]');
+                        } else {
+                            clientPhones = [];
+                        }
+                    } catch (e) {
+                        clientPhones = [];
+                    }
                     return clientPhones.some(phone => phone.toLowerCase().includes(searchTerm));
                 case 'all':
                 default:
                     const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
                     const nationalId = client.national_id.toLowerCase();
                     const clientId = client.client_id.toString().toLowerCase();
-                    const allPhones = Array.isArray(client.phone_numbers) ? client.phone_numbers : JSON.parse(client.phone_numbers || '[]');
+                    let allPhones;
+                    try {
+                        if (Array.isArray(client.phone_numbers)) {
+                            allPhones = client.phone_numbers;
+                        } else if (typeof client.phone_numbers === 'string') {
+                            allPhones = JSON.parse(client.phone_numbers || '[]');
+                        } else {
+                            allPhones = [];
+                        }
+                    } catch (e) {
+                        allPhones = [];
+                    }
                     const phoneMatch = allPhones.some(phone => phone.toLowerCase().includes(searchTerm));
                     return fullName.includes(searchTerm) || nationalId.includes(searchTerm) || 
                            clientId.includes(searchTerm) || phoneMatch;
@@ -778,14 +806,8 @@ function performLiveSearch() {
         });
     }
     
-    // Apply sorting
-    if (sortBy === 'alphabetical') {
-        filteredClients.sort((a, b) => `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`));
-    } else if (sortBy === 'recent') {
-        filteredClients.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    } else if (sortBy === 'client_id') {
-        filteredClients.sort((a, b) => a.client_id.localeCompare(b.client_id));
-    }
+    // Apply default sorting by most recent
+    filteredClients.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     
     clients = filteredClients;
     currentClientsPage = 1; // Reset to first page
@@ -800,7 +822,6 @@ function performLiveSearch() {
 // Clear search
 function clearClientsSearch() {
     document.getElementById('clients-search').value = '';
-    document.getElementById('clients-sort').value = '';
     document.querySelector('input[name="searchCriteria"][value="all"]').checked = true;
     clients = [...allClients];
     currentClientsPage = 1;
@@ -1041,7 +1062,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add event listeners for client search and filtering
     const clientsSearch = document.getElementById('clients-search');
-    const clientsSort = document.getElementById('clients-sort');
     const searchCriteriaRadios = document.querySelectorAll('input[name="searchCriteria"]');
     
     if (clientsSearch) {
@@ -1059,10 +1079,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 performLiveSearch();
             }
         });
-    }
-    
-    if (clientsSort) {
-        clientsSort.addEventListener('change', performLiveSearch);
     }
     
     // Add listeners to radio buttons
