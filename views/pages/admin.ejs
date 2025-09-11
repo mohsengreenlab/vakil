@@ -763,15 +763,15 @@ function performLiveSearch() {
                 case 'national_id':
                     return client.national_id.toLowerCase().includes(searchTerm);
                 case 'phone_numbers':
-                    const phoneNumbers = Array.isArray(client.phone_numbers) ? client.phone_numbers : JSON.parse(client.phone_numbers || '[]');
-                    return phoneNumbers.some(phone => phone.toLowerCase().includes(searchTerm));
+                    const clientPhones = Array.isArray(client.phone_numbers) ? client.phone_numbers : JSON.parse(client.phone_numbers || '[]');
+                    return clientPhones.some(phone => phone.toLowerCase().includes(searchTerm));
                 case 'all':
                 default:
                     const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
                     const nationalId = client.national_id.toLowerCase();
                     const clientId = client.client_id.toString().toLowerCase();
-                    const phoneNumbers = Array.isArray(client.phone_numbers) ? client.phone_numbers : JSON.parse(client.phone_numbers || '[]');
-                    const phoneMatch = phoneNumbers.some(phone => phone.toLowerCase().includes(searchTerm));
+                    const allPhones = Array.isArray(client.phone_numbers) ? client.phone_numbers : JSON.parse(client.phone_numbers || '[]');
+                    const phoneMatch = allPhones.some(phone => phone.toLowerCase().includes(searchTerm));
                     return fullName.includes(searchTerm) || nationalId.includes(searchTerm) || 
                            clientId.includes(searchTerm) || phoneMatch;
             }
@@ -873,16 +873,16 @@ document.getElementById('clientForm').addEventListener('submit', async function(
     e.preventDefault();
     
     const formData = new FormData(this);
-    const phoneNumbers = [formData.get('phone1')];
+    const formPhoneNumbers = [formData.get('phone1')];
     if (formData.get('phone2')) {
-        phoneNumbers.push(formData.get('phone2'));
+        formPhoneNumbers.push(formData.get('phone2'));
     }
     
     const clientData = {
         firstName: formData.get('firstName'),
         lastName: formData.get('lastName'),
         nationalId: formData.get('nationalId'),
-        phoneNumbers: phoneNumbers
+        phoneNumbers: formPhoneNumbers
     };
     
     try {
