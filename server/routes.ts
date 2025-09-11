@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertLegalCaseSchema, insertContactSchema } from "@shared/schema";
+import { insertCaseSchema, insertContactSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -71,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Submit case review
   app.post('/api/case-review', async (req, res) => {
     try {
-      const validatedData = insertLegalCaseSchema.parse(req.body);
+      const validatedData = insertCaseSchema.parse(req.body);
       const newCase = await storage.createLegalCase(validatedData);
       res.json({ success: true, case: newCase });
     } catch (error) {
@@ -114,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { status } = req.body;
       
-      const updatedCase = await storage.updateLegalCaseStatus(id, status);
+      const updatedCase = await storage.updateCaseStatus(id, status);
       if (updatedCase) {
         res.json({ success: true, case: updatedCase });
       } else {
