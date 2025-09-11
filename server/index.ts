@@ -280,7 +280,7 @@ app.post('/api/admin/cases', requireAuth, async (req, res) => {
     }
     
     // Check if client exists
-    const client = await storage.getClient(clientId);
+    const client = await storage.getClient(clientId.toString());
     if (!client) {
       return res.status(400).json({ 
         success: false, 

@@ -9,7 +9,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   
   // Client methods
-  getClient(clientId: number): Promise<Client | undefined>;
+  getClient(clientId: string | number): Promise<Client | undefined>;
   getAllClients(): Promise<Client[]>;
   createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[]): Promise<Client>;
   
