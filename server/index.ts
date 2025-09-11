@@ -149,9 +149,10 @@ app.post('/api/admin/login', async (req, res) => {
       });
     }
     
-    // For now, compare plain text passwords (should be hashed in production)
-    // TODO: Implement password hashing
-    if (admin.password !== password) {
+    // Use bcrypt to properly hash and compare passwords
+    const bcrypt = require('bcrypt');
+    const isPasswordValid = await bcrypt.compare(password, admin.password);
+    if (!isPasswordValid) {
       return res.status(401).json({ 
         success: false, 
         message: 'نام کاربری یا رمز عبور اشتباه است' 
@@ -315,7 +316,16 @@ app.put('/api/admin/cases/:caseId/status', requireAuth, async (req, res) => {
       });
     }
     
-    const updatedCase = await storage.updateCaseStatus(caseId, status);
+    // Parse caseId to number
+    const caseIdNum = parseInt(caseId, 10);
+    if (isNaN(caseIdNum)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'شناسه پرونده نامعتبر است' 
+      });
+    }
+    
+    const updatedCase = await storage.updateCaseStatus(caseIdNum, status);
     if (!updatedCase) {
       return res.status(404).json({ 
         success: false, 

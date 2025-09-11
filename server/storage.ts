@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type LegalCase, type InsertLegalCase, type Contact, type InsertContact } from "@shared/schema";
+import { type User, type InsertUser, type Client, type InsertClient, type Case, type InsertCase, type Contact, type InsertContact } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -7,11 +7,16 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
-  // Legal case methods
-  getLegalCase(id: string): Promise<LegalCase | undefined>;
-  getAllLegalCases(): Promise<LegalCase[]>;
-  createLegalCase(legalCase: InsertLegalCase): Promise<LegalCase>;
-  updateLegalCaseStatus(id: string, status: string): Promise<LegalCase | undefined>;
+  // Client methods
+  getClient(clientId: number): Promise<Client | undefined>;
+  getAllClients(): Promise<Client[]>;
+  createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[]): Promise<Client>;
+  
+  // Case methods
+  getCase(caseId: number): Promise<Case | undefined>;
+  getAllCases(): Promise<Case[]>;
+  createCase(clientId: number, status: string): Promise<Case>;
+  updateCaseStatus(caseId: number, status: string): Promise<Case | undefined>;
   
   // Contact methods
   getContact(id: string): Promise<Contact | undefined>;
@@ -21,20 +26,26 @@ export interface IStorage {
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
-  private legalCases: Map<string, LegalCase>;
+  private clients: Map<number, Client>;
+  private cases: Map<number, Case>;
   private contacts: Map<string, Contact>;
+  private nextClientId: number = 1000; // Start client IDs from 1000
+  private nextCaseId: number = 1000000; // Start case IDs from 1000000
 
   constructor() {
     this.users = new Map();
-    this.legalCases = new Map();
+    this.clients = new Map();
+    this.cases = new Map();
     this.contacts = new Map();
     
-    // Create default admin user
+    // Create default admin user with hashed password
+    const bcrypt = require('bcrypt');
     const adminId = randomUUID();
+    const hashedPassword = bcrypt.hashSync("admin123", 10);
     const admin: User = {
       id: adminId,
       username: "admin",
-      password: "admin123", // In production, this should be hashed
+      password: hashedPassword,
       email: "admin@pishrolawfirm.ir",
       role: "admin",
       createdAt: new Date(),
@@ -57,40 +68,70 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
+      role: insertUser.role || "client",
       createdAt: new Date(),
+      email: insertUser.email || null,
     };
     this.users.set(id, user);
     return user;
   }
 
-  async getLegalCase(id: string): Promise<LegalCase | undefined> {
-    return this.legalCases.get(id);
+  // Client methods
+  async getClient(clientId: number): Promise<Client | undefined> {
+    return this.clients.get(clientId);
   }
 
-  async getAllLegalCases(): Promise<LegalCase[]> {
-    return Array.from(this.legalCases.values()).sort(
-      (a, b) => b.createdAt!.getTime() - a.createdAt!.getTime()
+  async getAllClients(): Promise<Client[]> {
+    return Array.from(this.clients.values()).sort(
+      (a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0)
     );
   }
 
-  async createLegalCase(insertLegalCase: InsertLegalCase): Promise<LegalCase> {
-    const id = randomUUID();
-    const legalCase: LegalCase = {
-      ...insertLegalCase,
-      id,
-      status: "pending",
+  async createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[]): Promise<Client> {
+    const clientId = this.nextClientId++;
+    const client: Client = {
+      clientId,
+      firstName,
+      lastName,
+      nationalId,
+      phoneNumbers,
       createdAt: new Date(),
     };
-    this.legalCases.set(id, legalCase);
-    return legalCase;
+    this.clients.set(clientId, client);
+    return client;
   }
 
-  async updateLegalCaseStatus(id: string, status: string): Promise<LegalCase | undefined> {
-    const legalCase = this.legalCases.get(id);
-    if (legalCase) {
-      legalCase.status = status;
-      this.legalCases.set(id, legalCase);
-      return legalCase;
+  // Case methods
+  async getCase(caseId: number): Promise<Case | undefined> {
+    return this.cases.get(caseId);
+  }
+
+  async getAllCases(): Promise<Case[]> {
+    return Array.from(this.cases.values()).sort(
+      (a, b) => (b.caseCreationDate?.getTime() || 0) - (a.caseCreationDate?.getTime() || 0)
+    );
+  }
+
+  async createCase(clientId: number, status: string): Promise<Case> {
+    const caseId = this.nextCaseId++;
+    const case_: Case = {
+      caseId,
+      clientId,
+      lastCaseStatus: status,
+      caseCreationDate: new Date(),
+      lastStatusDate: new Date(),
+    };
+    this.cases.set(caseId, case_);
+    return case_;
+  }
+
+  async updateCaseStatus(caseId: number, status: string): Promise<Case | undefined> {
+    const case_ = this.cases.get(caseId);
+    if (case_) {
+      case_.lastCaseStatus = status;
+      case_.lastStatusDate = new Date();
+      this.cases.set(caseId, case_);
+      return case_;
     }
     return undefined;
   }
@@ -110,6 +151,7 @@ export class MemStorage implements IStorage {
     const contact: Contact = {
       ...insertContact,
       id,
+      email: insertContact.email || null,
       createdAt: new Date(),
     };
     this.contacts.set(id, contact);
