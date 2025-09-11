@@ -152,15 +152,57 @@
             <div class="card p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold">لیست موکلان</h2>
+                </div>
+                
+                <!-- Enhanced Search Controls -->
+                <div class="card p-4 mb-4 bg-muted/30">
+                    <h3 class="text-md font-semibold mb-3">جستجو در موکلان</h3>
+                    
+                    <!-- Search Criteria Radio Buttons -->
+                    <div class="mb-3">
+                        <label class="text-sm font-medium mb-2 block">معیار جستجو:</label>
+                        <div class="flex flex-wrap gap-4" data-testid="search-criteria-options">
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="searchCriteria" value="client_id" class="radio" data-testid="radio-client-id">
+                                <span class="text-sm">شناسه موکل</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="searchCriteria" value="first_name" class="radio" data-testid="radio-first-name">
+                                <span class="text-sm">نام</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="searchCriteria" value="last_name" class="radio" data-testid="radio-last-name">
+                                <span class="text-sm">نام خانوادگی</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="searchCriteria" value="national_id" class="radio" data-testid="radio-national-id">
+                                <span class="text-sm">کد ملی</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="searchCriteria" value="phone_numbers" class="radio" data-testid="radio-phone-numbers">
+                                <span class="text-sm">شماره تلفن</span>
+                            </label>
+                            <label class="flex items-center gap-2">
+                                <input type="radio" name="searchCriteria" value="all" class="radio" checked data-testid="radio-all">
+                                <span class="text-sm">همه موارد</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Input and Controls -->
                     <div class="flex gap-2">
-                        <input type="search" id="clients-search" class="input-field w-48" placeholder="جستجو بر اساس نام یا کد ملی..." data-testid="input-search-clients">
-                        <select id="clients-filter" class="input-field w-32" data-testid="select-filter-clients">
-                            <option value="">همه</option>
-                            <option value="recent">اخیر</option>
+                        <input type="search" id="clients-search" class="input-field flex-1" placeholder="عبارت جستجو را وارد کنید..." data-testid="input-search-clients">
+                        <select id="clients-sort" class="input-field w-32" data-testid="select-sort-clients">
+                            <option value="">بدون مرتب‌سازی</option>
                             <option value="alphabetical">الفبا</option>
+                            <option value="recent">جدیدترین</option>
+                            <option value="client_id">بر اساس شناسه</option>
                         </select>
-                        <button onclick="clearClientsFilter()" class="btn-secondary text-sm px-3" data-testid="button-clear-filter">
-                            پاک کردن فیلتر
+                        <button onclick="clearClientsSearch()" class="btn-secondary text-sm px-3" data-testid="button-clear-search">
+                            پاک کردن
+                        </button>
+                        <button onclick="performLiveSearch()" class="btn-primary text-sm px-4" data-testid="button-search">
+                            جستجو
                         </button>
                     </div>
                 </div>
@@ -561,7 +603,20 @@ async function loadDashboardStats() {
 // Load clients list
 async function loadClients() {
     try {
-        const response = await fetch('/api/admin/clients');
+        const response = await fetch('/api/admin/clients', {
+            method: 'GET',
+            credentials: 'same-origin', // Include cookies for authentication
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        // Check if response is redirected (authentication failure)
+        if (response.redirected || response.status === 302) {
+            window.location.href = '/admin24';
+            return;
+        }
+        
         const result = await response.json();
         
         if (result.success) {
@@ -687,19 +742,39 @@ function goToClientsPage(page) {
     renderClientsTable(clients);
 }
 
-// Filter and search clients
-function filterClients() {
+// Enhanced search and filter functionality
+function performLiveSearch() {
     const searchTerm = document.getElementById('clients-search').value.toLowerCase().trim();
-    const sortBy = document.getElementById('clients-filter').value;
+    const selectedCriteria = document.querySelector('input[name="searchCriteria"]:checked').value;
+    const sortBy = document.getElementById('clients-sort').value;
     
     let filteredClients = [...allClients];
     
-    // Apply search filter
+    // Apply search filter based on selected criteria
     if (searchTerm) {
         filteredClients = filteredClients.filter(client => {
-            const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
-            const nationalId = client.national_id.toLowerCase();
-            return fullName.includes(searchTerm) || nationalId.includes(searchTerm);
+            switch (selectedCriteria) {
+                case 'client_id':
+                    return client.client_id.toString().toLowerCase().includes(searchTerm);
+                case 'first_name':
+                    return client.first_name.toLowerCase().includes(searchTerm);
+                case 'last_name':
+                    return client.last_name.toLowerCase().includes(searchTerm);
+                case 'national_id':
+                    return client.national_id.toLowerCase().includes(searchTerm);
+                case 'phone_numbers':
+                    const phoneNumbers = Array.isArray(client.phone_numbers) ? client.phone_numbers : JSON.parse(client.phone_numbers || '[]');
+                    return phoneNumbers.some(phone => phone.toLowerCase().includes(searchTerm));
+                case 'all':
+                default:
+                    const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
+                    const nationalId = client.national_id.toLowerCase();
+                    const clientId = client.client_id.toString().toLowerCase();
+                    const phoneNumbers = Array.isArray(client.phone_numbers) ? client.phone_numbers : JSON.parse(client.phone_numbers || '[]');
+                    const phoneMatch = phoneNumbers.some(phone => phone.toLowerCase().includes(searchTerm));
+                    return fullName.includes(searchTerm) || nationalId.includes(searchTerm) || 
+                           clientId.includes(searchTerm) || phoneMatch;
+            }
         });
     }
     
@@ -708,20 +783,38 @@ function filterClients() {
         filteredClients.sort((a, b) => `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`));
     } else if (sortBy === 'recent') {
         filteredClients.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    } else if (sortBy === 'client_id') {
+        filteredClients.sort((a, b) => a.client_id.localeCompare(b.client_id));
     }
     
     clients = filteredClients;
     currentClientsPage = 1; // Reset to first page
     renderClientsTable(clients);
+    
+    // Update search result count
+    const resultCount = filteredClients.length;
+    const totalCount = allClients.length;
+    showToast(`${resultCount} موکل از ${totalCount} موکل یافت شد`, 'success');
 }
 
-// Clear all filters
-function clearClientsFilter() {
+// Clear search
+function clearClientsSearch() {
     document.getElementById('clients-search').value = '';
-    document.getElementById('clients-filter').value = '';
+    document.getElementById('clients-sort').value = '';
+    document.querySelector('input[name="searchCriteria"][value="all"]').checked = true;
     clients = [...allClients];
     currentClientsPage = 1;
     renderClientsTable(clients);
+    showToast('جستجو پاک شد', 'info');
+}
+
+// Legacy function for backwards compatibility
+function filterClients() {
+    performLiveSearch();
+}
+
+function clearClientsFilter() {
+    clearClientsSearch();
 }
 
 // Render cases table
@@ -948,14 +1041,37 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add event listeners for client search and filtering
     const clientsSearch = document.getElementById('clients-search');
-    const clientsFilter = document.getElementById('clients-filter');
+    const clientsSort = document.getElementById('clients-sort');
+    const searchCriteriaRadios = document.querySelectorAll('input[name="searchCriteria"]');
     
     if (clientsSearch) {
-        clientsSearch.addEventListener('input', filterClients);
+        // Live search as user types (with debounce)
+        let searchTimeout;
+        clientsSearch.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(performLiveSearch, 500); // 500ms debounce
+        });
+        
+        // Also trigger search on Enter key
+        clientsSearch.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                clearTimeout(searchTimeout);
+                performLiveSearch();
+            }
+        });
     }
     
-    if (clientsFilter) {
-        clientsFilter.addEventListener('change', filterClients);
+    if (clientsSort) {
+        clientsSort.addEventListener('change', performLiveSearch);
     }
+    
+    // Add listeners to radio buttons
+    searchCriteriaRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (document.getElementById('clients-search').value.trim()) {
+                performLiveSearch(); // Re-search when criteria changes
+            }
+        });
+    });
 });
 </script>
