@@ -85,13 +85,11 @@ export class SingleStoreStorage {
       throw new Error("SINGLESTORE_PASSWORD environment variable is required for SingleStore connection");
     }
 
-    // Connection configuration with SSL and proper pool settings
+    // Use the exact connection string format as specified
+    const connectionString = `singlestore://dew-7b1a1:${process.env.SINGLESTORE_PASSWORD}@svc-3482219c-a389-4079-b18b-d50662524e8a-shared-dml.aws-virginia-6.svc.singlestore.com:3333/db_dew_f1c43?ssl={}`;
+    
     this.pool = mysql.createPool({
-      host: process.env.SINGLESTORE_HOST || 'svc-3482219c-a389-4079-b18b-d50662524e8a-shared-dml.aws-virginia-6.svc.singlestore.com',
-      port: parseInt(process.env.SINGLESTORE_PORT || '3333'),
-      user: process.env.SINGLESTORE_USER || 'dew-7b1a1',
-      password: process.env.SINGLESTORE_PASSWORD,
-      database: process.env.SINGLESTORE_DB || 'db_dew_f1c43',
+      uri: connectionString,
       ssl: {
         ca: readFileSync('./singlestore-bundle.pem'),
         rejectUnauthorized: true
