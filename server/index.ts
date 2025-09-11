@@ -280,7 +280,7 @@ app.get('/api/admin/cases', requireAuth, async (req, res) => {
 
 app.post('/api/admin/cases', requireAuth, async (req, res) => {
   try {
-    const { clientId, status } = req.body;
+    const { clientId, status, caseId } = req.body;
     
     if (!clientId || !status) {
       return res.status(400).json({ 
@@ -298,7 +298,7 @@ app.post('/api/admin/cases', requireAuth, async (req, res) => {
       });
     }
     
-    const case_ = await storage.createCase(clientId, status);
+    const case_ = await storage.createCase(clientId, status, caseId);
     res.json({ 
       success: true, 
       message: 'پرونده با موفقیت اضافه شد',
@@ -325,16 +325,15 @@ app.put('/api/admin/cases/:caseId/status', requireAuth, async (req, res) => {
       });
     }
     
-    // Parse caseId to number
-    const caseIdNum = parseInt(caseId, 10);
-    if (isNaN(caseIdNum)) {
+    // Use caseId as string (VARCHAR(7) in database)
+    if (!caseId || caseId.trim() === '') {
       return res.status(400).json({ 
         success: false, 
         message: 'شناسه پرونده نامعتبر است' 
       });
     }
     
-    const updatedCase = await storage.updateCaseStatus(caseIdNum, status);
+    const updatedCase = await storage.updateCaseStatus(caseId, status);
     if (!updatedCase) {
       return res.status(404).json({ 
         success: false, 

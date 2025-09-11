@@ -524,23 +524,33 @@ export class SingleStoreStorage {
     }
   }
 
-  async createCase(clientId: string, lastCaseStatus: string = 'pending'): Promise<Case> {
+  async createCase(clientId: string | number, lastCaseStatus: string = 'under-review', customCaseId?: string): Promise<Case> {
     try {
       let caseId: string;
-      do {
-        caseId = this.generateCaseId();
-      } while (!(await this.isCaseIdUnique(caseId)));
+      if (customCaseId && customCaseId.trim()) {
+        // Use provided case ID if it's unique
+        if (await this.isCaseIdUnique(customCaseId.trim())) {
+          caseId = customCaseId.trim();
+        } else {
+          throw new Error(`شناسه پرونده ${customCaseId} قبلاً استفاده شده است`);
+        }
+      } else {
+        // Auto-generate unique case ID
+        do {
+          caseId = this.generateCaseId();
+        } while (!(await this.isCaseIdUnique(caseId)));
+      }
 
       const caseCreationDate = new Date().toISOString().split('T')[0];
       
       await this.pool.execute(
         'INSERT INTO cases (case_id, client_id, case_creation_date, last_case_status) VALUES (?, ?, ?, ?)',
-        [caseId, clientId, caseCreationDate, lastCaseStatus]
+        [caseId, String(clientId), caseCreationDate, lastCaseStatus]
       );
 
       return {
         case_id: caseId,
-        client_id: clientId,
+        client_id: String(clientId),
         case_creation_date: new Date(caseCreationDate),
         last_case_status: lastCaseStatus,
         created_at: new Date()
@@ -551,11 +561,11 @@ export class SingleStoreStorage {
     }
   }
 
-  async getClient(clientId: string): Promise<Client | undefined> {
+  async getClient(clientId: string | number): Promise<Client | undefined> {
     try {
       const [rows] = await this.pool.execute(
         'SELECT * FROM clients WHERE client_id = ?',
-        [clientId]
+        [String(clientId)]
       );
       return (rows as any)[0] || undefined;
     } catch (error) {
@@ -576,11 +586,11 @@ export class SingleStoreStorage {
     }
   }
 
-  async getCase(caseId: string): Promise<Case | undefined> {
+  async getCase(caseId: string | number): Promise<Case | undefined> {
     try {
       const [rows] = await this.pool.execute(
         'SELECT * FROM cases WHERE case_id = ?',
-        [caseId]
+        [String(caseId)]
       );
       return (rows as any)[0] || undefined;
     } catch (error) {
@@ -601,11 +611,11 @@ export class SingleStoreStorage {
     }
   }
 
-  async updateCaseStatus(caseId: string, status: string): Promise<Case | undefined> {
+  async updateCaseStatus(caseId: string | number, status: string): Promise<Case | undefined> {
     try {
       await this.pool.execute(
         'UPDATE cases SET last_case_status = ? WHERE case_id = ?',
-        [status, caseId]
+        [status, String(caseId)]
       );
       return await this.getCase(caseId);
     } catch (error) {
@@ -618,23 +628,4 @@ export class SingleStoreStorage {
     await this.pool.end();
   }
 
-  // Legacy interface methods for backward compatibility
-  async getAllLegalCases(): Promise<any[]> {
-    return this.getAllCases();
-  }
-
-  async createLegalCase(caseData: any): Promise<any> {
-    // Map legacy case data to new structure and create a case
-    console.log('Legacy case creation:', caseData);
-    const caseId = String(Math.floor(Math.random() * 1000000) + 1000000);
-    const clientId = String(Math.floor(Math.random() * 1000) + 1000);
-    
-    // Create a basic case record for legacy compatibility
-    return {
-      id: caseId,
-      ...caseData,
-      status: 'pending',
-      createdAt: new Date()
-    };
-  }
 }

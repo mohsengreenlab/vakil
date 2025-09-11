@@ -14,15 +14,19 @@ export interface IStorage {
   createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[]): Promise<Client>;
   
   // Case methods
-  getCase(caseId: number): Promise<Case | undefined>;
+  getCase(caseId: string | number): Promise<Case | undefined>;
   getAllCases(): Promise<Case[]>;
-  createCase(clientId: number, status: string): Promise<Case>;
-  updateCaseStatus(caseId: number, status: string): Promise<Case | undefined>;
+  createCase(clientId: string | number, status: string, caseId?: string): Promise<Case>;
+  updateCaseStatus(caseId: string | number, status: string): Promise<Case | undefined>;
   
   // Contact methods
   getContact(id: string): Promise<Contact | undefined>;
   getAllContacts(): Promise<Contact[]>;
   createContact(contact: InsertContact): Promise<Contact>;
+  
+  // Legacy methods for backward compatibility
+  getAllLegalCases(): Promise<any[]>;
+  createLegalCase(caseData: any): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -102,8 +106,9 @@ export class MemStorage implements IStorage {
   }
 
   // Case methods
-  async getCase(caseId: number): Promise<Case | undefined> {
-    return this.cases.get(caseId);
+  async getCase(caseId: string | number): Promise<Case | undefined> {
+    const numericCaseId = typeof caseId === 'string' ? parseInt(caseId) : caseId;
+    return this.cases.get(numericCaseId);
   }
 
   async getAllCases(): Promise<Case[]> {
@@ -112,25 +117,27 @@ export class MemStorage implements IStorage {
     );
   }
 
-  async createCase(clientId: number, status: string): Promise<Case> {
-    const caseId = this.nextCaseId++;
+  async createCase(clientId: string | number, status: string, caseId?: string): Promise<Case> {
+    const numericClientId = typeof clientId === 'string' ? parseInt(clientId) : clientId;
+    const numericCaseId = caseId ? parseInt(caseId) : this.nextCaseId++;
     const case_: Case = {
-      caseId,
-      clientId,
+      caseId: numericCaseId,
+      clientId: numericClientId,
       lastCaseStatus: status,
       caseCreationDate: new Date(),
       lastStatusDate: new Date(),
     };
-    this.cases.set(caseId, case_);
+    this.cases.set(numericCaseId, case_);
     return case_;
   }
 
-  async updateCaseStatus(caseId: number, status: string): Promise<Case | undefined> {
-    const case_ = this.cases.get(caseId);
+  async updateCaseStatus(caseId: string | number, status: string): Promise<Case | undefined> {
+    const numericCaseId = typeof caseId === 'string' ? parseInt(caseId) : caseId;
+    const case_ = this.cases.get(numericCaseId);
     if (case_) {
       case_.lastCaseStatus = status;
       case_.lastStatusDate = new Date();
-      this.cases.set(caseId, case_);
+      this.cases.set(numericCaseId, case_);
       return case_;
     }
     return undefined;
