@@ -96,10 +96,21 @@ app.post('/api/client/login', async (req, res) => {
     req.session.clientId = client.client_id;
     req.session.clientNationalId = client.national_id;
     
-    res.json({ 
-      success: true, 
-      message: 'ورود موفقیت‌آمیز',
-      redirectUrl: '/client/portal'
+    // Explicitly save session before responding to prevent race condition
+    req.session.save((saveError) => {
+      if (saveError) {
+        console.error('Session save error:', saveError);
+        return res.status(500).json({ 
+          success: false, 
+          message: 'خطای ذخیره جلسه. لطفاً مجدداً تلاش کنید.' 
+        });
+      }
+      
+      res.json({ 
+        success: true, 
+        message: 'ورود موفقیت‌آمیز',
+        redirectUrl: '/client/portal'
+      });
     });
     
   } catch (error) {
@@ -146,7 +157,6 @@ app.get('/client/portal', requireClientAuth, async (req, res) => {
     
     const client = await storage.getClient(req.session.clientId);
     console.log('Client data loaded:', client);
-    console.log('About to render HTML directly...');
     
     try {
       // Build cases HTML
@@ -200,9 +210,7 @@ app.get('/client/portal', requireClientAuth, async (req, res) => {
         </html>
       `;
     
-      console.log('HTML generated, sending response...');
       res.send(html);
-      console.log('Response sent successfully!');
     } catch (htmlError) {
       console.error('Error generating HTML:', htmlError);
       res.send(`<html><body><h1>Client Portal - ${client.first_name} ${client.last_name}</h1><p>National ID: ${client.national_id}</p><p>Cases: ${clientCases.length}</p></body></html>`);
