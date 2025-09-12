@@ -1,0 +1,41 @@
+lawyer@FreePaper:~/releases/20250912_205727$ sudo journalctl -u lawyer -f
+Sep 12 21:05:45 FreePaper lawyer[510016]: }
+Sep 12 21:05:45 FreePaper lawyer[510016]: 📋 Required environment variables: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+Sep 12 21:05:45 FreePaper systemd[1]: lawyer.service: Main process exited, code=exited, status=1/FAILURE
+Sep 12 21:05:45 FreePaper systemd[1]: lawyer.service: Failed with result 'exit-code'.
+Sep 12 21:05:45 FreePaper systemd[1]: lawyer.service: Consumed 1.799s CPU time, 30.5M memory peak, 0B memory swap peak.
+Sep 12 21:05:48 FreePaper systemd[1]: lawyer.service: Scheduled restart job, restart counter is at 1.
+Sep 12 21:05:48 FreePaper systemd[1]: Started lawyer.service - Persian Legal Firm Web Application.
+Sep 12 21:05:49 FreePaper lawyer[510389]: Now using node v20.19.5 (npm v10.8.2)
+Sep 12 21:05:50 FreePaper lawyer[510389]: 🗄️  Using SingleStore database connection
+Sep 12 21:05:50 FreePaper lawyer[510389]: 🔍 Testing database connectivity...
+Sep 12 21:06:00 FreePaper lawyer[510389]: ❌ Error initializing SingleStore tables: Error: connect ETIMEDOUT
+Sep 12 21:06:00 FreePaper lawyer[510389]:     at PoolConnection._handleTimeoutError (/home/lawyer/releases/20250912_205727/node_modules/mysql2/lib/base/connection.js:200:17)
+Sep 12 21:06:00 FreePaper lawyer[510389]:     at listOnTimeout (node:internal/timers:581:17)
+Sep 12 21:06:00 FreePaper lawyer[510389]:     at process.processTimers (node:internal/timers:519:7) {
+Sep 12 21:06:00 FreePaper lawyer[510389]:   errorno: 'ETIMEDOUT',
+Sep 12 21:06:00 FreePaper lawyer[510389]:   code: 'ETIMEDOUT',
+Sep 12 21:06:00 FreePaper lawyer[510389]:   syscall: 'connect',
+Sep 12 21:06:00 FreePaper lawyer[510389]:   fatal: true
+Sep 12 21:06:00 FreePaper lawyer[510389]: }
+Sep 12 21:06:00 FreePaper lawyer[510389]: ❌ Error initializing SingleStore tables: Error: connect ETIMEDOUT
+Sep 12 21:06:00 FreePaper lawyer[510389]:     at PoolConnection._handleTimeoutError (/home/lawyer/releases/20250912_205727/node_modules/mysql2/lib/base/connection.js:200:17)
+Sep 12 21:06:00 FreePaper lawyer[510389]:     at listOnTimeout (node:internal/timers:581:17)
+Sep 12 21:06:00 FreePaper lawyer[510389]:     at process.processTimers (node:internal/timers:519:7) {
+Sep 12 21:06:00 FreePaper lawyer[510389]:   errorno: 'ETIMEDOUT',
+Sep 12 21:06:00 FreePaper lawyer[510389]:   code: 'ETIMEDOUT',
+Sep 12 21:06:00 FreePaper lawyer[510389]:   syscall: 'connect',
+Sep 12 21:06:00 FreePaper lawyer[510389]:   fatal: true
+Sep 12 21:06:00 FreePaper lawyer[510389]: }
+Sep 12 21:06:00 FreePaper lawyer[510389]: ❌ Failed to initialize database connection: Error: connect ETIMEDOUT
+Sep 12 21:06:00 FreePaper lawyer[510389]:     at PoolConnection._handleTimeoutError (/home/lawyer/releases/20250912_205727/node_modules/mysql2/lib/base/connection.js:200:17)
+Sep 12 21:06:00 FreePaper lawyer[510389]:     at listOnTimeout (node:internal/timers:581:17)
+Sep 12 21:06:00 FreePaper lawyer[510389]:     at process.processTimers (node:internal/timers:519:7) {
+Sep 12 21:06:00 FreePaper lawyer[510389]:   errorno: 'ETIMEDOUT',
+Sep 12 21:06:00 FreePaper lawyer[510389]:   code: 'ETIMEDOUT',
+Sep 12 21:06:00 FreePaper lawyer[510389]:   syscall: 'connect',
+Sep 12 21:06:00 FreePaper lawyer[510389]:   fatal: true
+Sep 12 21:06:00 FreePaper lawyer[510389]: }
+Sep 12 21:06:00 FreePaper lawyer[510389]: 📋 Required environment variables: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+Sep 12 21:06:00 FreePaper systemd[1]: lawyer.service: Main process exited, code=exited, status=1/FAILURE
+Sep 12 21:06:00 FreePaper systemd[1]: lawyer.service: Failed with result 'exit-code'.
