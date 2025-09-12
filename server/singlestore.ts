@@ -40,6 +40,15 @@ export interface ContactMessage {
   created_at: Date;
 }
 
+export interface QAItem {
+  id: string;
+  question: string;
+  answer: string;
+  topic: string;
+  show: number;
+  date_created: Date;
+}
+
 // Legacy type adapters for existing code compatibility
 export interface User {
   id: string;
@@ -77,6 +86,7 @@ export interface Contact {
 export type InsertUser = Omit<User, 'id' | 'createdAt'>;
 export type InsertLegalCase = Omit<LegalCase, 'id' | 'status' | 'createdAt'>;
 export type InsertContact = Omit<Contact, 'id' | 'createdAt'>;
+export type InsertQAItem = Omit<QAItem, 'id' | 'date_created'>;
 
 export class SingleStoreStorage {
   private pool: mysql.Pool;
@@ -180,6 +190,19 @@ export class SingleStoreStorage {
           subject VARCHAR(500) NOT NULL,
           message TEXT NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          SHARD KEY (id)
+        )
+      `);
+
+      // Create QA table for questions and answers
+      await connection.execute(`
+        CREATE TABLE IF NOT EXISTS QA (
+          id VARCHAR(36) PRIMARY KEY,
+          question TEXT NOT NULL,
+          answer TEXT NOT NULL,
+          topic VARCHAR(255) NOT NULL,
+          \`show\` TINYINT(1) NOT NULL DEFAULT 1,
+          date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           SHARD KEY (id)
         )
       `);
