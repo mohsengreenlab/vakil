@@ -1,0 +1,24 @@
+Now, I want to deploy this web app to my Ubuntu VPS. Provide a complete, step-by-step deployment plan and carry it out accordingly. Use clear, descriptive steps. The plan must prioritize isolation and guarantee zero conflicts with what’s already running.
+
+WHAT’S ALREADY ON THE VPS (RESERVED DOMAINS/PORTS)
+- FreePaper → daneshmehr.org (reverse-proxied) → local port 8000
+- Kerit → kerit.com.ru + www.kerit.com.ru → local port 3001 (plus a webhook on 3002)
+- SmartCover → smartcover.kerit.com.ru → local port 3004 (behind Cloudflare)
+- TrustLine → trustline.chat → local port 3003
+- TopTeachers → topteachers.online → local port 3005
+- PartnerSystems → partnersystems.online + www.partnersystems.online → local port 3006
+- SiahRokh → no domain yet → local port 3007
+Reserved app ports in use: 8000, 3001, 3002, 3003, 3004, 3005, 3006, 3007.
+Do NOT alter or restart any existing apps, domains, or certificates.
+
+PRIMARY GOALS
+1) Deploy the new app in a fully isolated way (its own user/service, its own data and logs, its own domain/subdomain, and its own internal port that is NOT one of the reserved ports above).
+2) Expose it through the existing NGINX reverse proxy pattern using a unique domain/subdomain (no overlap with the domains listed above).
+3) Enable HTTPS for the new domain without touching certificates for existing domains.
+4) Wire it to the EXTERNAL SingleStore database using adjustable settings (host, port, db name, user, password, SSL mode, and pool sizes) that I can change later without code changes.
+
+SINGLESTORE (EXTERNAL DB) REQUIREMENTS
+- Provide a clear place to set these values: DB HOST, DB PORT, DB NAME, DB USER, DB PASSWORD, SSL/TLS options, and connection pool limits.
+- Assume these values may change. Make sure I can update them later without changing code (e.g., through per-app variables/secrets). Document exactly how I will update them and safely restart just the NEW app without affecting others.
+- Add a readiness/health step so the app won’t start serving until it can reach the database (and fails gracefully if credentials are wrong).
+- Include a short rollback plan if new DB settings break the app.

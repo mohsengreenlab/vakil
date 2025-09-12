@@ -2,6 +2,7 @@ import mysql from "mysql2/promise";
 import { readFileSync } from "fs";
 import { IStorage } from "./storage.js";
 import * as bcrypt from 'bcrypt';
+import { getConfig } from "./config.js";
 
 // Define interfaces based on the new schema requirements
 export interface Client {
@@ -92,23 +93,41 @@ export class SingleStoreStorage {
   private pool: mysql.Pool;
 
   constructor() {
-    // Check if required password is available
-    if (!process.env.SINGLESTORE_PASSWORD) {
-      throw new Error("SINGLESTORE_PASSWORD environment variable is required for SingleStore connection");
-    }
-
-    // Use the exact connection string format as specified
-    const connectionString = `singlestore://dew-7b1a1:${process.env.SINGLESTORE_PASSWORD}@svc-3482219c-a389-4079-b18b-d50662524e8a-shared-dml.aws-virginia-6.svc.singlestore.com:3333/db_dew_f1c43?ssl={}`;
+    // Check if we're in production or development mode
+    const isProduction = process.env.NODE_ENV === 'production';
     
-    this.pool = mysql.createPool({
-      uri: connectionString,
-      ssl: {
-        ca: readFileSync('./singlestore-bundle.pem'),
-        rejectUnauthorized: true
-      },
-      connectionLimit: 10,
-      queueLimit: 0
-    });
+    if (isProduction) {
+      // Production: Use environment variables
+      const config = getConfig();
+      const connectionString = `singlestore://${config.database.username}:${config.database.password}@${config.database.host}:${config.database.port}/${config.database.database}?ssl={}`;
+      
+      this.pool = mysql.createPool({
+        uri: connectionString,
+        ssl: config.database.sslMode ? {
+          ca: readFileSync('./singlestore-bundle.pem'),
+          rejectUnauthorized: true
+        } : undefined,
+        connectionLimit: config.database.connectionLimit,
+        queueLimit: config.database.queueLimit
+      });
+    } else {
+      // Development: Use existing hardcoded configuration for compatibility
+      if (!process.env.SINGLESTORE_PASSWORD) {
+        throw new Error("SINGLESTORE_PASSWORD environment variable is required for SingleStore connection");
+      }
+
+      const connectionString = `singlestore://dew-7b1a1:${process.env.SINGLESTORE_PASSWORD}@svc-3482219c-a389-4079-b18b-d50662524e8a-shared-dml.aws-virginia-6.svc.singlestore.com:3333/db_dew_f1c43?ssl={}`;
+      
+      this.pool = mysql.createPool({
+        uri: connectionString,
+        ssl: {
+          ca: readFileSync('./singlestore-bundle.pem'),
+          rejectUnauthorized: true
+        },
+        connectionLimit: 10,
+        queueLimit: 0
+      });
+    }
     
     // Initialize tables with error handling (don't throw to avoid crashing)
     this.initializeTables().catch(error => {

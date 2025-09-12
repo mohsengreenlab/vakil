@@ -5,19 +5,53 @@ import session from "express-session";
 import bcrypt from "bcrypt";
 import { SingleStoreStorage } from "./singlestore.js";
 import type { IStorage } from "./storage.js";
+import { getConfig } from "./config.js";
 
 const app = express();
 
-// Initialize storage with SingleStore database
-let storage: IStorage;
+// Initialize configuration (only in production)
+const isProduction = process.env.NODE_ENV === 'production';
+let config: any;
 
-// Initialize SingleStore database connection
-if (!process.env.SINGLESTORE_PASSWORD) {
-  throw new Error("SINGLESTORE_PASSWORD environment variable is required");
+if (isProduction) {
+  config = getConfig();
+  // Configure app for production
+  if (config.trustProxy) {
+    app.set('trust proxy', 1);
+  }
 }
 
-storage = new SingleStoreStorage();
-console.log(`🗄️  Using SingleStore database connection`);
+// Initialize storage and start server
+async function initializeApp() {
+  let storage: IStorage;
+
+  try {
+    storage = new SingleStoreStorage();
+    console.log(`🗄️  Using SingleStore database connection`);
+    
+    // Test database connectivity before starting server in production
+    if (isProduction) {
+      console.log('🔍 Testing database connectivity...');
+      const connection = await (storage as any).pool.getConnection();
+      await connection.ping();
+      connection.release();
+      console.log('✅ Database connectivity verified');
+    }
+  } catch (error) {
+    console.error('❌ Failed to initialize database connection:', error);
+    if (isProduction) {
+      console.error('📋 Required environment variables: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD');
+    } else {
+      console.error('📋 Required environment variable: SINGLESTORE_PASSWORD');
+    }
+    process.exit(1);
+  }
+
+  return storage;
+}
+
+// Initialize storage
+const storage = await initializeApp();
 
 // Set EJS as templating engine with layouts
 app.set('view engine', 'ejs');
@@ -34,11 +68,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // Session middleware
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key-here',
+  secret: isProduction ? config.sessionSecret : (process.env.SESSION_SECRET || 'your-secret-key-here'),
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: false, // Set to true in production with HTTPS
+    secure: isProduction ? config.secureCookies : false,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
@@ -365,6 +399,30 @@ app.get('/client/portal', requireClientAuth, async (req, res) => {
       <pre>${error.stack}</pre>
       </body></html>
     `);
+  }
+});
+
+// Health check endpoint for production deployment
+app.get('/health', async (req, res) => {
+  try {
+    // Test database connectivity
+    const connection = await (storage as any).pool.getConnection();
+    await connection.ping();
+    connection.release();
+    
+    res.status(200).json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      database: 'connected'
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(503).json({ 
+      status: 'error', 
+      timestamp: new Date().toISOString(),
+      database: 'disconnected',
+      error: 'Database connection failed'
+    });
   }
 });
 
