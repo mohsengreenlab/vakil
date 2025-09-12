@@ -7,7 +7,7 @@ set -e
 # Configuration
 APP_NAME="lawyer"
 APP_USER="lawyer"
-APP_DIR="/srv/lawyer"
+APP_DIR="/home/lawyer"
 DOMAIN="lawyer.partnersystems.online"
 SERVICE_NAME="lawyer"
 
@@ -40,7 +40,7 @@ log "Step 1: Creating system user and directories..."
 
 # Create application user (system user without sudo for security)
 if ! id "$APP_USER" &>/dev/null; then
-    useradd --system --shell /usr/sbin/nologin --home-dir "$APP_DIR" --create-home "$APP_USER"
+    useradd --shell /bin/bash --home-dir "$APP_DIR" --create-home "$APP_USER"
     log "Created system user: $APP_USER"
 else
     log "User $APP_USER already exists"

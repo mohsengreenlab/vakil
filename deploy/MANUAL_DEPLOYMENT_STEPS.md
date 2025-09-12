@@ -12,12 +12,12 @@ This guide provides step-by-step manual deployment instructions for the lawyer.p
 ## Step 1: Create System User and Directories
 
 ```bash
-# Create dedicated system user (no login shell for security)
-sudo useradd --system --shell /usr/sbin/nologin --home-dir /srv/lawyer --create-home lawyer
+# Create dedicated user with bash shell
+sudo useradd --shell /bin/bash --home-dir /home/lawyer --create-home lawyer
 
 # Create application directory structure
-sudo mkdir -p /srv/lawyer/{releases,shared/{certs,logs}}
-sudo chown -R lawyer:lawyer /srv/lawyer
+sudo mkdir -p /home/lawyer/{releases,shared/{certs,logs}}
+sudo chown -R lawyer:lawyer /home/lawyer
 
 # Create environment config directory
 sudo mkdir -p /etc/lawyer
@@ -26,7 +26,7 @@ sudo chmod 755 /etc/lawyer
 
 # Verify user and directories created
 id lawyer
-ls -la /srv/lawyer
+ls -la /home/lawyer
 ls -la /etc/lawyer
 ```
 
@@ -56,14 +56,14 @@ python3 --version
 sudo su - lawyer -s /bin/bash
 
 # Set HOME for the session
-export HOME="/srv/lawyer"
-cd /srv/lawyer
+export HOME="/home/lawyer"
+cd /home/lawyer
 
 # Install nvm
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 
 # Reload nvm
-export NVM_DIR="/srv/lawyer/.nvm"
+export NVM_DIR="/home/lawyer/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 # Install and use Node.js 20
@@ -91,7 +91,7 @@ cd your-repo-name
 
 # Create timestamped release directory
 TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
-RELEASE_DIR="/srv/lawyer/releases/$TIMESTAMP"
+RELEASE_DIR="/home/lawyer/releases/$TIMESTAMP"
 sudo mkdir -p "$RELEASE_DIR"
 
 # Copy application files to release directory
@@ -99,9 +99,9 @@ sudo cp -r ./* "$RELEASE_DIR/"
 sudo chown -R lawyer:lawyer "$RELEASE_DIR"
 
 # Copy health monitor script
-sudo cp "./deploy/health-monitor.sh" "/srv/lawyer/shared/health-monitor.sh"
-sudo chmod +x "/srv/lawyer/shared/health-monitor.sh"
-sudo chown lawyer:lawyer "/srv/lawyer/shared/health-monitor.sh"
+sudo cp "./deploy/health-monitor.sh" "/home/lawyer/shared/health-monitor.sh"
+sudo chmod +x "/home/lawyer/shared/health-monitor.sh"
+sudo chown lawyer:lawyer "/home/lawyer/shared/health-monitor.sh"
 ```
 
 ---
@@ -114,8 +114,8 @@ cd "$RELEASE_DIR"
 
 # Build as lawyer user with isolated Node.js
 sudo -u lawyer bash -c "
-    export HOME='/srv/lawyer'
-    export NVM_DIR='/srv/lawyer/.nvm'
+    export HOME='/home/lawyer'
+    export NVM_DIR='/home/lawyer/.nvm'
     [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\"
     nvm use 20
     npm ci
@@ -172,8 +172,8 @@ sudo cp "$RELEASE_DIR/deploy/lawyer.service" "/etc/systemd/system/lawyer.service
 sudo systemctl daemon-reload
 
 # Create symlink to current release
-sudo ln -sfn "$RELEASE_DIR" "/srv/lawyer/current"
-sudo chown -h lawyer:lawyer "/srv/lawyer/current"
+sudo ln -sfn "$RELEASE_DIR" "/home/lawyer/current"
+sudo chown -h lawyer:lawyer "/home/lawyer/current"
 
 # Enable service (don't start yet)
 sudo systemctl enable lawyer
@@ -251,13 +251,13 @@ curl https://lawyer.partnersystems.online/health
 
 ```bash
 # Add cron job for health monitoring (every 5 minutes)
-(sudo crontab -l 2>/dev/null | grep -v "/srv/lawyer/shared/health-monitor.sh"; echo "*/5 * * * * /srv/lawyer/shared/health-monitor.sh") | sudo crontab -
+(sudo crontab -l 2>/dev/null | grep -v "/home/lawyer/shared/health-monitor.sh"; echo "*/5 * * * * /home/lawyer/shared/health-monitor.sh") | sudo crontab -
 
 # Verify cron job was added
 sudo crontab -l
 
 # Test health monitor manually
-sudo /srv/lawyer/shared/health-monitor.sh
+sudo /home/lawyer/shared/health-monitor.sh
 ```
 
 ---
@@ -267,9 +267,9 @@ sudo /srv/lawyer/shared/health-monitor.sh
 Check each item to ensure deployment was successful:
 
 - [ ] **User Created**: `id lawyer` shows system user
-- [ ] **Directories**: `/srv/lawyer/` structure exists with proper ownership
-- [ ] **Node.js Isolated**: `/srv/lawyer/.nvm/versions/node/` contains v20.x
-- [ ] **Application Built**: `/srv/lawyer/current/dist/` contains built files
+- [ ] **Directories**: `/home/lawyer/` structure exists with proper ownership
+- [ ] **Node.js Isolated**: `/home/lawyer/.nvm/versions/node/` contains v20.x
+- [ ] **Application Built**: `/home/lawyer/current/dist/` contains built files
 - [ ] **Environment Config**: `/etc/lawyer/lawyer.env` has your database credentials
 - [ ] **Service Running**: `sudo systemctl status lawyer` shows active
 - [ ] **Health Check**: `curl http://localhost:3008/health` returns success
@@ -289,7 +289,7 @@ sudo journalctl -u lawyer -f
 sudo tail -f /var/log/nginx/lawyer.error.log
 
 # Test database connection
-cd /srv/lawyer/current && sudo -u lawyer node -e "console.log('Testing DB connection...')"
+cd /home/lawyer/current && sudo -u lawyer node -e "console.log('Testing DB connection...')"
 
 # Restart services
 sudo systemctl restart lawyer
@@ -318,7 +318,7 @@ rm -rf /tmp/your-repo-name
 For future deployments, you can:
 1. Clone the updated repository
 2. Repeat steps 4-5 (create new release and build)
-3. Update the symlink in step 7: `sudo ln -sfn /srv/lawyer/releases/NEW_TIMESTAMP /srv/lawyer/current`
+3. Update the symlink in step 7: `sudo ln -sfn /home/lawyer/releases/NEW_TIMESTAMP /home/lawyer/current`
 4. Restart the service: `sudo systemctl restart lawyer`
 
-The previous release will remain in `/srv/lawyer/releases/` for easy rollback if needed.
+The previous release will remain in `/home/lawyer/releases/` for easy rollback if needed.

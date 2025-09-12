@@ -12,7 +12,7 @@ This guide provides complete step-by-step instructions for deploying the Persian
 ## Directory Structure
 
 ```
-/srv/lawyer/
+/home/lawyer/
 ├── releases/           # Timestamped application releases
 │   ├── 20250912_120000/
 │   └── 20250912_140000/
@@ -135,11 +135,11 @@ The script will:
 Set up automatic health monitoring:
 ```bash
 # Copy health monitor script
-sudo cp deploy/health-monitor.sh /srv/lawyer/shared/
-sudo chmod +x /srv/lawyer/shared/health-monitor.sh
+sudo cp deploy/health-monitor.sh /home/lawyer/shared/
+sudo chmod +x /home/lawyer/shared/health-monitor.sh
 
 # Add to crontab safely (check every 5 minutes)
-(sudo crontab -l 2>/dev/null | grep -v "/srv/lawyer/shared/health-monitor.sh"; echo "*/5 * * * * /srv/lawyer/shared/health-monitor.sh") | sudo crontab -
+(sudo crontab -l 2>/dev/null | grep -v "/home/lawyer/shared/health-monitor.sh"; echo "*/5 * * * * /home/lawyer/shared/health-monitor.sh") | sudo crontab -
 ```
 
 ## Security Considerations
@@ -161,7 +161,7 @@ sudo journalctl -u lawyer -xe
 sudo cat /etc/lawyer/lawyer.env
 
 # Test configuration
-cd /srv/lawyer/current && sudo -u lawyer node dist/index.js
+cd /home/lawyer/current && sudo -u lawyer node dist/index.js
 ```
 
 ### Database Connection Issues

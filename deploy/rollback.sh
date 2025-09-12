@@ -7,7 +7,7 @@ set -e
 # Configuration
 APP_NAME="lawyer"
 APP_USER="lawyer"
-APP_DIR="/srv/lawyer"
+APP_DIR="/home/lawyer"
 SERVICE_NAME="lawyer"
 
 # Colors for output

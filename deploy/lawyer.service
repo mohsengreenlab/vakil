@@ -6,11 +6,11 @@ After=network.target
 Type=simple
 User=lawyer
 Group=lawyer
-WorkingDirectory=/srv/lawyer/current
+WorkingDirectory=/home/lawyer/current
 EnvironmentFile=/etc/lawyer/lawyer.env
-ExecStart=/bin/bash -lc 'export HOME=/srv/lawyer; export NVM_DIR=/srv/lawyer/.nvm; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; nvm use 20; exec node dist/index.js'
-Environment="HOME=/srv/lawyer"
-Environment="NVM_DIR=/srv/lawyer/.nvm"
+ExecStart=/bin/bash -lc 'export HOME=/home/lawyer; export NVM_DIR=/home/lawyer/.nvm; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; nvm use 20; exec node dist/index.js'
+Environment="HOME=/home/lawyer"
+Environment="NVM_DIR=/home/lawyer/.nvm"
 Restart=always
 RestartSec=3
 StandardOutput=journal
@@ -21,8 +21,8 @@ SyslogIdentifier=lawyer
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/srv/lawyer
+ProtectHome=false
+ReadWritePaths=/home/lawyer
 RuntimeDirectory=lawyer
 RuntimeDirectoryMode=0755
 

@@ -3,7 +3,7 @@
 # Persian Legal Firm - Health Monitor Script
 # Add this to cron for continuous health monitoring
 # Example cron entry (check every 5 minutes):
-# */5 * * * * /srv/lawyer/shared/health-monitor.sh
+# */5 * * * * /home/lawyer/shared/health-monitor.sh
 
 # Configuration
 APP_NAME="lawyer"
@@ -85,7 +85,7 @@ else
 fi
 
 # Check disk space
-disk_usage=$(df /srv/lawyer | awk 'NR==2 {print $5}' | sed 's/%//')
+disk_usage=$(df /home/lawyer | awk 'NR==2 {print $5}' | sed 's/%//')
 if [ "$disk_usage" -gt 80 ]; then
     log "${YELLOW}[WARNING] Disk usage high: ${disk_usage}%${NC}"
 fi
