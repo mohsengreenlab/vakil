@@ -282,16 +282,29 @@ app.get('/client/portal', requireClientAuth, async (req, res) => {
                 .logout-btn { 
                     position: absolute; 
                     top: 20px; 
-                    left: 20px; 
-                    background: #dc2626; 
+                    right: 20px; 
+                    background: linear-gradient(135deg, #ef4444, #dc2626);
                     color: white; 
                     border: none; 
-                    padding: 10px 20px; 
-                    border-radius: 5px; 
+                    padding: 12px 24px; 
+                    border-radius: 8px; 
                     cursor: pointer; 
                     font-family: Tahoma;
+                    font-size: 14px;
+                    font-weight: 600;
+                    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+                    transition: all 0.2s ease;
+                    z-index: 10;
                 }
-                .logout-btn:hover { background: #b91c1c; }
+                .logout-btn:hover { 
+                    background: linear-gradient(135deg, #dc2626, #b91c1c);
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+                }
+                .logout-btn:active {
+                    transform: translateY(0);
+                    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+                }
             </style>
         </head>
         <body>
