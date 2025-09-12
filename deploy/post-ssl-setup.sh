@@ -5,8 +5,8 @@ set -e
 # Run this after the main deployment to configure SSL with Certbot
 
 # Configuration
-APP_NAME="pishroapp"
-DOMAIN="pishro.yourdomain.com"  # CHANGE THIS TO YOUR DOMAIN
+APP_NAME="lawyer"
+DOMAIN="lawyer.partnersystems.online"  # CHANGE THIS TO YOUR DOMAIN
 
 # Colors for output
 RED='\033[0;31m'
