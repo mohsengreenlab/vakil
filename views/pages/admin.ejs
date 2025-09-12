@@ -43,6 +43,9 @@
                 <button onclick="showTab('contacts')" class="tab-btn" data-tab="contacts" data-testid="tab-contacts">
                     پیام‌های تماس
                 </button>
+                <button onclick="showTab('qa')" class="tab-btn" data-tab="qa" data-testid="tab-qa">
+                    پرسش و پاسخ
+                </button>
             </nav>
         </div>
     </div>
@@ -446,6 +449,116 @@
             </div>
         </div>
 
+        <!-- QA Management Tab -->
+        <div id="qa-tab" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold">مدیریت پرسش و پاسخ</h1>
+                <button onclick="showAddQAForm()" class="btn-primary" data-testid="button-add-qa">
+                    + افزودن پرسش و پاسخ جدید
+                </button>
+            </div>
+
+            <!-- Add QA Form (Hidden by default) -->
+            <div id="add-qa-form" class="card p-6 mb-6 hidden">
+                <h2 class="text-xl font-bold mb-4">افزودن پرسش و پاسخ جدید</h2>
+                <form id="qaForm" class="space-y-4">
+                    <div>
+                        <label for="qaQuestion" class="block text-sm font-medium mb-2">سوال</label>
+                        <textarea id="qaQuestion" name="question" rows="3" class="input-field" placeholder="سوال خود را وارد کنید..." required data-testid="input-qa-question"></textarea>
+                    </div>
+                    <div>
+                        <label for="qaAnswer" class="block text-sm font-medium mb-2">پاسخ</label>
+                        <textarea id="qaAnswer" name="answer" rows="6" class="input-field" placeholder="پاسخ سوال را وارد کنید..." required data-testid="input-qa-answer"></textarea>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="qaTopic" class="block text-sm font-medium mb-2">موضوع</label>
+                            <input type="text" id="qaTopic" name="topic" class="input-field" placeholder="موضوع (مثل: حقوق خانواده)" value="عمومی" data-testid="input-qa-topic">
+                        </div>
+                        <div>
+                            <label for="qaShow" class="block text-sm font-medium mb-2">وضعیت نمایش</label>
+                            <select id="qaShow" name="show" class="input-field" data-testid="select-qa-show">
+                                <option value="1">نمایش</option>
+                                <option value="0">مخفی</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn-primary" data-testid="button-save-qa">
+                            ذخیره
+                        </button>
+                        <button type="button" onclick="hideAddQAForm()" class="btn-secondary" data-testid="button-cancel-qa">
+                            انصراف
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Edit QA Form (Hidden by default) -->
+            <div id="edit-qa-form" class="card p-6 mb-6 hidden">
+                <h2 class="text-xl font-bold mb-4">ویرایش پرسش و پاسخ</h2>
+                <form id="editQaForm" class="space-y-4">
+                    <input type="hidden" id="editQaId" name="id">
+                    <div>
+                        <label for="editQaQuestion" class="block text-sm font-medium mb-2">سوال</label>
+                        <textarea id="editQaQuestion" name="question" rows="3" class="input-field" required data-testid="input-edit-qa-question"></textarea>
+                    </div>
+                    <div>
+                        <label for="editQaAnswer" class="block text-sm font-medium mb-2">پاسخ</label>
+                        <textarea id="editQaAnswer" name="answer" rows="6" class="input-field" required data-testid="input-edit-qa-answer"></textarea>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="editQaTopic" class="block text-sm font-medium mb-2">موضوع</label>
+                            <input type="text" id="editQaTopic" name="topic" class="input-field" data-testid="input-edit-qa-topic">
+                        </div>
+                        <div>
+                            <label for="editQaShow" class="block text-sm font-medium mb-2">وضعیت نمایش</label>
+                            <select id="editQaShow" name="show" class="input-field" data-testid="select-edit-qa-show">
+                                <option value="1">نمایش</option>
+                                <option value="0">مخفی</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn-primary" data-testid="button-update-qa">
+                            بروزرسانی
+                        </button>
+                        <button type="button" onclick="hideEditQAForm()" class="btn-secondary" data-testid="button-cancel-edit-qa">
+                            انصراف
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- QA List -->
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">فهرست پرسش و پاسخ‌ها</h2>
+                    <input type="search" id="qa-admin-search" class="input-field w-64" placeholder="جستجو در پرسش‌ها..." data-testid="input-search-qa">
+                </div>
+                
+                <div id="qa-loading" class="text-center py-8 hidden" data-testid="qa-admin-loading">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <p class="text-muted-foreground mt-2">در حال بارگذاری...</p>
+                </div>
+
+                <div id="qa-empty" class="text-center py-8 hidden" data-testid="qa-admin-empty">
+                    <div class="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">هنوز پرسش و پاسخی ثبت نشده</h3>
+                    <p class="text-muted-foreground">اولین پرسش و پاسخ را اضافه کنید.</p>
+                </div>
+                
+                <div id="qa-list" class="space-y-4" data-testid="qa-admin-list">
+                    <!-- QA items will be loaded here -->
+                </div>
+            </div>
+        </div>
+
         </div>
     </div>
 </div>
@@ -586,6 +699,11 @@ function showTab(tabName) {
     
     // Add active class to selected tab button
     document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    
+    // Load data when switching to specific tabs
+    if (tabName === 'qa') {
+        loadQAItems();
+    }
     
     // Load data for the selected tab
     if (tabName === 'clients') {
@@ -1087,6 +1205,157 @@ function replyToContact(contactId) {
     showToast(`پاسخ به پیام ${contactId}`, 'info');
 }
 
+// QA Management Functions
+let qaItems = [];
+
+function showAddQAForm() {
+    document.getElementById('add-qa-form').classList.remove('hidden');
+    document.getElementById('qaQuestion').focus();
+}
+
+function hideAddQAForm() {
+    document.getElementById('add-qa-form').classList.add('hidden');
+    document.getElementById('qaForm').reset();
+    document.getElementById('qaTopic').value = 'عمومی';
+    document.getElementById('qaShow').value = '1';
+}
+
+function showEditQAForm(qaItem) {
+    document.getElementById('edit-qa-form').classList.remove('hidden');
+    document.getElementById('editQaId').value = qaItem.id;
+    document.getElementById('editQaQuestion').value = qaItem.question;
+    document.getElementById('editQaAnswer').value = qaItem.answer;
+    document.getElementById('editQaTopic').value = qaItem.topic;
+    document.getElementById('editQaShow').value = qaItem.show;
+    document.getElementById('editQaQuestion').focus();
+}
+
+function hideEditQAForm() {
+    document.getElementById('edit-qa-form').classList.add('hidden');
+    document.getElementById('editQaForm').reset();
+}
+
+async function loadQAItems() {
+    try {
+        document.getElementById('qa-loading').classList.remove('hidden');
+        document.getElementById('qa-empty').classList.add('hidden');
+        
+        const response = await fetch('/api/admin/qa');
+        const data = await response.json();
+        
+        if (data.success) {
+            qaItems = data.items;
+            displayQAItems(qaItems);
+        } else {
+            showToast('خطا در بارگذاری پرسش و پاسخ‌ها', 'error');
+            document.getElementById('qa-empty').classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Error loading QA items:', error);
+        showToast('خطا در اتصال به سرور', 'error');
+        document.getElementById('qa-empty').classList.remove('hidden');
+    } finally {
+        document.getElementById('qa-loading').classList.add('hidden');
+    }
+}
+
+function displayQAItems(items) {
+    const container = document.getElementById('qa-list');
+    const emptyState = document.getElementById('qa-empty');
+    
+    if (items.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+    }
+    
+    emptyState.classList.add('hidden');
+    
+    container.innerHTML = items.map(item => {
+        const formattedDate = new Date(item.date_created).toLocaleDateString('fa-IR');
+        const showStatus = item.show === 1 ? 'نمایش' : 'مخفی';
+        const showBadgeClass = item.show === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+        
+        return `
+            <div class="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors" data-testid="qa-admin-item-${item.id}">
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="font-semibold text-lg">${item.question}</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2 py-1 text-xs rounded-full ${showBadgeClass}">${showStatus}</span>
+                        <span class="text-sm text-muted-foreground">${formattedDate}</span>
+                    </div>
+                </div>
+                <div class="text-sm text-muted-foreground mb-3">
+                    <span class="bg-primary/10 text-primary px-2 py-1 rounded text-xs">${item.topic}</span>
+                </div>
+                <div class="text-sm mb-4 text-muted-foreground">
+                    ${item.answer.length > 200 ? item.answer.substring(0, 200) + '...' : item.answer}
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button onclick="editQAItem('${item.id}')" class="text-primary hover:underline text-sm" data-testid="button-edit-qa-${item.id}">
+                        ویرایش
+                    </button>
+                    <button onclick="deleteQAItem('${item.id}')" class="text-red-600 hover:underline text-sm" data-testid="button-delete-qa-${item.id}">
+                        حذف
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function editQAItem(qaId) {
+    const qaItem = qaItems.find(item => item.id === qaId);
+    if (qaItem) {
+        showEditQAForm(qaItem);
+    }
+}
+
+async function deleteQAItem(qaId) {
+    if (!confirm('آیا مطمئن هستید که می‌خواهید این پرسش و پاسخ را حذف کنید؟')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/qa/${qaId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('پرسش و پاسخ حذف شد', 'success');
+            loadQAItems(); // Reload the list
+        } else {
+            showToast(result.message || 'خطا در حذف پرسش و پاسخ', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting QA item:', error);
+        showToast('خطا در اتصال به سرور', 'error');
+    }
+}
+
+// QA Search functionality
+function setupQASearch() {
+    const searchInput = document.getElementById('qa-admin-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.trim().toLowerCase();
+            
+            if (searchTerm === '') {
+                displayQAItems(qaItems);
+            } else {
+                const filteredItems = qaItems.filter(item => 
+                    item.question.toLowerCase().includes(searchTerm) ||
+                    item.answer.toLowerCase().includes(searchTerm) ||
+                    item.topic.toLowerCase().includes(searchTerm)
+                );
+                displayQAItems(filteredItems);
+            }
+        });
+    }
+}
+
 // Logout function
 async function logout() {
     try {
@@ -1127,6 +1396,87 @@ function showToast(message, type = 'info') {
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
     loadDashboardStats();
+    
+    // Initialize QA form handlers
+    const qaForm = document.getElementById('qaForm');
+    if (qaForm) {
+        qaForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const qaData = {
+                question: formData.get('question'),
+                answer: formData.get('answer'),
+                topic: formData.get('topic'),
+                show: parseInt(formData.get('show'))
+            };
+            
+            try {
+                const response = await fetch('/api/admin/qa', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(qaData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('پرسش و پاسخ جدید اضافه شد', 'success');
+                    hideAddQAForm();
+                    loadQAItems();
+                } else {
+                    showToast(result.message || 'خطا در ایجاد پرسش و پاسخ', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating QA item:', error);
+                showToast('خطا در اتصال به سرور', 'error');
+            }
+        });
+    }
+    
+    const editQaForm = document.getElementById('editQaForm');
+    if (editQaForm) {
+        editQaForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const qaId = formData.get('id');
+            const qaData = {
+                question: formData.get('question'),
+                answer: formData.get('answer'),
+                topic: formData.get('topic'),
+                show: parseInt(formData.get('show'))
+            };
+            
+            try {
+                const response = await fetch(`/api/admin/qa/${qaId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(qaData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('پرسش و پاسخ بروزرسانی شد', 'success');
+                    hideEditQAForm();
+                    loadQAItems();
+                } else {
+                    showToast(result.message || 'خطا در بروزرسانی پرسش و پاسخ', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating QA item:', error);
+                showToast('خطا در اتصال به سرور', 'error');
+            }
+        });
+    }
+    
+    // Setup QA search
+    setupQASearch();
     
     // Add event delegation for assign case buttons (XSS fix)
     document.addEventListener('click', function(e) {

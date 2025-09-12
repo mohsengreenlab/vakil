@@ -1,4 +1,5 @@
 import { type User, type InsertUser, type Client, type InsertClient, type Case, type InsertCase, type Contact, type InsertContact } from "@shared/schema";
+import { type QAItem, type InsertQAItem } from "./singlestore.js";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
 
@@ -27,6 +28,14 @@ export interface IStorage {
   getContact(id: string): Promise<Contact | undefined>;
   getAllContacts(): Promise<Contact[]>;
   createContact(contact: InsertContact): Promise<Contact>;
+  
+  // QA methods
+  getPublicQAItems(): Promise<QAItem[]>;
+  getAllQAItems(): Promise<QAItem[]>;
+  createQAItem(qaData: InsertQAItem): Promise<QAItem>;
+  updateQAItem(id: string, qaData: Partial<InsertQAItem>): Promise<QAItem | null>;
+  deleteQAItem(id: string): Promise<boolean>;
+  getQAItem(id: string): Promise<QAItem | null>;
   
   // Legacy methods for backward compatibility
   getAllLegalCases(): Promise<any[]>;
@@ -167,6 +176,39 @@ export class MemStorage implements IStorage {
     };
     this.contacts.set(id, contact);
     return contact;
+  }
+
+  // QA methods (stub implementations for MemStorage)
+  async getPublicQAItems(): Promise<QAItem[]> {
+    return [];
+  }
+
+  async getAllQAItems(): Promise<QAItem[]> {
+    return [];
+  }
+
+  async createQAItem(qaData: InsertQAItem): Promise<QAItem> {
+    const id = randomUUID();
+    return {
+      id,
+      question: qaData.question,
+      answer: qaData.answer,
+      topic: qaData.topic,
+      show: qaData.show,
+      date_created: new Date()
+    };
+  }
+
+  async updateQAItem(id: string, qaData: Partial<InsertQAItem>): Promise<QAItem | null> {
+    return null;
+  }
+
+  async deleteQAItem(id: string): Promise<boolean> {
+    return false;
+  }
+
+  async getQAItem(id: string): Promise<QAItem | null> {
+    return null;
   }
 
   // Legacy interface methods for backward compatibility

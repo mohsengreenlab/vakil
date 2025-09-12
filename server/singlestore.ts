@@ -751,4 +751,158 @@ export class SingleStoreStorage {
     await this.pool.end();
   }
 
+  // QA CRUD operations
+
+  async getAllQAItems(): Promise<QAItem[]> {
+    try {
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM QA ORDER BY date_created DESC'
+      );
+      return (rows as any[]).map(row => ({
+        id: row.ID,
+        question: row.Question,
+        answer: row.Answer,
+        topic: row.Topic,
+        show: row.show,
+        date_created: row.date_created
+      }));
+    } catch (error) {
+      console.error('Error getting all QA items:', error);
+      throw error;
+    }
+  }
+
+  async getPublicQAItems(): Promise<QAItem[]> {
+    try {
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM QA WHERE `show` = 1 ORDER BY date_created DESC'
+      );
+      return (rows as any[]).map(row => ({
+        id: row.ID,
+        question: row.Question,
+        answer: row.Answer,
+        topic: row.Topic,
+        show: row.show,
+        date_created: row.date_created
+      }));
+    } catch (error) {
+      console.error('Error getting public QA items:', error);
+      throw error;
+    }
+  }
+
+  async createQAItem(qaData: InsertQAItem): Promise<QAItem> {
+    try {
+      const id = this.generateUUID();
+      await this.pool.execute(
+        'INSERT INTO QA (id, question, answer, topic, `show`) VALUES (?, ?, ?, ?, ?)',
+        [id, qaData.question, qaData.answer, qaData.topic, qaData.show]
+      );
+
+      // Return the created QA item
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM QA WHERE id = ?',
+        [id]
+      );
+      const createdQA = (rows as any)[0];
+      return {
+        id: createdQA.ID,
+        question: createdQA.Question,
+        answer: createdQA.Answer,
+        topic: createdQA.Topic,
+        show: createdQA.show,
+        date_created: createdQA.date_created
+      };
+    } catch (error) {
+      console.error('Error creating QA item:', error);
+      throw error;
+    }
+  }
+
+  async updateQAItem(id: string, qaData: Partial<InsertQAItem>): Promise<QAItem | null> {
+    try {
+      const updateFields = [];
+      const updateValues = [];
+
+      if (qaData.question !== undefined) {
+        updateFields.push('question = ?');
+        updateValues.push(qaData.question);
+      }
+      if (qaData.answer !== undefined) {
+        updateFields.push('answer = ?');
+        updateValues.push(qaData.answer);
+      }
+      if (qaData.topic !== undefined) {
+        updateFields.push('topic = ?');
+        updateValues.push(qaData.topic);
+      }
+      if (qaData.show !== undefined) {
+        updateFields.push('`show` = ?');
+        updateValues.push(qaData.show);
+      }
+
+      if (updateFields.length === 0) {
+        return null; // No fields to update
+      }
+
+      updateValues.push(id);
+      await this.pool.execute(
+        `UPDATE QA SET ${updateFields.join(', ')} WHERE id = ?`,
+        updateValues
+      );
+
+      // Return the updated QA item
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM QA WHERE id = ?',
+        [id]
+      );
+      const updatedQA = (rows as any)[0];
+      return updatedQA ? {
+        id: updatedQA.ID,
+        question: updatedQA.Question,
+        answer: updatedQA.Answer,
+        topic: updatedQA.Topic,
+        show: updatedQA.show,
+        date_created: updatedQA.date_created
+      } : null;
+    } catch (error) {
+      console.error('Error updating QA item:', error);
+      throw error;
+    }
+  }
+
+  async deleteQAItem(id: string): Promise<boolean> {
+    try {
+      const [result] = await this.pool.execute(
+        'DELETE FROM QA WHERE id = ?',
+        [id]
+      );
+      return (result as any).affectedRows > 0;
+    } catch (error) {
+      console.error('Error deleting QA item:', error);
+      throw error;
+    }
+  }
+
+  async getQAItem(id: string): Promise<QAItem | null> {
+    try {
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM QA WHERE id = ?',
+        [id]
+      );
+      const qa = (rows as any)[0];
+      return qa ? {
+        id: qa.ID,
+        question: qa.Question,
+        answer: qa.Answer,
+        topic: qa.Topic,
+        show: qa.show,
+        date_created: qa.date_created
+      } : null;
+    } catch (error) {
+      console.error('Error getting QA item:', error);
+      throw error;
+    }
+  }
+
 }

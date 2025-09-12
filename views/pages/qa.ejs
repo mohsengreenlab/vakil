@@ -1,175 +1,278 @@
-
 <div class="container mx-auto px-4 py-16">
     <!-- Breadcrumb -->
     <nav class="mb-8" aria-label="Breadcrumb">
         <ol class="flex items-center space-x-reverse space-x-2 text-sm">
             <li><a href="/" class="text-muted-foreground hover:text-foreground">خانه</a></li>
             <li class="text-muted-foreground">/</li>
-            <li class="text-foreground font-medium">بررسی پرونده حقوقی</li>
+            <li class="text-foreground font-medium">پرسش و پاسخ حقوقی</li>
         </ol>
     </nav>
 
     <div class="text-center mb-12">
-        <h1 class="text-4xl font-bold mb-4">بررسی پرونده حقوقی</h1>
-        <p class="text-muted-foreground text-lg">اطلاعات پرونده خود را وارد کنید تا بررسی اولیه انجام شود</p>
+        <h1 class="text-4xl font-bold mb-4">پرسش و پاسخ حقوقی</h1>
+        <p class="text-muted-foreground text-lg">پاسخ سوالات متداول حقوقی را در اینجا بیابید</p>
     </div>
 
     <div class="max-w-4xl mx-auto">
-        <!-- Form Card -->
-        <div class="card p-8">
-            <form id="case-review-form" class="space-y-6">
-                <!-- Personal Information -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4">اطلاعات شخصی</h3>
-                    <div class="grid md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="clientName" class="block text-sm font-medium mb-2">نام کامل</label>
-                            <input type="text" id="clientName" name="clientName" class="input-field" required aria-describedby="clientName-error">
-                            <div id="clientName-error" class="text-destructive text-sm mt-1 hidden"></div>
-                        </div>
-                        <div>
-                            <label for="clientPhone" class="block text-sm font-medium mb-2">شماره تماس</label>
-                            <input type="tel" id="clientPhone" name="clientPhone" class="input-field" placeholder="09xxxxxxxxx" required aria-describedby="clientPhone-error">
-                            <div id="clientPhone-error" class="text-destructive text-sm mt-1 hidden"></div>
-                        </div>
-                        <div class="md:col-span-2">
-                            <label for="clientEmail" class="block text-sm font-medium mb-2">ایمیل (اختیاری)</label>
-                            <input type="email" id="clientEmail" name="clientEmail" class="input-field" placeholder="example@email.com" aria-describedby="clientEmail-error">
-                            <div id="clientEmail-error" class="text-destructive text-sm mt-1 hidden"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Case Information -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4">اطلاعات پرونده</h3>
-                    <div class="space-y-6">
-                        <div>
-                            <label for="caseType" class="block text-sm font-medium mb-2">نوع پرونده</label>
-                            <select id="caseType" name="caseType" class="input-field" required aria-describedby="caseType-error">
-                                <option value="">انتخاب کنید</option>
-                                <option value="family">حقوق خانواده</option>
-                                <option value="commercial">حقوق تجاری</option>
-                                <option value="property">حقوق املاک</option>
-                                <option value="criminal">حقوق کیفری</option>
-                                <option value="labor">حقوق کار</option>
-                                <option value="civil">حقوق مدنی</option>
-                                <option value="other">سایر</option>
-                            </select>
-                            <div id="caseType-error" class="text-destructive text-sm mt-1 hidden"></div>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium mb-2">فوریت پرونده</label>
-                            <div class="flex gap-6">
-                                <label class="flex items-center">
-                                    <input type="radio" name="urgency" value="normal" class="ml-2 h-4 w-4 text-primary focus:ring-ring border-border" checked>
-                                    <span>عادی</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" name="urgency" value="urgent" class="ml-2 h-4 w-4 text-primary focus:ring-ring border-border">
-                                    <span>فوری</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" name="urgency" value="critical" class="ml-2 h-4 w-4 text-primary focus:ring-ring border-border">
-                                    <span>بسیار فوری</span>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label for="description" class="block text-sm font-medium mb-2">توضیحات پرونده</label>
-                            <textarea id="description" name="description" rows="6" class="input-field resize-none" placeholder="لطفاً تفصیل کاملی از موضوع پرونده خود بنویسید..." required aria-describedby="description-error"></textarea>
-                            <div id="description-error" class="text-destructive text-sm mt-1 hidden"></div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium mb-2">وضعیت وکیل</label>
-                            <div class="flex gap-6">
-                                <label class="flex items-center">
-                                    <input type="radio" name="hasLawyer" value="no" class="ml-2 h-4 w-4 text-primary focus:ring-ring border-border" checked>
-                                    <span>وکیل ندارم</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" name="hasLawyer" value="yes" class="ml-2 h-4 w-4 text-primary focus:ring-ring border-border">
-                                    <span>وکیل دارم</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- File Upload -->
-                <div>
-                    <h3 class="text-xl font-semibold mb-4">ضمیمه مدارک</h3>
-                    <div class="file-upload-area">
-                        <svg class="w-12 h-12 text-muted-foreground mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                        </svg>
-                        <p class="text-muted-foreground mb-2">مدارک مربوط به پرونده را اینجا بکشید یا کلیک کنید</p>
-                        <input type="file" id="documents" name="documents" multiple accept=".pdf,.doc,.docx,.jpg,.png" class="hidden">
-                        <button type="button" onclick="document.getElementById('documents').click()" class="btn-ghost">
-                            انتخاب فایل
-                        </button>
-                        <p class="text-xs text-muted-foreground mt-2">فرمت‌های مجاز: PDF, DOC, DOCX, JPG, PNG - حداکثر ۱۰ مگابایت</p>
-                    </div>
-                </div>
-
-                <!-- Privacy Consent -->
-                <div class="card p-4 bg-muted">
-                    <label class="flex items-start gap-3">
-                        <input type="checkbox" id="privacy" name="privacy" class="mt-1 h-4 w-4 text-primary focus:ring-ring border-border" required>
-                        <span class="text-sm">
-                            با ارسال این فرم، موافقت خود را با 
-                            <a href="#" class="text-primary hover:underline">قوانین حفظ حریم خصوصی</a>
-                            و 
-                            <a href="#" class="text-primary hover:underline">شرایط استفاده</a>
-                            اعلام می‌کنم.
-                        </span>
-                    </label>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="flex flex-col sm:flex-row gap-4 justify-end">
-                    <a href="/" class="btn-ghost text-center">
-                        انصراف
-                    </a>
-                    <button type="submit" class="btn-primary" data-original-text="ارسال برای بررسی">
-                        ارسال برای بررسی
-                    </button>
-                </div>
-            </form>
+        <!-- Search Box -->
+        <div class="mb-8">
+            <div class="relative">
+                <input 
+                    type="text" 
+                    id="qa-search" 
+                    placeholder="جستجو در پرسش‌ها..." 
+                    class="input-field pl-12" 
+                    data-testid="input-qa-search"
+                />
+                <svg class="w-5 h-5 absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M18 10.5a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"></path>
+                </svg>
+            </div>
         </div>
 
-        <!-- Info Cards -->
-        <div class="grid md:grid-cols-3 gap-6 mt-12">
-            <div class="text-center p-6">
-                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <h4 class="font-semibold mb-2">بررسی ۲۴ ساعته</h4>
-                <p class="text-sm text-muted-foreground">پرونده شما حداکثر ظرف ۲۴ ساعت بررسی می‌شود</p>
+        <!-- Loading State -->
+        <div id="qa-loading" class="text-center py-8" data-testid="qa-loading">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p class="text-muted-foreground mt-2">در حال بارگذاری...</p>
+        </div>
+
+        <!-- No Results -->
+        <div id="qa-no-results" class="text-center py-8 hidden" data-testid="qa-no-results">
+            <div class="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
             </div>
-            <div class="text-center p-6">
-                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                    </svg>
-                </div>
-                <h4 class="font-semibold mb-2">محرمانگی کامل</h4>
-                <p class="text-sm text-muted-foreground">اطلاعات شما کاملاً محرمانه و امن نگهداری می‌شود</p>
+            <h3 class="text-xl font-semibold mb-2">موردی یافت نشد</h3>
+            <p class="text-muted-foreground">متأسفانه هیچ پرسش و پاسخی مطابق با جستجوی شما یافت نشد.</p>
+        </div>
+
+        <!-- QA Items Container -->
+        <div id="qa-container" class="space-y-4" data-testid="qa-container">
+            <!-- QA items will be loaded here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="qa-empty" class="text-center py-8 hidden" data-testid="qa-empty">
+            <div class="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
             </div>
-            <div class="text-center p-6">
-                <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                    </svg>
-                </div>
-                <h4 class="font-semibold mb-2">مشاوره رایگان</h4>
-                <p class="text-sm text-muted-foreground">بررسی اولیه و مشاوره کاملاً رایگان است</p>
-            </div>
+            <h3 class="text-xl font-semibold mb-2">هنوز پرسش و پاسخی ثبت نشده</h3>
+            <p class="text-muted-foreground">به زودی پرسش‌ها و پاسخ‌های حقوقی در اینجا قرار خواهند گرفت.</p>
         </div>
     </div>
 </div>
+
+<style>
+.qa-item {
+    border: 1px solid hsl(var(--border));
+    border-radius: 8px;
+    background: hsl(var(--card));
+}
+
+.qa-question {
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+    border-radius: 8px 8px 0 0;
+}
+
+.qa-question:hover {
+    background: hsl(var(--muted) / 0.5);
+}
+
+.qa-question.active {
+    background: hsl(var(--muted));
+    border-bottom: 1px solid hsl(var(--border));
+}
+
+.qa-answer {
+    padding: 1.5rem;
+    background: hsl(var(--muted) / 0.3);
+    border-radius: 0 0 8px 8px;
+    display: none;
+}
+
+.qa-answer.active {
+    display: block;
+    animation: slideDown 0.3s ease-out;
+}
+
+.qa-meta {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+    margin-top: 0.5rem;
+}
+
+.qa-topic {
+    display: inline-block;
+    background: hsl(var(--primary) / 0.1);
+    color: hsl(var(--primary));
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin-right: 0.5rem;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 500px;
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+}
+
+.highlight {
+    background-color: hsl(var(--accent) / 0.3);
+    font-weight: 600;
+    padding: 0.125rem 0.25rem;
+    border-radius: 3px;
+}
+</style>
+
+<script>
+let qaItems = [];
+let filteredItems = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadQAItems();
+    setupSearch();
+});
+
+async function loadQAItems() {
+    try {
+        const response = await fetch('/api/qa');
+        const data = await response.json();
+        
+        if (data.success) {
+            qaItems = data.items;
+            filteredItems = [...qaItems];
+            displayQAItems(qaItems);
+        } else {
+            showEmptyState();
+        }
+    } catch (error) {
+        console.error('Error loading QA items:', error);
+        showEmptyState();
+    } finally {
+        hideLoading();
+    }
+}
+
+function setupSearch() {
+    const searchInput = document.getElementById('qa-search');
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.trim().toLowerCase();
+        
+        if (searchTerm === '') {
+            filteredItems = [...qaItems];
+        } else {
+            filteredItems = qaItems.filter(item => 
+                item.question.toLowerCase().includes(searchTerm) ||
+                item.answer.toLowerCase().includes(searchTerm) ||
+                item.topic.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        displayQAItems(filteredItems, searchTerm);
+    });
+}
+
+function displayQAItems(items, searchTerm = '') {
+    const container = document.getElementById('qa-container');
+    const noResults = document.getElementById('qa-no-results');
+    const emptyState = document.getElementById('qa-empty');
+    
+    // Hide states first
+    noResults.classList.add('hidden');
+    emptyState.classList.add('hidden');
+    
+    if (items.length === 0) {
+        container.innerHTML = '';
+        if (searchTerm) {
+            noResults.classList.remove('hidden');
+        } else {
+            emptyState.classList.remove('hidden');
+        }
+        return;
+    }
+    
+    container.innerHTML = items.map(item => {
+        const highlightedQuestion = searchTerm ? highlightText(item.question, searchTerm) : item.question;
+        const highlightedAnswer = searchTerm ? highlightText(item.answer, searchTerm) : item.answer;
+        const formattedDate = new Date(item.date_created).toLocaleDateString('fa-IR');
+        
+        return `
+            <div class="qa-item" data-testid="qa-item-${item.id}">
+                <div class="qa-question" onclick="toggleAnswer('${item.id}')" data-testid="qa-question-${item.id}">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold">${highlightedQuestion}</h3>
+                        <svg id="icon-${item.id}" class="w-5 h-5 text-muted-foreground transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                    <div class="qa-meta">
+                        <span class="qa-topic">${item.topic}</span>
+                        <span>${formattedDate}</span>
+                    </div>
+                </div>
+                <div id="answer-${item.id}" class="qa-answer" data-testid="qa-answer-${item.id}">
+                    <div class="prose prose-sm max-w-none text-foreground">
+                        ${highlightedAnswer.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function toggleAnswer(itemId) {
+    const answer = document.getElementById(`answer-${itemId}`);
+    const question = answer.previousElementSibling;
+    const icon = document.getElementById(`icon-${itemId}`);
+    
+    const isActive = answer.classList.contains('active');
+    
+    // Close all other answers first
+    document.querySelectorAll('.qa-answer.active').forEach(el => {
+        el.classList.remove('active');
+        el.previousElementSibling.classList.remove('active');
+        const otherIcon = el.previousElementSibling.querySelector('svg');
+        if (otherIcon) {
+            otherIcon.style.transform = 'rotate(0deg)';
+        }
+    });
+    
+    // Toggle current answer if it wasn't active
+    if (!isActive) {
+        answer.classList.add('active');
+        question.classList.add('active');
+        icon.style.transform = 'rotate(180deg)';
+    }
+}
+
+function highlightText(text, searchTerm) {
+    if (!searchTerm) return text;
+    
+    const regex = new RegExp(`(${searchTerm})`, 'gi');
+    return text.replace(regex, '<span class="highlight">$1</span>');
+}
+
+function hideLoading() {
+    document.getElementById('qa-loading').classList.add('hidden');
+}
+
+function showEmptyState() {
+    document.getElementById('qa-empty').classList.remove('hidden');
+}
+</script>

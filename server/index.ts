@@ -16,7 +16,7 @@ if (!process.env.SINGLESTORE_PASSWORD) {
   throw new Error("SINGLESTORE_PASSWORD environment variable is required");
 }
 
-storage = new SingleStoreStorage() as any;
+storage = new SingleStoreStorage();
 console.log(`🗄️  Using SingleStore database connection`);
 
 // Set EJS as templating engine with layouts
@@ -61,6 +61,93 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
     res.redirect('/admin24');
   }
 };
+
+// QA API routes
+app.get('/api/qa', async (req, res) => {
+  try {
+    const qaItems = await storage.getPublicQAItems();
+    res.json({ success: true, items: qaItems });
+  } catch (error) {
+    console.error('Error getting public QA items:', error);
+    res.status(500).json({ success: false, message: 'خطا در دریافت پرسش و پاسخ‌ها' });
+  }
+});
+
+// Admin QA routes (protected)
+app.get('/api/admin/qa', requireAuth, async (req, res) => {
+  try {
+    const qaItems = await storage.getAllQAItems();
+    res.json({ success: true, items: qaItems });
+  } catch (error) {
+    console.error('Error getting all QA items:', error);
+    res.status(500).json({ success: false, message: 'خطا در دریافت پرسش و پاسخ‌ها' });
+  }
+});
+
+app.post('/api/admin/qa', requireAuth, async (req, res) => {
+  try {
+    const { question, answer, topic, show } = req.body;
+    
+    if (!question || !answer) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'سوال و پاسخ الزامی است' 
+      });
+    }
+
+    const qaData = {
+      question,
+      answer,
+      topic: topic || 'عمومی',
+      show: show !== undefined ? show : 1
+    };
+
+    const newQA = await storage.createQAItem(qaData);
+    res.json({ success: true, item: newQA });
+  } catch (error) {
+    console.error('Error creating QA item:', error);
+    res.status(500).json({ success: false, message: 'خطا در ایجاد پرسش و پاسخ' });
+  }
+});
+
+app.put('/api/admin/qa/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { question, answer, topic, show } = req.body;
+    
+    const qaData: any = {};
+    if (question !== undefined) qaData.question = question;
+    if (answer !== undefined) qaData.answer = answer;
+    if (topic !== undefined) qaData.topic = topic;
+    if (show !== undefined) qaData.show = show;
+
+    const updatedQA = await storage.updateQAItem(id, qaData);
+    if (updatedQA) {
+      res.json({ success: true, item: updatedQA });
+    } else {
+      res.status(404).json({ success: false, message: 'پرسش و پاسخ یافت نشد' });
+    }
+  } catch (error) {
+    console.error('Error updating QA item:', error);
+    res.status(500).json({ success: false, message: 'خطا در به‌روزرسانی پرسش و پاسخ' });
+  }
+});
+
+app.delete('/api/admin/qa/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await storage.deleteQAItem(id);
+    
+    if (deleted) {
+      res.json({ success: true, message: 'پرسش و پاسخ حذف شد' });
+    } else {
+      res.status(404).json({ success: false, message: 'پرسش و پاسخ یافت نشد' });
+    }
+  } catch (error) {
+    console.error('Error deleting QA item:', error);
+    res.status(500).json({ success: false, message: 'خطا در حذف پرسش و پاسخ' });
+  }
+});
 
 // Client login routes
 app.get('/login', (req, res) => {
