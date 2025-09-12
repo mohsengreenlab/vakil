@@ -22,11 +22,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Case review page
-  app.get('/case-review', (req, res) => {
-    res.render('pages/case-review', { 
-      title: 'بررسی پرونده حقوقی - دفتر وکالت پیشرو',
-      page: 'case-review'
+  // QA page
+  app.get('/qa', (req, res) => {
+    res.render('pages/qa', { 
+      title: 'پرسش و پاسخ حقوقی - دفتر وکالت پیشرو',
+      page: 'qa'
     });
   });
 
