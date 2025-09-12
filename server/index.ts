@@ -282,7 +282,7 @@ app.get('/client/portal', requireClientAuth, async (req, res) => {
                 .logout-btn { 
                     position: absolute; 
                     top: 20px; 
-                    right: 20px; 
+                    left: 20px; 
                     background: linear-gradient(135deg, #ef4444, #dc2626);
                     color: white; 
                     border: none; 
