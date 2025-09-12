@@ -194,15 +194,45 @@ async function handleLoginSubmit(e) {
     e.preventDefault();
     
     const form = e.target;
+    const button = form.querySelector('button[type="submit"]');
+    const originalText = button.getAttribute('data-original-text') || button.textContent;
+    
+    // Show loading state
+    button.disabled = true;
+    button.textContent = 'در حال ورود...';
+    
     const formData = new FormData(form);
-    const data = Object.fromEntries(formData);
+    const loginData = {
+        nationalId: formData.get('nationalId'),
+        password: formData.get('password')
+    };
     
-    // Mock login for demonstration
-    showToast('ورود موفقیت‌آمیز بود. به پنل شخصی خود منتقل می‌شوید.', 'success');
-    
-    setTimeout(() => {
-        window.location.href = '/';
-    }, 2000);
+    try {
+        const response = await fetch('/api/client/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(loginData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('ورود موفقیت‌آمیز بود. در حال انتقال...', 'success');
+            
+            // Redirect to portal
+            setTimeout(() => {
+                window.location.href = result.redirectUrl || '/client/portal';
+            }, 1000);
+        } else {
+            showToast(result.message || 'خطا در ورود', 'error');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        showToast('خطای ارتباط با سرور', 'error');
+    } finally {
+        button.disabled = false;
+        button.textContent = originalText;
+    }
 }
 
 function setFormLoading(form, isLoading) {
