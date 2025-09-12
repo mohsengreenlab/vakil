@@ -85,7 +85,7 @@ body {
 
 .nav-link:hover {
     background: var(--primary);
-    color: var(--primary-foreground);
+    color: white;
 }
 
 .nav-link.active {
