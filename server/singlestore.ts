@@ -220,7 +220,7 @@ export class SingleStoreStorage {
           console.log('📋 QA table is empty - will use UUID format');
         }
       } catch (checkError) {
-        console.log('ℹ️ QA table check:', checkError.message);
+        console.log('ℹ️ QA table check:', (checkError as Error).message);
       }
 
       // Insert default admin if not exists
