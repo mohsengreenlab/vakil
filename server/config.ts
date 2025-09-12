@@ -5,6 +5,7 @@ export interface DatabaseConfig {
   username: string;
   password: string;
   sslMode: boolean;
+  sslCertPath?: string;
   connectionLimit: number;
   queueLimit: number;
 }
@@ -59,6 +60,7 @@ export function getConfig(): AppConfig {
       username: getEnvVar('DB_USER'),
       password: getEnvVar('DB_PASSWORD'),
       sslMode: getEnvBoolean('DB_SSL', true),
+      sslCertPath: process.env.DB_SSL_CERT_PATH,
       connectionLimit: getEnvNumber('DB_CONNECTION_LIMIT', 10),
       queueLimit: getEnvNumber('DB_QUEUE_LIMIT', 0)
     }

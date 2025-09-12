@@ -15,6 +15,7 @@ DB_NAME=your_database_name
 DB_USER=your_username
 DB_PASSWORD=your_secure_password
 DB_SSL=true
+DB_SSL_CERT_PATH=/home/lawyer/shared/certs/singlestore.pem
 DB_CONNECTION_LIMIT=10
 DB_QUEUE_LIMIT=0
 
@@ -23,6 +24,8 @@ LOG_LEVEL=info
 
 # Instructions:
 # 1. Replace all placeholder values with your actual SingleStore connection details
-# 2. Generate a strong random session secret (use: openssl rand -base64 32)
-# 3. Set appropriate file permissions: chmod 600 /etc/lawyer/lawyer.env
-# 4. Ensure only root can read this file for security
+# 2. Place your SingleStore SSL certificate (.pem file) at: /home/lawyer/shared/certs/singlestore.pem
+# 3. Generate a strong random session secret (use: openssl rand -base64 32)
+# 4. Set appropriate file permissions: chmod 600 /etc/lawyer/lawyer.env
+# 5. Set certificate permissions: chmod 600 /home/lawyer/shared/certs/singlestore.pem
+# 6. Ensure only root can read the env file and only lawyer user can read the cert file

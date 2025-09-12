@@ -128,9 +128,14 @@ ls -la "$RELEASE_DIR/dist/"
 
 ---
 
-## Step 6: Create Environment Configuration
+## Step 6: Create Environment Configuration and SSL Certificate
 
 ```bash
+# Place your SingleStore SSL certificate
+sudo cp /path/to/your/singlestore.pem /home/lawyer/shared/certs/singlestore.pem
+sudo chown lawyer:lawyer /home/lawyer/shared/certs/singlestore.pem
+sudo chmod 600 /home/lawyer/shared/certs/singlestore.pem
+
 # Copy environment template
 sudo cp "$RELEASE_DIR/deploy/environment.template" "/etc/lawyer/lawyer.env"
 sudo chown root:root "/etc/lawyer/lawyer.env"
@@ -152,6 +157,8 @@ DB_PORT=3333
 DB_NAME=your_database_name
 DB_USER=your_username
 DB_PASSWORD=your_secure_password
+DB_SSL=true
+DB_SSL_CERT_PATH=/home/lawyer/shared/certs/singlestore.pem
 ```
 
 **Generate session secret:**

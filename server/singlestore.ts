@@ -104,7 +104,7 @@ export class SingleStoreStorage {
       this.pool = mysql.createPool({
         uri: connectionString,
         ssl: config.database.sslMode ? {
-          ca: readFileSync('./singlestore-bundle.pem'),
+          ca: config.database.sslCertPath ? readFileSync(config.database.sslCertPath) : readFileSync('./singlestore-bundle.pem'),
           rejectUnauthorized: true
         } : undefined,
         connectionLimit: config.database.connectionLimit,
