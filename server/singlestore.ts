@@ -794,6 +794,17 @@ export class SingleStoreStorage {
   async createQAItem(qaData: InsertQAItem): Promise<QAItem> {
     try {
       const id = this.generateUUID();
+      
+      // Debug the values being inserted
+      console.log('🔍 Debug QA insertion values:', {
+        id: id,
+        question_length: qaData.question?.length || 0,
+        answer_length: qaData.answer?.length || 0,
+        topic_length: qaData.topic?.length || 0,
+        show_value: qaData.show,
+        show_type: typeof qaData.show
+      });
+
       await this.pool.execute(
         'INSERT INTO QA (id, question, answer, topic, `show`) VALUES (?, ?, ?, ?, ?)',
         [id, qaData.question, qaData.answer, qaData.topic, qaData.show]
