@@ -99,7 +99,7 @@ app.post('/api/admin/qa', requireAuth, async (req, res) => {
       question,
       answer,
       topic: topic || 'عمومی',
-      show: show !== undefined ? show : 1
+      show: show !== undefined ? (show ? 1 : 0) : 1
     };
 
     const newQA = await storage.createQAItem(qaData);
@@ -119,7 +119,7 @@ app.put('/api/admin/qa/:id', requireAuth, async (req, res) => {
     if (question !== undefined) qaData.question = question;
     if (answer !== undefined) qaData.answer = answer;
     if (topic !== undefined) qaData.topic = topic;
-    if (show !== undefined) qaData.show = show;
+    if (show !== undefined) qaData.show = show ? 1 : 0;
 
     const updatedQA = await storage.updateQAItem(id, qaData);
     if (updatedQA) {
