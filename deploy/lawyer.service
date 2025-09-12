@@ -4,24 +4,24 @@ After=network.target
 
 [Service]
 Type=simple
-User=pishroapp
-Group=pishroapp
-WorkingDirectory=/srv/pishroapp/current
-EnvironmentFile=/etc/pishroapp/pishroapp.env
+User=lawyer
+Group=lawyer
+WorkingDirectory=/srv/lawyer/current
+EnvironmentFile=/etc/lawyer/lawyer.env
 ExecStart=/usr/bin/node dist/index.js
 Restart=always
 RestartSec=3
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=pishroapp
+SyslogIdentifier=lawyer
 
 # Security settings
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/srv/pishroapp
-RuntimeDirectory=pishroapp
+ReadWritePaths=/srv/lawyer
+RuntimeDirectory=lawyer
 RuntimeDirectoryMode=0755
 
 [Install]

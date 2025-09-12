@@ -12,7 +12,7 @@ This guide provides complete step-by-step instructions for deploying the Persian
 ## Directory Structure
 
 ```
-/srv/pishroapp/
+/srv/lawyer/
 ├── releases/           # Timestamped application releases
 │   ├── 20250912_120000/
 │   └── 20250912_140000/
@@ -24,24 +24,23 @@ This guide provides complete step-by-step instructions for deploying the Persian
 
 ## Configuration Files
 
-- **Environment**: `/etc/pishroapp/pishroapp.env`
-- **Systemd Service**: `/etc/systemd/system/pishroapp.service`
-- **NGINX Config**: `/etc/nginx/sites-available/pishroapp`
+- **Environment**: `/etc/lawyer/lawyer.env`
+- **Systemd Service**: `/etc/systemd/system/lawyer.service`
+- **NGINX Config**: `/etc/nginx/sites-available/lawyer`
 
 ## Deployment Process
 
 ### 1. Prepare Your Domain
 
 Update the domain name in the deployment scripts:
-- Edit `deploy/deploy.sh` and change `DOMAIN="pishro.yourdomain.com"`
-- Edit `deploy/nginx-site.conf` and replace `pishro.yourdomain.com`
+Domain is pre-configured as `lawyer.partnersystems.online`
 
 ### 2. Configure Database Connection
 
 Copy and edit the environment template:
 ```bash
-cp deploy/environment.template /etc/pishroapp/pishroapp.env
-chmod 600 /etc/pishroapp/pishroapp.env
+cp deploy/environment.template /etc/lawyer/lawyer.env
+chmod 600 /etc/lawyer/lawyer.env
 ```
 
 Required environment variables:
@@ -69,13 +68,13 @@ sudo ./deploy/deploy.sh
 
 ```bash
 # Start the application
-sudo systemctl start pishroapp
+sudo systemctl start lawyer
 
 # Start NGINX
 sudo systemctl reload nginx
 
 # Check application status
-sudo systemctl status pishroapp
+sudo systemctl status lawyer
 curl http://localhost:5000/health
 ```
 
@@ -96,24 +95,24 @@ sudo certbot renew --dry-run
 
 ### Check Application Status
 ```bash
-sudo systemctl status pishroapp
-sudo journalctl -u pishroapp -f
+sudo systemctl status lawyer
+sudo journalctl -u lawyer -f
 curl https://your-domain.com/health
 ```
 
 ### View Logs
 ```bash
 # Application logs
-sudo journalctl -u pishroapp -f
+sudo journalctl -u lawyer -f
 
 # NGINX logs
-sudo tail -f /var/log/nginx/pishroapp.access.log
-sudo tail -f /var/log/nginx/pishroapp.error.log
+sudo tail -f /var/log/nginx/lawyer.access.log
+sudo tail -f /var/log/nginx/lawyer.error.log
 ```
 
 ### Restart Application
 ```bash
-sudo systemctl restart pishroapp
+sudo systemctl restart lawyer
 ```
 
 ## Rollback Procedure
@@ -136,19 +135,19 @@ The script will:
 Set up automatic health monitoring:
 ```bash
 # Copy health monitor script
-sudo cp deploy/health-monitor.sh /srv/pishroapp/shared/
-sudo chmod +x /srv/pishroapp/shared/health-monitor.sh
+sudo cp deploy/health-monitor.sh /srv/lawyer/shared/
+sudo chmod +x /srv/lawyer/shared/health-monitor.sh
 
-# Add to crontab (check every 5 minutes)
-echo "*/5 * * * * /srv/pishroapp/shared/health-monitor.sh" | sudo crontab -
+# Add to crontab safely (check every 5 minutes)
+(sudo crontab -l 2>/dev/null | grep -v "/srv/lawyer/shared/health-monitor.sh"; echo "*/5 * * * * /srv/lawyer/shared/health-monitor.sh") | sudo crontab -
 ```
 
 ## Security Considerations
 
-1. **Database**: Environment variables stored securely in `/etc/pishroapp/pishroapp.env` (600 permissions)
+1. **Database**: Environment variables stored securely in `/etc/lawyer/lawyer.env` (600 permissions)
 2. **SSL/TLS**: Automatic HTTPS with Let's Encrypt certificates
 3. **Firewall**: Only ports 80 and 443 exposed externally
-4. **Application**: Runs as dedicated `pishroapp` user with limited privileges
+4. **Application**: Runs as dedicated `lawyer` user with limited privileges
 5. **Isolation**: Complete separation from other applications on ports 3001-3007
 
 ## Troubleshooting
@@ -156,19 +155,19 @@ echo "*/5 * * * * /srv/pishroapp/shared/health-monitor.sh" | sudo crontab -
 ### Service Won't Start
 ```bash
 # Check detailed logs
-sudo journalctl -u pishroapp -xe
+sudo journalctl -u lawyer -xe
 
 # Check environment file
-sudo cat /etc/pishroapp/pishroapp.env
+sudo cat /etc/lawyer/lawyer.env
 
 # Test configuration
-cd /srv/pishroapp/current && sudo -u pishroapp node dist/index.js
+cd /srv/lawyer/current && sudo -u lawyer node dist/index.js
 ```
 
 ### Database Connection Issues
 ```bash
 # Verify environment variables
-sudo grep DB_ /etc/pishroapp/pishroapp.env
+sudo grep DB_ /etc/lawyer/lawyer.env
 
 # Test database connectivity
 # Update connection details and test from application directory
@@ -195,12 +194,12 @@ To update database settings without code changes:
 
 1. Edit environment file:
    ```bash
-   sudo nano /etc/pishroapp/pishroapp.env
+   sudo nano /etc/lawyer/lawyer.env
    ```
 
 2. Restart application:
    ```bash
-   sudo systemctl restart pishroapp
+   sudo systemctl restart lawyer
    ```
 
 3. Verify health:
@@ -214,12 +213,12 @@ To update database settings without code changes:
 - **Log Rotation**: Handled by systemd journal
 - **SSL Renewal**: Automatic via Certbot
 - **Updates**: Use deployment script for new releases
-- **Backups**: Backup `/etc/pishroapp/` and application data
+- **Backups**: Backup `/etc/lawyer/` and application data
 
 ## Support
 
 For issues with this deployment:
-1. Check application logs: `sudo journalctl -u pishroapp -f`
-2. Check NGINX logs: `sudo tail -f /var/log/nginx/pishroapp.error.log`
+1. Check application logs: `sudo journalctl -u lawyer -f`
+2. Check NGINX logs: `sudo tail -f /var/log/nginx/lawyer.error.log`
 3. Verify health endpoint: `curl https://your-domain.com/health`
 4. Use rollback script if needed: `sudo ./deploy/rollback.sh`

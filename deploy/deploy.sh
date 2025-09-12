@@ -5,11 +5,11 @@ set -e
 # Run this script to deploy the application to your Ubuntu VPS
 
 # Configuration
-APP_NAME="pishroapp"
-APP_USER="pishroapp"
-APP_DIR="/srv/pishroapp"
-DOMAIN="pishro.yourdomain.com"  # CHANGE THIS TO YOUR DOMAIN
-SERVICE_NAME="pishroapp"
+APP_NAME="lawyer"
+APP_USER="lawyer"
+APP_DIR="/srv/lawyer"
+DOMAIN="lawyer.partnersystems.online"
+SERVICE_NAME="lawyer"
 
 # Colors for output
 RED='\033[0;31m'
@@ -38,10 +38,10 @@ fi
 # Step 1: System preparation and user creation
 log "Step 1: Creating system user and directories..."
 
-# Create application user
+# Create application user (system user without sudo for security)
 if ! id "$APP_USER" &>/dev/null; then
-    useradd --system --shell /bin/bash --home-dir "$APP_DIR" --create-home "$APP_USER"
-    log "Created user: $APP_USER"
+    useradd --system --shell /usr/sbin/nologin --home-dir "$APP_DIR" --create-home "$APP_USER"
+    log "Created system user: $APP_USER"
 else
     log "User $APP_USER already exists"
 fi
@@ -82,6 +82,12 @@ fi
 sudo -u "$APP_USER" mkdir -p "$RELEASE_DIR"
 sudo -u "$APP_USER" cp -r ./* "$RELEASE_DIR/"
 
+# Copy health monitor script to shared directory
+mkdir -p "$APP_DIR/shared"
+cp "./deploy/health-monitor.sh" "$APP_DIR/shared/health-monitor.sh"
+chmod +x "$APP_DIR/shared/health-monitor.sh"
+chown "$APP_USER:$APP_USER" "$APP_DIR/shared/health-monitor.sh"
+
 # Install dependencies and build
 cd "$RELEASE_DIR"
 sudo -u "$APP_USER" npm ci
@@ -115,7 +121,7 @@ fi
 # Step 5: Systemd service setup
 log "Step 5: Setting up systemd service..."
 
-cp "./deploy/pishroapp.service" "/etc/systemd/system/$SERVICE_NAME.service"
+cp "./deploy/lawyer.service" "/etc/systemd/system/$SERVICE_NAME.service"
 systemctl daemon-reload
 
 # Create symlink to current release
@@ -130,7 +136,7 @@ if ! command -v nginx &> /dev/null; then
 fi
 
 # Copy NGINX configuration (HTTP only initially)
-sed "s/pishro.yourdomain.com/$DOMAIN/g" "./deploy/nginx-site.conf" > "/etc/nginx/sites-available/$APP_NAME"
+sed "s/DOMAIN_PLACEHOLDER/$DOMAIN/g" "./deploy/nginx-site.conf" > "/etc/nginx/sites-available/$APP_NAME"
 ln -sf "/etc/nginx/sites-available/$APP_NAME" "/etc/nginx/sites-enabled/"
 
 # Test NGINX configuration

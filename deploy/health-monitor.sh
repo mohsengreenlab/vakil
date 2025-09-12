@@ -3,15 +3,15 @@
 # Persian Legal Firm - Health Monitor Script
 # Add this to cron for continuous health monitoring
 # Example cron entry (check every 5 minutes):
-# */5 * * * * /srv/pishroapp/shared/health-monitor.sh
+# */5 * * * * /srv/lawyer/shared/health-monitor.sh
 
 # Configuration
-APP_NAME="pishroapp"
-SERVICE_NAME="pishroapp"
+APP_NAME="lawyer"
+SERVICE_NAME="lawyer"
 HEALTH_URL="http://localhost:5000/health"
-LOG_FILE="/var/log/pishroapp-health.log"
+LOG_FILE="/var/log/lawyer-health.log"
 MAX_FAILURES=3
-FAILURE_COUNT_FILE="/tmp/pishroapp-failures"
+FAILURE_COUNT_FILE="/tmp/lawyer-failures"
 
 # Colors for output
 RED='\033[0;31m'
@@ -85,7 +85,7 @@ else
 fi
 
 # Check disk space
-disk_usage=$(df /srv/pishroapp | awk 'NR==2 {print $5}' | sed 's/%//')
+disk_usage=$(df /srv/lawyer | awk 'NR==2 {print $5}' | sed 's/%//')
 if [ "$disk_usage" -gt 80 ]; then
     log "${YELLOW}[WARNING] Disk usage high: ${disk_usage}%${NC}"
 fi

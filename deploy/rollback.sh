@@ -5,10 +5,10 @@ set -e
 # Use this script to rollback to a previous deployment
 
 # Configuration
-APP_NAME="pishroapp"
-APP_USER="pishroapp"
-APP_DIR="/srv/pishroapp"
-SERVICE_NAME="pishroapp"
+APP_NAME="lawyer"
+APP_USER="lawyer"
+APP_DIR="/srv/lawyer"
+SERVICE_NAME="lawyer"
 
 # Colors for output
 RED='\033[0;31m'
