@@ -276,14 +276,28 @@ app.get('/client/portal', requireClientAuth, async (req, res) => {
             <style>
                 body { font-family: Tahoma; margin: 20px; background: #f5f5f5; direction: rtl; }
                 .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; }
-                .header { background: #2563eb; color: white; padding: 20px; margin-bottom: 20px; }
+                .header { background: #2563eb; color: white; padding: 20px; margin-bottom: 20px; position: relative; }
                 .case { border: 1px solid #ddd; padding: 15px; margin: 10px 0; }
                 .status { background: #f3e8ff; color: #7c3aed; padding: 5px 10px; border-radius: 15px; font-size: 12px; }
+                .logout-btn { 
+                    position: absolute; 
+                    top: 20px; 
+                    left: 20px; 
+                    background: #dc2626; 
+                    color: white; 
+                    border: none; 
+                    padding: 10px 20px; 
+                    border-radius: 5px; 
+                    cursor: pointer; 
+                    font-family: Tahoma;
+                }
+                .logout-btn:hover { background: #b91c1c; }
             </style>
         </head>
         <body>
             <div class="container">
                 <div class="header">
+                    <button class="logout-btn" onclick="logout()">خروج</button>
                     <h1>پورتال موکل - دفتر وکالت پیشرو</h1>
                     <p>خوش آمدید، ${client.first_name} ${client.last_name}</p>
                     <p>کد ملی: ${client.national_id}</p>
@@ -294,6 +308,30 @@ app.get('/client/portal', requireClientAuth, async (req, res) => {
                 <p>تلفن: ۰۲۱-۸۸۷۷۶۶۵۵</p>
                 <p>ایمیل: info@pishrolawfirm.ir</p>
             </div>
+            <script>
+                function logout() {
+                    if (confirm('آیا مطمئن هستید که می‌خواهید خارج شوید؟')) {
+                        fetch('/api/client/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.href = '/';
+                            } else {
+                                alert('خطا در خروج: ' + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('خطا در خروج');
+                        });
+                    }
+                }
+            </script>
         </body>
         </html>
       `;
