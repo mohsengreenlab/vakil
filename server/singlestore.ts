@@ -207,20 +207,20 @@ export class SingleStoreStorage {
         )
       `);
 
-      // Defensive migration: Fix existing QA table schema if needed
+      // Check existing QA table structure to understand ID type
       try {
-        console.log('🔧 Applying defensive QA table schema migration...');
-        await connection.execute(`
-          ALTER TABLE QA 
-          MODIFY COLUMN id VARCHAR(36) NOT NULL,
-          MODIFY COLUMN question TEXT NOT NULL,
-          MODIFY COLUMN answer TEXT NOT NULL,
-          MODIFY COLUMN topic VARCHAR(255) NOT NULL,
-          MODIFY COLUMN \`show\` TINYINT(1) NOT NULL DEFAULT 1
-        `);
-        console.log('✅ QA table schema migration completed successfully');
-      } catch (migrationError) {
-        console.log('ℹ️ QA table schema migration skipped (table already has correct schema or contains data)');
+        const [existingRows] = await connection.execute('SELECT * FROM QA LIMIT 1');
+        console.log('🔍 Existing QA table sample:', existingRows);
+        
+        // Check if there are any existing rows to understand the ID format
+        if ((existingRows as any[]).length > 0) {
+          const sampleId = (existingRows as any[])[0].id;
+          console.log('📋 Sample QA ID format:', typeof sampleId, sampleId);
+        } else {
+          console.log('📋 QA table is empty - will use UUID format');
+        }
+      } catch (checkError) {
+        console.log('ℹ️ QA table check:', checkError.message);
       }
 
       // Insert default admin if not exists
@@ -809,7 +809,8 @@ export class SingleStoreStorage {
 
   async createQAItem(qaData: InsertQAItem): Promise<QAItem> {
     try {
-      const id = this.generateUUID();
+      // Use numeric ID instead of UUID for compatibility with existing INT primary key
+      const id = Date.now().toString();
       
 
       await this.pool.execute(
