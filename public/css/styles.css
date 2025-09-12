@@ -84,8 +84,8 @@ body {
 }
 
 .nav-link:hover {
-    background: var(--primary);
-    color: white;
+    background: var(--primary) !important;
+    color: white !important;
 }
 
 .nav-link.active {
