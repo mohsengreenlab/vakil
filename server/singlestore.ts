@@ -207,6 +207,22 @@ export class SingleStoreStorage {
         )
       `);
 
+      // Defensive migration: Fix existing QA table schema if needed
+      try {
+        console.log('🔧 Applying defensive QA table schema migration...');
+        await connection.execute(`
+          ALTER TABLE QA 
+          MODIFY COLUMN id VARCHAR(36) NOT NULL,
+          MODIFY COLUMN question TEXT NOT NULL,
+          MODIFY COLUMN answer TEXT NOT NULL,
+          MODIFY COLUMN topic VARCHAR(255) NOT NULL,
+          MODIFY COLUMN \`show\` TINYINT(1) NOT NULL DEFAULT 1
+        `);
+        console.log('✅ QA table schema migration completed successfully');
+      } catch (migrationError) {
+        console.log('ℹ️ QA table schema migration skipped (table already has correct schema or contains data)');
+      }
+
       // Insert default admin if not exists
       const [adminExists] = await connection.execute(
         'SELECT COUNT(*) as count FROM admins WHERE username = ?',
@@ -795,15 +811,6 @@ export class SingleStoreStorage {
     try {
       const id = this.generateUUID();
       
-      // Debug the values being inserted
-      console.log('🔍 Debug QA insertion values:', {
-        id: id,
-        question_length: qaData.question?.length || 0,
-        answer_length: qaData.answer?.length || 0,
-        topic_length: qaData.topic?.length || 0,
-        show_value: qaData.show,
-        show_type: typeof qaData.show
-      });
 
       await this.pool.execute(
         'INSERT INTO QA (id, question, answer, topic, `show`) VALUES (?, ?, ?, ?, ?)',

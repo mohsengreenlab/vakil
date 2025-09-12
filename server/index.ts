@@ -102,14 +102,6 @@ app.post('/api/admin/qa', requireAuth, async (req, res) => {
       show: show !== undefined ? (show ? 1 : 0) : 1
     };
 
-    // Debug logging
-    console.log('Creating QA with data:', {
-      question: question?.length ? `${question.substring(0, 50)}... (length: ${question.length})` : question,
-      answer: answer?.length ? `${answer.substring(0, 50)}... (length: ${answer.length})` : answer,
-      topic: topic?.length ? `${topic.substring(0, 20)}... (length: ${topic.length})` : topic,
-      show: qaData.show,
-      showType: typeof qaData.show
-    });
 
     const newQA = await storage.createQAItem(qaData);
     res.json({ success: true, item: newQA });
