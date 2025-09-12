@@ -1,0 +1,1 @@
+When importing from Github, Replit is not allowed to make an internal database/storage for this web app. The database for this web app is in SingleStore with connection details saved in the accoutn secrets. Use that external database for this web app.
