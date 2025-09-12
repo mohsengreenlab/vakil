@@ -51,15 +51,25 @@ mkdir -p "$APP_DIR"/{releases,shared/{certs,logs}}
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 log "Created directory structure in $APP_DIR"
 
-# Step 2: Install Node.js 20 LTS
-log "Step 2: Installing Node.js 20 LTS..."
+# Step 2: Install isolated Node.js 20 LTS via nvm 
+log "Step 2: Installing isolated Node.js 20 LTS via nvm..."
 
-if ! command -v node &> /dev/null || [[ $(node -v) != v20* ]]; then
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-    apt-get install -y nodejs
-    log "Installed Node.js $(node -v)"
+# Install nvm for the application user if not present
+if [ ! -d "$APP_DIR/.nvm" ]; then
+    sudo -u "$APP_USER" bash -c "
+        export HOME=\"$APP_DIR\"
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+        export NVM_DIR=\"$APP_DIR/.nvm\"
+        [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\"
+        nvm install 20
+        nvm use 20
+        nvm alias default 20
+    "
+    NODE_PATH="$APP_DIR/.nvm/versions/node/$(ls $APP_DIR/.nvm/versions/node/ | grep v20 | head -1)/bin/node"
+    log "Installed isolated Node.js via nvm at $NODE_PATH"
 else
-    log "Node.js 20 is already installed: $(node -v)"
+    NODE_PATH="$APP_DIR/.nvm/versions/node/$(ls $APP_DIR/.nvm/versions/node/ | grep v20 | head -1)/bin/node"
+    log "Using existing isolated Node.js at $NODE_PATH"
 fi
 
 # Install build tools
@@ -88,10 +98,16 @@ cp "./deploy/health-monitor.sh" "$APP_DIR/shared/health-monitor.sh"
 chmod +x "$APP_DIR/shared/health-monitor.sh"
 chown "$APP_USER:$APP_USER" "$APP_DIR/shared/health-monitor.sh"
 
-# Install dependencies and build
+# Install dependencies and build using isolated Node.js
 cd "$RELEASE_DIR"
-sudo -u "$APP_USER" npm ci
-sudo -u "$APP_USER" npm run build
+sudo -u "$APP_USER" bash -c "
+    export HOME=\"$APP_DIR\"
+    export NVM_DIR=\"$APP_DIR/.nvm\"
+    [ -s \"\$NVM_DIR/nvm.sh\" ] && \. \"\$NVM_DIR/nvm.sh\"
+    nvm use 20
+    npm ci
+    npm run build
+"
 
 # Copy SSL certificate
 if [ -f "./singlestore-bundle.pem" ]; then

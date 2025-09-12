@@ -8,7 +8,7 @@
 # Configuration
 APP_NAME="lawyer"
 SERVICE_NAME="lawyer"
-HEALTH_URL="http://localhost:5000/health"
+HEALTH_URL="http://localhost:3008/health"
 LOG_FILE="/var/log/lawyer-health.log"
 MAX_FAILURES=3
 FAILURE_COUNT_FILE="/tmp/lawyer-failures"

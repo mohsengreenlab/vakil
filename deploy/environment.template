@@ -3,17 +3,17 @@
 
 # Application Configuration (REQUIRED)
 NODE_ENV=production
-PORT=5000
-SESSION_SECRET=hciuoehruihfhiseoujfGETGEARGTYJTDyhaneijrvgfnsrijntghstrHSRTHRSTHRGTNHDT
+PORT=3008
+SESSION_SECRET=GENERATE_STRONG_RANDOM_SECRET_HERE
 TRUST_PROXY=true
 SECURE_COOKIES=true
 
 # Database Configuration - SingleStore
-DB_HOST=svc-3482219c-a389-4079-b18b-d50662524e8a-shared-dml.aws-virginia-6.svc.singlestore.com
+DB_HOST=your-singlestore-host.com
 DB_PORT=3333
-DB_NAME=db_dew_f1c43
-DB_USER=dew-7b1a1
-DB_PASSWORD=*z0L54:inbeiaYG!Dy68sOr5iW
+DB_NAME=your_database_name
+DB_USER=your_username
+DB_PASSWORD=your_secure_password
 DB_SSL=true
 DB_CONNECTION_LIMIT=10
 DB_QUEUE_LIMIT=0

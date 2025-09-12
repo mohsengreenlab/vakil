@@ -8,7 +8,9 @@ User=lawyer
 Group=lawyer
 WorkingDirectory=/srv/lawyer/current
 EnvironmentFile=/etc/lawyer/lawyer.env
-ExecStart=/usr/bin/node dist/index.js
+ExecStart=/bin/bash -lc 'export HOME=/srv/lawyer; export NVM_DIR=/srv/lawyer/.nvm; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; nvm use 20; exec node dist/index.js'
+Environment="HOME=/srv/lawyer"
+Environment="NVM_DIR=/srv/lawyer/.nvm"
 Restart=always
 RestartSec=3
 StandardOutput=journal

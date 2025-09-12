@@ -75,7 +75,7 @@ sudo systemctl reload nginx
 
 # Check application status
 sudo systemctl status lawyer
-curl http://localhost:5000/health
+curl http://localhost:3008/health
 ```
 
 ### 5. Setup SSL Certificate
@@ -186,7 +186,7 @@ sudo nginx -t
 ```
 
 ### Port Conflicts
-The application uses port 5000 internally (isolated to localhost). This should not conflict with your existing applications on ports 8000, 3001-3007.
+The application uses port 3008 internally (isolated to localhost). This should not conflict with your existing applications on ports 8000, 3001-3007.
 
 ## Updating Database Configuration
 

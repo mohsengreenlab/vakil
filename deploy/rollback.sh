@@ -120,7 +120,7 @@ fi
 
 # Test health endpoint
 log "Testing application health..."
-if curl -f -s http://localhost:5000/health > /dev/null; then
+if curl -f -s http://localhost:3008/health > /dev/null; then
     log "Health check passed"
 else
     warn "Health check failed. Application may not be responding correctly."
@@ -132,5 +132,5 @@ log "Current release: $target_release"
 echo
 log "Verify the rollback:"
 echo "  systemctl status $SERVICE_NAME"
-echo "  curl http://localhost:5000/health"
+echo "  curl http://localhost:3008/health"
 echo "  journalctl -u $SERVICE_NAME -f"
