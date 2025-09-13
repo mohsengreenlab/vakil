@@ -563,10 +563,10 @@ export class SingleStoreStorage {
         clientId = this.generateClientId();
       } while (!(await this.isClientIdUnique(clientId)));
 
-      // Hash password if provided
-      let hashedPassword = null;
+      // Store password as plain text if provided
+      let plainPassword = null;
       if (password) {
-        hashedPassword = await bcrypt.hash(password, 10);
+        plainPassword = password;
       }
 
       // First, insert into national_id_registry to enforce global uniqueness
@@ -578,7 +578,7 @@ export class SingleStoreStorage {
       // Then, insert into clients table with password
       await connection.execute(
         'INSERT INTO clients (client_id, first_name, last_name, national_id, phone_numbers, password) VALUES (?, ?, ?, ?, ?, ?)',
-        [clientId, firstName, lastName, nationalId, JSON.stringify(phoneNumbers), hashedPassword]
+        [clientId, firstName, lastName, nationalId, JSON.stringify(phoneNumbers), plainPassword]
       );
 
       await connection.commit();
@@ -589,7 +589,7 @@ export class SingleStoreStorage {
         last_name: lastName,
         national_id: nationalId,
         phone_numbers: JSON.stringify(phoneNumbers),
-        password: hashedPassword || undefined,
+        password: plainPassword || undefined,
         created_at: new Date()
       };
     } catch (error) {
