@@ -1,22 +1,25 @@
 <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
     <div class="container mx-auto px-4">
-        <div class="flex h-16 items-center justify-between">
+        <!-- Desktop Layout -->
+        <div class="hidden sm:flex h-16 items-center justify-between">
             <!-- Logo and Persistent Button -->
             <div class="flex items-center space-x-reverse space-x-4">
                 <div class="flex items-center space-x-reverse space-x-2">
                     <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                         <span class="text-primary-foreground font-bold text-lg">ق</span>
                     </div>
-                    <span class="font-bold text-xl truncate max-w-[8rem] sm:max-w-none">دفتر وکالت پیشرو</span>
+                    <span class="font-bold text-xl">دفتر وکالت پیشرو</span>
                 </div>
                 
-                <!-- Persistent "پیگیری پرونده" Button - Always Visible -->
+                <!-- Persistent "پیگیری پرونده" Button - Desktop -->
                 <a href="/client-login" 
-                   class="bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium transition-colors flex-shrink-0 whitespace-nowrap"
+                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0 whitespace-nowrap"
+                   style="background-color: rgb(250,181,5); color: rgb(56,66,82);"
+                   onmouseover="this.style.backgroundColor='rgb(230,161,0)'"
+                   onmouseout="this.style.backgroundColor='rgb(250,181,5)'"
                    data-testid="button-track-case"
                    aria-label="پیگیری پرونده">
-                    <span class="hidden sm:inline">پیگیری پرونده</span>
-                    <span class="sm:hidden">پیگیری</span>
+                    پیگیری پرونده
                 </a>
             </div>
             
@@ -29,7 +32,7 @@
                 <a href="/client-login" class="nav-link text-sm font-medium transition-colors <%= page === 'client-login' ? 'active' : '' %>">ورود موکلان</a>
             </nav>
             
-            <!-- Actions -->
+            <!-- Desktop Actions -->
             <div class="flex items-center space-x-reverse space-x-4">
                 <!-- Dark Mode Toggle -->
                 <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-muted transition-colors" aria-label="تغییر حالت تاریک">
@@ -40,13 +43,54 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                     </svg>
                 </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Layout -->
+        <div class="sm:hidden py-3">
+            <div class="flex flex-col space-y-3">
+                <!-- Logo Row -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-reverse space-x-2">
+                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <span class="text-primary-foreground font-bold text-lg">ق</span>
+                        </div>
+                        <span class="font-bold text-xl">دفتر وکالت پیشرو</span>
+                    </div>
+                    
+                    <!-- Actions on same row for mobile -->
+                    <div class="flex items-center space-x-reverse space-x-4">
+                        <!-- Dark Mode Toggle -->
+                        <button onclick="toggleDarkMode()" class="p-2 rounded-lg hover:bg-muted transition-colors" aria-label="تغییر حالت تاریک">
+                            <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                            </svg>
+                            <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Mobile Menu Button -->
+                        <button onclick="toggleMobileMenu()" class="p-2 rounded-lg hover:bg-muted transition-colors" aria-label="منوی موبایل">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
                 
-                <!-- Mobile Menu Button -->
-                <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-lg hover:bg-muted transition-colors" aria-label="منوی موبایل">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
+                <!-- Button Row - Under Logo on Mobile -->
+                <div class="flex justify-start">
+                    <a href="/client-login" 
+                       class="px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                       style="background-color: rgb(250,181,5); color: rgb(56,66,82);"
+                       onmouseover="this.style.backgroundColor='rgb(230,161,0)'"
+                       onmouseout="this.style.backgroundColor='rgb(250,181,5)'"
+                       data-testid="button-track-case-mobile"
+                       aria-label="پیگیری پرونده">
+                        پیگیری پرونده
+                    </a>
+                </div>
             </div>
         </div>
     </div>
