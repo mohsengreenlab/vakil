@@ -384,6 +384,126 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Case Event Management Modal -->
+            <div id="case-events-modal" class="fixed inset-0 bg-black/50 hidden z-50">
+                <div class="flex items-center justify-center min-h-screen p-4">
+                    <div class="bg-card rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <div class="border-b border-border p-6">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-2xl font-bold">مدیریت رویدادهای پرونده</h2>
+                                <button onclick="closeCaseEventsModal()" class="text-muted-foreground hover:text-foreground">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="mt-2 text-muted-foreground" id="case-events-case-info">
+                                <!-- Case info will be displayed here -->
+                            </div>
+                        </div>
+
+                        <div class="p-6">
+                            <!-- Add Event Form -->
+                            <div class="mb-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold">افزودن رویداد جدید</h3>
+                                    <button onclick="toggleAddEventForm()" class="btn-primary btn-sm" id="toggle-add-event-btn" data-testid="button-toggle-add-event">
+                                        + افزودن رویداد
+                                    </button>
+                                </div>
+                                
+                                <div id="add-event-form" class="card p-4 bg-muted/30 hidden">
+                                    <form id="eventForm" class="grid grid-cols-1 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium mb-2">نوع رویداد <span class="text-red-500">*</span></label>
+                                            <select name="eventType" required class="input-field" data-testid="select-event-type">
+                                                <option value="">انتخاب نوع رویداد</option>
+                                                <option value="جلسه دادگاه">جلسه دادگاه</option>
+                                                <option value="مشاوره">مشاوره</option>
+                                                <option value="تنظیم لایحه">تنظیم لایحه</option>
+                                                <option value="ارسال مدارک">ارسال مدارک</option>
+                                                <option value="دریافت مدارک">دریافت مدارک</option>
+                                                <option value="پیگیری">پیگیری</option>
+                                                <option value="تماس تلفنی">تماس تلفنی</option>
+                                                <option value="سایر">سایر</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium mb-2">جزئیات رویداد</label>
+                                            <textarea name="details" rows="3" class="input-field" placeholder="شرح جزئیات رویداد..." data-testid="textarea-event-details"></textarea>
+                                        </div>
+                                        <div class="flex gap-4">
+                                            <button type="submit" class="btn-primary" data-testid="button-save-event">ذخیره رویداد</button>
+                                            <button type="button" onclick="cancelAddEvent()" class="btn-secondary" data-testid="button-cancel-add-event">لغو</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Events List -->
+                            <div>
+                                <h3 class="text-lg font-semibold mb-4">لیست رویدادهای پرونده</h3>
+                                <div id="case-events-list" class="space-y-4">
+                                    <!-- Events will be loaded here -->
+                                </div>
+                                <div id="case-events-loading" class="text-center py-8 text-muted-foreground hidden">
+                                    در حال بارگذاری...
+                                </div>
+                                <div id="case-events-empty" class="text-center py-8 text-muted-foreground hidden">
+                                    هیچ رویدادی برای این پرونده ثبت نشده است
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Event Modal -->
+            <div id="edit-event-modal" class="fixed inset-0 bg-black/50 hidden z-50">
+                <div class="flex items-center justify-center min-h-screen p-4">
+                    <div class="bg-card rounded-lg max-w-lg w-full">
+                        <div class="border-b border-border p-6">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-xl font-bold">ویرایش رویداد</h2>
+                                <button onclick="closeEditEventModal()" class="text-muted-foreground hover:text-foreground">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="p-6">
+                            <form id="editEventForm" class="grid grid-cols-1 gap-4">
+                                <input type="hidden" name="eventId" id="edit-event-id">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">نوع رویداد <span class="text-red-500">*</span></label>
+                                    <select name="eventType" required class="input-field" id="edit-event-type" data-testid="select-edit-event-type">
+                                        <option value="">انتخاب نوع رویداد</option>
+                                        <option value="جلسه دادگاه">جلسه دادگاه</option>
+                                        <option value="مشاوره">مشاوره</option>
+                                        <option value="تنظیم لایحه">تنظیم لایحه</option>
+                                        <option value="ارسال مدارک">ارسال مدارک</option>
+                                        <option value="دریافت مدارک">دریافت مدارک</option>
+                                        <option value="پیگیری">پیگیری</option>
+                                        <option value="تماس تلفنی">تماس تلفنی</option>
+                                        <option value="سایر">سایر</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">جزئیات رویداد</label>
+                                    <textarea name="details" rows="3" class="input-field" placeholder="شرح جزئیات رویداد..." id="edit-event-details" data-testid="textarea-edit-event-details"></textarea>
+                                </div>
+                                <div class="flex gap-4">
+                                    <button type="submit" class="btn-primary" data-testid="button-update-event">بروزرسانی</button>
+                                    <button type="button" onclick="closeEditEventModal()" class="btn-secondary" data-testid="button-cancel-edit-event">لغو</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Contact Messages Tab -->
