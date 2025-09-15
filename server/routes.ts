@@ -232,11 +232,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add a new event to a case (admin functionality - could be used later)
+  // ADMIN: Get all cases (needed by admin.ejs)
+  app.get('/api/admin/cases', requireAuth, async (req, res) => {
+    try {
+      const cases = await storage.getAllLegalCases();
+      res.json({ success: true, cases });
+    } catch (error) {
+      console.error('Error fetching all cases for admin:', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت پرونده‌ها' });
+    }
+  });
+
+  // Add a new event to a case (admin functionality)
   app.post('/api/cases/:caseId/events', requireAuth, async (req, res) => {
     try {
       const { caseId } = req.params;
-      const { eventType, details } = req.body;
+      
+      // Validate input with Zod schema
+      const validatedData = insertCaseEventSchema.parse(req.body);
 
       // Verify case exists
       const case_ = await storage.getCase(caseId);
@@ -246,8 +259,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const newEvent = await storage.createCaseEvent({
         caseId,
-        eventType,
-        details
+        eventType: validatedData.eventType,
+        details: validatedData.details
       });
 
       res.json({ 
@@ -255,8 +268,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         event: newEvent 
       });
     } catch (error) {
-      console.error('Error creating case event:', error);
-      res.status(500).json({ success: false, message: 'خطا در ایجاد رویداد پرونده' });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ success: false, errors: error.errors, message: 'داده‌های ورودی نامعتبر است' });
+      } else {
+        console.error('Error creating case event:', error);
+        res.status(500).json({ success: false, message: 'خطا در ایجاد رویداد پرونده' });
+      }
     }
   });
 
@@ -288,7 +305,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/admin/cases/:caseId/events/:eventId', requireAuth, async (req, res) => {
     try {
       const { caseId, eventId } = req.params;
-      const { eventType, details } = req.body;
 
       // Verify case exists
       const case_ = await storage.getCase(caseId);
@@ -296,15 +312,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ success: false, message: 'پرونده یافت نشد' });
       }
 
-      // Validate input
-      if (!eventType && details === undefined) {
+      // Validate input with Zod schema (partial for updates)
+      const partialEventSchema = insertCaseEventSchema.partial();
+      const validatedData = partialEventSchema.parse(req.body);
+
+      // Ensure at least one field is provided
+      if (!validatedData.eventType && validatedData.details === undefined) {
         return res.status(400).json({ success: false, message: 'حداقل یک فیلد برای بروزرسانی الزامی است' });
       }
 
-      const updatedEvent = await storage.updateCaseEvent(eventId, {
-        eventType,
-        details
-      });
+      const updatedEvent = await storage.updateCaseEvent(eventId, validatedData);
 
       if (!updatedEvent) {
         return res.status(404).json({ success: false, message: 'رویداد یافت نشد' });
@@ -316,8 +333,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         event: updatedEvent 
       });
     } catch (error) {
-      console.error('Error updating case event:', error);
-      res.status(500).json({ success: false, message: 'خطا در بروزرسانی رویداد پرونده' });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ success: false, errors: error.errors, message: 'داده‌های ورودی نامعتبر است' });
+      } else {
+        console.error('Error updating case event:', error);
+        res.status(500).json({ success: false, message: 'خطا در بروزرسانی رویداد پرونده' });
+      }
     }
   });
 

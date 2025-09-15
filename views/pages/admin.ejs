@@ -1138,7 +1138,57 @@ function clearClientsFilter() {
     clearClientsSearch();
 }
 
-// renderCasesTable function moved to main.js to avoid conflicts
+// Cases table rendering
+function renderCasesTable(cases) {
+    const tableBody = document.getElementById('cases-table-body');
+    
+    if (!cases || cases.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">هیچ پرونده‌ای یافت نشد</td></tr>';
+        return;
+    }
+    
+    tableBody.innerHTML = cases.map(caseItem => {
+        const caseId = caseItem.case_id || caseItem.caseId;
+        const clientId = caseItem.client_id || caseItem.clientId;
+        const status = caseItem.last_case_status || caseItem.status;
+        const createdAt = caseItem.case_creation_date || caseItem.caseCreationDate || caseItem.created_at;
+        
+        const formattedDate = createdAt ? 
+            new Date(createdAt).toLocaleDateString('fa-IR') : 'نامشخص';
+            
+        const statusText = getStatusText(status);
+        
+        return `
+            <tr data-testid="case-row-${caseId}">
+                <td class="font-medium">${caseId}</td>
+                <td>${clientId}</td>
+                <td>موکل ${clientId}</td>
+                <td>
+                    <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                        ${statusText}
+                    </span>
+                </td>
+                <td>${formattedDate}</td>
+                <td>
+                    <div class="flex gap-2">
+                        <button 
+                            onclick="viewCaseDetails('${caseId}')" 
+                            class="text-primary hover:underline text-sm" 
+                            data-testid="button-view-details-${caseId}">
+                            نمایش جزئیات
+                        </button>
+                        <button 
+                            onclick="updateCaseStatus('${caseId}', prompt('وضعیت جدید را وارد کنید:'))" 
+                            class="text-accent hover:underline text-sm" 
+                            data-testid="button-update-status-${caseId}">
+                            تغییر وضعیت
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
 
 // Form submission handlers
 document.getElementById('clientForm').addEventListener('submit', async function(e) {
@@ -1476,6 +1526,263 @@ function setupQASearch() {
     }
 }
 
+// Case Event Management Functions
+let currentCaseId = null;
+let currentCaseEvents = [];
+
+function viewCaseDetails(caseId) {
+    currentCaseId = caseId;
+    loadCaseEvents(caseId);
+    document.getElementById('case-events-modal').classList.remove('hidden');
+}
+
+function closeCaseEventsModal() {
+    document.getElementById('case-events-modal').classList.add('hidden');
+    currentCaseId = null;
+    currentCaseEvents = [];
+    hideAddEventForm();
+}
+
+async function loadCaseEvents(caseId) {
+    try {
+        document.getElementById('case-events-loading').classList.remove('hidden');
+        document.getElementById('case-events-empty').classList.add('hidden');
+        // Clear the events list safely
+        const eventsList = document.getElementById('case-events-list');
+        eventsList.replaceChildren();
+        
+        // Get case events and info in one call (removes redundant API call)
+        const response = await fetch(`/api/admin/cases/${caseId}/events`);
+        const data = await response.json();
+        
+        if (data.success) {
+            // Safely display case info without XSS vulnerability
+            if (data.case) {
+                updateCaseInfoSafely(data.case);
+            }
+            
+            currentCaseEvents = data.events;
+            displayCaseEvents(data.events);
+        } else {
+            showToast('خطا در بارگذاری رویدادها', 'error');
+            document.getElementById('case-events-empty').classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Error loading case events:', error);
+        showToast('خطا در اتصال به سرور', 'error');
+        document.getElementById('case-events-empty').classList.remove('hidden');
+    } finally {
+        document.getElementById('case-events-loading').classList.add('hidden');
+    }
+}
+
+// Helper function to safely update case info without XSS
+function updateCaseInfoSafely(caseItem) {
+    const container = document.getElementById('case-events-case-info');
+    container.replaceChildren();
+    
+    const div = document.createElement('div');
+    div.className = 'text-sm';
+    
+    // Create safe text nodes to prevent XSS
+    const caseLabel = document.createElement('span');
+    caseLabel.className = 'font-medium';
+    caseLabel.textContent = 'پرونده شماره:';
+    
+    const caseId = document.createTextNode(` ${caseItem.case_id || ''} | `);
+    
+    const clientLabel = document.createElement('span');
+    clientLabel.className = 'font-medium';
+    clientLabel.textContent = 'شناسه موکل:';
+    
+    const clientId = document.createTextNode(` ${caseItem.client_id || ''} | `);
+    
+    const statusLabel = document.createElement('span');
+    statusLabel.className = 'font-medium';
+    statusLabel.textContent = 'وضعیت:';
+    
+    const status = document.createTextNode(` ${getStatusText(caseItem.last_case_status || '')}`);
+    
+    div.appendChild(caseLabel);
+    div.appendChild(caseId);
+    div.appendChild(clientLabel);
+    div.appendChild(clientId);
+    div.appendChild(statusLabel);
+    div.appendChild(status);
+    
+    container.appendChild(div);
+}
+
+function displayCaseEvents(events) {
+    const container = document.getElementById('case-events-list');
+    const emptyState = document.getElementById('case-events-empty');
+    
+    if (events.length === 0) {
+        container.replaceChildren();
+        emptyState.classList.remove('hidden');
+        return;
+    }
+    
+    emptyState.classList.add('hidden');
+    
+    // Clear container safely
+    container.replaceChildren();
+    
+    // Create each event element safely without XSS vulnerabilities
+    events.forEach(event => {
+        const eventDiv = createEventElementSafely(event);
+        container.appendChild(eventDiv);
+    });
+}
+
+// Helper function to safely create event elements without XSS
+function createEventElementSafely(event) {
+    const formattedDate = new Date(event.occurredAt).toLocaleDateString('fa-IR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    
+    // Create main container
+    const eventDiv = document.createElement('div');
+    eventDiv.className = 'border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors';
+    eventDiv.setAttribute('data-testid', `event-item-${event.id || ''}`);
+    
+    // Create header with event type and date
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'flex justify-between items-start mb-3';
+    
+    const leftDiv = document.createElement('div');
+    
+    const eventTypeH4 = document.createElement('h4');
+    eventTypeH4.className = 'font-semibold text-lg';
+    eventTypeH4.textContent = event.eventType || ''; // Safe text content prevents XSS
+    
+    const dateDiv = document.createElement('div');
+    dateDiv.className = 'text-sm text-muted-foreground';
+    dateDiv.textContent = formattedDate;
+    
+    leftDiv.appendChild(eventTypeH4);
+    leftDiv.appendChild(dateDiv);
+    
+    // Create action buttons
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'flex gap-2';
+    
+    const editBtn = document.createElement('button');
+    editBtn.className = 'text-primary hover:underline text-sm';
+    editBtn.setAttribute('data-testid', `button-edit-event-${event.id || ''}`);
+    editBtn.textContent = 'ویرایش';
+    editBtn.onclick = () => editCaseEvent(event.id);
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'text-red-600 hover:underline text-sm';
+    deleteBtn.setAttribute('data-testid', `button-delete-event-${event.id || ''}`);
+    deleteBtn.textContent = 'حذف';
+    deleteBtn.onclick = () => deleteCaseEvent(event.id);
+    
+    actionsDiv.appendChild(editBtn);
+    actionsDiv.appendChild(deleteBtn);
+    
+    headerDiv.appendChild(leftDiv);
+    headerDiv.appendChild(actionsDiv);
+    
+    eventDiv.appendChild(headerDiv);
+    
+    // Add details if they exist
+    if (event.details) {
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'text-sm text-muted-foreground mt-2';
+        detailsDiv.textContent = event.details; // Safe text content prevents XSS
+        eventDiv.appendChild(detailsDiv);
+    }
+    
+    return eventDiv;
+}
+
+function toggleAddEventForm() {
+    const form = document.getElementById('add-event-form');
+    const btn = document.getElementById('toggle-add-event-btn');
+    
+    if (form.classList.contains('hidden')) {
+        showAddEventForm();
+    } else {
+        hideAddEventForm();
+    }
+}
+
+function showAddEventForm() {
+    document.getElementById('add-event-form').classList.remove('hidden');
+    document.getElementById('toggle-add-event-btn').textContent = 'لغو';
+    document.querySelector('select[name="eventType"]').focus();
+}
+
+function hideAddEventForm() {
+    document.getElementById('add-event-form').classList.add('hidden');
+    document.getElementById('toggle-add-event-btn').textContent = '+ افزودن رویداد';
+    document.getElementById('eventForm').reset();
+}
+
+function cancelAddEvent() {
+    hideAddEventForm();
+}
+
+function editCaseEvent(eventId) {
+    const event = currentCaseEvents.find(e => e.id === eventId);
+    if (event) {
+        document.getElementById('edit-event-id').value = event.id;
+        document.getElementById('edit-event-type').value = event.eventType;
+        document.getElementById('edit-event-details').value = event.details || '';
+        document.getElementById('edit-event-modal').classList.remove('hidden');
+    }
+}
+
+function closeEditEventModal() {
+    document.getElementById('edit-event-modal').classList.add('hidden');
+    document.getElementById('editEventForm').reset();
+}
+
+async function deleteCaseEvent(eventId) {
+    if (!confirm('آیا مطمئن هستید که می‌خواهید این رویداد را حذف کنید؟')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/cases/${currentCaseId}/events/${eventId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('رویداد حذف شد', 'success');
+            loadCaseEvents(currentCaseId); // Reload events
+        } else {
+            showToast(result.message || 'خطا در حذف رویداد', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting case event:', error);
+        showToast('خطا در اتصال به سرور', 'error');
+    }
+}
+
+// Helper function to get Persian status text
+function getStatusText(status) {
+    const statusMap = {
+        'under-review': 'در انتظار بررسی',
+        'lawyer-study': 'در حال مطالعه وکیل',
+        'in-progress': 'در حال اقدام',
+        'awaiting-court': 'در انتظار رای دادگاه',
+        'verdict-issued': 'صدور رای',
+        'active': 'فعال',
+        'pending': 'در انتظار',
+        'completed': 'تکمیل شده'
+    };
+    return statusMap[status] || status;
+}
+
 // Logout function
 async function logout() {
     try {
@@ -1590,6 +1897,80 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch (error) {
                 console.error('Error updating QA item:', error);
+                showToast('خطا در اتصال به سرور', 'error');
+            }
+        });
+    }
+
+    // Initialize Case Event form handlers
+    const eventForm = document.getElementById('eventForm');
+    if (eventForm) {
+        eventForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const eventData = {
+                eventType: formData.get('eventType'),
+                details: formData.get('details')
+            };
+            
+            try {
+                const response = await fetch(`/api/cases/${currentCaseId}/events`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(eventData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('رویداد جدید اضافه شد', 'success');
+                    hideAddEventForm();
+                    loadCaseEvents(currentCaseId); // Reload events
+                } else {
+                    showToast(result.message || 'خطا در ایجاد رویداد', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating case event:', error);
+                showToast('خطا در اتصال به سرور', 'error');
+            }
+        });
+    }
+
+    const editEventForm = document.getElementById('editEventForm');
+    if (editEventForm) {
+        editEventForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const eventId = formData.get('eventId');
+            const eventData = {
+                eventType: formData.get('eventType'),
+                details: formData.get('details')
+            };
+            
+            try {
+                const response = await fetch(`/api/admin/cases/${currentCaseId}/events/${eventId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(eventData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('رویداد بروزرسانی شد', 'success');
+                    closeEditEventModal();
+                    loadCaseEvents(currentCaseId); // Reload events
+                } else {
+                    showToast(result.message || 'خطا در بروزرسانی رویداد', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating case event:', error);
                 showToast('خطا در اتصال به سرور', 'error');
             }
         });
