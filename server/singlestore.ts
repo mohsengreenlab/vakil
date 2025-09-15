@@ -270,22 +270,33 @@ export class SingleStoreStorage {
         ['admin']
       );
       
+      // SECURITY FIX: Only create admin user if ADMIN_PASSWORD environment variable is set
+      // This removes the hardcoded "admin123" password vulnerability
       if ((adminExists as any)[0].count === 0) {
-        const bcrypt = await import('bcrypt');
-        const adminId = this.generateUUID();
-        const hashedPassword = bcrypt.hashSync('admin123', 10);
-        await connection.execute(
-          'INSERT INTO admins (id, username, password) VALUES (?, ?, ?)',
-          [adminId, 'admin', hashedPassword]
-        );
+        if (process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.length >= 8) {
+          const bcrypt = await import('bcrypt');
+          const adminId = this.generateUUID();
+          const hashedPassword = bcrypt.hashSync(process.env.ADMIN_PASSWORD, 12);
+          await connection.execute(
+            'INSERT INTO admins (id, username, password) VALUES (?, ?, ?)',
+            [adminId, 'admin', hashedPassword]
+          );
+          console.log('✅ SingleStore: Admin user created with environment-provided password');
+        } else {
+          console.log('⚠️  SingleStore: No admin user created - set ADMIN_PASSWORD environment variable (min 8 chars)');
+        }
       } else {
-        // Rehash existing plaintext passwords (migration fix)
-        const bcrypt = await import('bcrypt');
-        const hashedPassword = bcrypt.hashSync('admin123', 10);
-        await connection.execute(
-          'UPDATE admins SET password = ? WHERE username = ? AND password NOT LIKE "$2%"',
-          [hashedPassword, 'admin']
-        );
+        // SECURITY FIX: Only update passwords if ADMIN_PASSWORD is provided
+        // Remove automatic rehashing with hardcoded password
+        if (process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.length >= 8) {
+          const bcrypt = await import('bcrypt');
+          const hashedPassword = bcrypt.hashSync(process.env.ADMIN_PASSWORD, 12);
+          await connection.execute(
+            'UPDATE admins SET password = ? WHERE username = ? AND password NOT LIKE "$2%"',
+            [hashedPassword, 'admin']
+          );
+          console.log('✅ SingleStore: Updated legacy plaintext passwords');
+        }
       }
 
       connection.release();

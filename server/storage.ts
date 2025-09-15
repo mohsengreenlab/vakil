@@ -65,18 +65,24 @@ export class MemStorage implements IStorage {
     this.contacts = new Map();
     this.caseEvents = new Map();
     
-    // Create default admin user with hashed password
-    const adminId = randomUUID();
-    const hashedPassword = bcrypt.hashSync("admin123", 10);
-    const admin: User = {
-      id: adminId,
-      username: "admin",
-      password: hashedPassword,
-      email: "admin@pishrolawfirm.ir",
-      role: "admin",
-      createdAt: new Date(),
-    };
-    this.users.set(adminId, admin);
+    // SECURITY FIX: Only create admin user if ADMIN_PASSWORD environment variable is set
+    // This removes the hardcoded "admin123" password vulnerability
+    if (process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.length >= 8) {
+      const adminId = randomUUID();
+      const hashedPassword = bcrypt.hashSync(process.env.ADMIN_PASSWORD, 12);
+      const admin: User = {
+        id: adminId,
+        username: "admin",
+        password: hashedPassword,
+        email: "admin@pishrolawfirm.ir", 
+        role: "admin",
+        createdAt: new Date(),
+      };
+      this.users.set(adminId, admin);
+      console.log("✅ Admin user created with environment-provided password");
+    } else {
+      console.log("⚠️  No admin user created - set ADMIN_PASSWORD environment variable (min 8 chars) to create admin user");
+    }
   }
 
   async getUser(id: string): Promise<User | undefined> {

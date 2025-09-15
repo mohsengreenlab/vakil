@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCaseSchema, insertContactSchema } from "@shared/schema";
+import { insertCaseSchema, insertContactSchema, insertCaseEventSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -64,25 +64,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Admin page
-  app.get('/admin24', async (req, res) => {
-    try {
-      const cases = await storage.getAllLegalCases();
-      const contacts = await storage.getAllContacts();
-      
-      res.render('pages/admin', { 
-        title: 'پنل مدیریت - دفتر وکالت پیشرو',
-        page: 'admin',
-        cases,
-        contacts
-      });
-    } catch (error) {
-      res.status(500).render('pages/500', {
-        title: 'خطای داخلی سرور',
-        error: 'خطا در بارگذاری اطلاعات'
-      });
-    }
-  });
+  // SECURITY FIX: This route should NOT exist here as it duplicates the properly protected route in index.ts
+  // Removing this completely unprotected admin route that was exposing sensitive data
+  // The proper protected admin route is in index.ts at /admin24/dashboard with requireAuth
 
   // API Routes
 
@@ -232,16 +216,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ADMIN: Get all cases (needed by admin.ejs)
-  app.get('/api/admin/cases', requireAuth, async (req, res) => {
-    try {
-      const cases = await storage.getAllLegalCases();
-      res.json({ success: true, cases });
-    } catch (error) {
-      console.error('Error fetching all cases for admin:', error);
-      res.status(500).json({ success: false, message: 'خطا در دریافت پرونده‌ها' });
-    }
-  });
+  // ROUTE CONSOLIDATION FIX: This duplicate route is removed to prevent conflicts
+  // The primary '/api/admin/cases' route is handled in server/index.ts
 
   // Add a new event to a case (admin functionality)
   app.post('/api/cases/:caseId/events', requireAuth, async (req, res) => {
