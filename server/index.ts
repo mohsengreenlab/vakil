@@ -87,12 +87,21 @@ declare module 'express-session' {
   }
 }
 
-// Authentication middleware
+// Authentication middleware for HTML pages (redirects to login)
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   if (req.session.adminId) {
     next();
   } else {
     res.redirect('/admin24');
+  }
+};
+
+// Authentication middleware for API endpoints (returns JSON)
+const requireAuthAPI = (req: Request, res: Response, next: NextFunction) => {
+  if (req.session.adminId) {
+    next();
+  } else {
+    res.status(401).json({ success: false, message: 'دسترسی غیر مجاز - احراز هویت مدیر الزامی است' });
   }
 };
 
@@ -108,7 +117,7 @@ app.get('/api/qa', async (req, res) => {
 });
 
 // Admin QA routes (protected)
-app.get('/api/admin/qa', requireAuth, async (req, res) => {
+app.get('/api/admin/qa', requireAuthAPI, async (req, res) => {
   try {
     const qaItems = await storage.getAllQAItems();
     res.json({ success: true, items: qaItems });
@@ -503,7 +512,7 @@ app.get('/admin24/dashboard', requireAuth, async (req, res) => {
 });
 
 // Admin test endpoint to create a client for testing login
-app.post('/api/admin/create-test-client', requireAuth, async (req, res) => {
+app.post('/api/admin/create-test-client', requireAuthAPI, async (req, res) => {
   try {
     const connection = await (storage as any).pool.getConnection();
     
@@ -605,7 +614,7 @@ app.post('/api/admin/logout', (req, res) => {
 });
 
 // Admin API endpoints for clients management
-app.get('/api/admin/clients', requireAuth, async (req, res) => {
+app.get('/api/admin/clients', requireAuthAPI, async (req, res) => {
   try {
     const clients = await storage.getAllClients();
     res.json({ 
@@ -621,7 +630,7 @@ app.get('/api/admin/clients', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/admin/clients', requireAuth, async (req, res) => {
+app.post('/api/admin/clients', requireAuthAPI, async (req, res) => {
   try {
     const { firstName, lastName, nationalId, phoneNumbers, password } = req.body;
     
@@ -670,7 +679,7 @@ app.post('/api/admin/clients', requireAuth, async (req, res) => {
 });
 
 // Admin API endpoints for cases management
-app.get('/api/admin/cases', requireAuth, async (req, res) => {
+app.get('/api/admin/cases', requireAuthAPI, async (req, res) => {
   try {
     const cases = await storage.getAllCases();
     res.json({ 
@@ -686,7 +695,7 @@ app.get('/api/admin/cases', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/admin/cases', requireAuth, async (req, res) => {
+app.post('/api/admin/cases', requireAuthAPI, async (req, res) => {
   try {
     const { clientId, status, caseId } = req.body;
     
@@ -721,7 +730,7 @@ app.post('/api/admin/cases', requireAuth, async (req, res) => {
   }
 });
 
-app.put('/api/admin/cases/:caseId/status', requireAuth, async (req, res) => {
+app.put('/api/admin/cases/:caseId/status', requireAuthAPI, async (req, res) => {
   try {
     const { caseId } = req.params;
     const { status } = req.body;
@@ -764,7 +773,7 @@ app.put('/api/admin/cases/:caseId/status', requireAuth, async (req, res) => {
 });
 
 // Convert contact message to client
-app.post('/api/admin/convert-contact/:contactId', requireAuth, async (req, res) => {
+app.post('/api/admin/convert-contact/:contactId', requireAuthAPI, async (req, res) => {
   try {
     const { contactId } = req.params;
     

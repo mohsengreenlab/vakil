@@ -1553,6 +1553,32 @@ async function loadCaseEvents(caseId) {
         
         // Get case events and info in one call (removes redundant API call)
         const response = await fetch(`/api/admin/cases/${caseId}/events`);
+        
+        // Check if response is OK and contains JSON
+        if (!response.ok) {
+            if (response.status === 401 || response.status === 403) {
+                // Admin session expired or forbidden - redirect to login
+                showToast('جلسه شما منقضی شده است. در حال انتقال به صفحه ورود...', 'warning');
+                setTimeout(() => {
+                    window.location.assign('/admin24');
+                }, 2000);
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        
+        // Handle cases where server redirected to HTML login page (302 → 200)
+        if (response.redirected || !contentType || !contentType.includes('application/json')) {
+            // This likely means we got redirected to login page or got HTML instead of JSON
+            showToast('جلسه شما منقضی شده است. در حال انتقال به صفحه ورود...', 'warning');
+            setTimeout(() => {
+                window.location.assign(response.redirected ? response.url : '/admin24');
+            }, 2000);
+            return;
+        }
+        
         const data = await response.json();
         
         if (data.success) {
