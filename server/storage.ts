@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Client, type InsertClient, type Case, type InsertCase, type Contact, type InsertContact } from "@shared/schema";
+import { type User, type InsertUser, type Client, type InsertClient, type Case, type InsertCase, type Contact, type InsertContact, type CaseEvent, type InsertCaseEvent } from "@shared/schema";
 import { type QAItem, type InsertQAItem } from "./singlestore.js";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
@@ -24,6 +24,11 @@ export interface IStorage {
   createCase(clientId: string | number, status: string, caseId?: string): Promise<Case>;
   updateCaseStatus(caseId: string | number, status: string): Promise<Case | undefined>;
   
+  // Case Events methods
+  getCaseEvents(caseId: string | number): Promise<CaseEvent[]>;
+  getClientCaseEvents(clientId: string | number): Promise<{ case: Case, events: CaseEvent[] }[]>;
+  createCaseEvent(caseEvent: InsertCaseEvent): Promise<CaseEvent>;
+  
   // Contact methods
   getContact(id: string): Promise<Contact | undefined>;
   getAllContacts(): Promise<Contact[]>;
@@ -47,6 +52,7 @@ export class MemStorage implements IStorage {
   private clients: Map<number, Client>;
   private cases: Map<number, Case>;
   private contacts: Map<string, Contact>;
+  private caseEvents: Map<string, CaseEvent>;
   private nextClientId: number = 1000; // Start client IDs from 1000
   private nextCaseId: number = 1000000; // Start case IDs from 1000000
 
@@ -55,6 +61,7 @@ export class MemStorage implements IStorage {
     this.clients = new Map();
     this.cases = new Map();
     this.contacts = new Map();
+    this.caseEvents = new Map();
     
     // Create default admin user with hashed password
     const adminId = randomUUID();
@@ -106,16 +113,49 @@ export class MemStorage implements IStorage {
 
   async createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[], password?: string): Promise<Client> {
     const clientId = this.nextClientId++;
+    const hashedPassword = password ? bcrypt.hashSync(password, 10) : null;
     const client: Client = {
       clientId,
       firstName,
       lastName,
       nationalId,
       phoneNumbers,
+      password: hashedPassword,
       createdAt: new Date(),
     };
     this.clients.set(clientId, client);
     return client;
+  }
+
+  async authenticateClient(nationalId: string, password: string): Promise<Client | null> {
+    const client = Array.from(this.clients.values()).find(c => c.nationalId === nationalId);
+    if (!client || !client.password) {
+      return null;
+    }
+    const isValid = bcrypt.compareSync(password, client.password);
+    return isValid ? client : null;
+  }
+
+  async updateClientPassword(clientId: string, newPassword: string): Promise<void> {
+    const numericClientId = parseInt(clientId);
+    const client = this.clients.get(numericClientId);
+    if (client) {
+      client.password = bcrypt.hashSync(newPassword, 10);
+      this.clients.set(numericClientId, client);
+    }
+  }
+
+  async setClientPasswordByNationalId(nationalId: string, password: string): Promise<void> {
+    const client = Array.from(this.clients.values()).find(c => c.nationalId === nationalId);
+    if (client) {
+      client.password = bcrypt.hashSync(password, 10);
+      this.clients.set(client.clientId, client);
+    }
+  }
+
+  async getClientCases(clientId: string): Promise<Case[]> {
+    const numericClientId = parseInt(clientId);
+    return Array.from(this.cases.values()).filter(case_ => case_.clientId === numericClientId);
   }
 
   // Case methods
@@ -139,6 +179,7 @@ export class MemStorage implements IStorage {
       lastCaseStatus: status,
       caseCreationDate: new Date(),
       lastStatusDate: new Date(),
+      createdAt: new Date(),
     };
     this.cases.set(numericCaseId, case_);
     return case_;
@@ -154,6 +195,41 @@ export class MemStorage implements IStorage {
       return case_;
     }
     return undefined;
+  }
+
+  // Case Events methods
+  async getCaseEvents(caseId: string | number): Promise<CaseEvent[]> {
+    const caseIdStr = caseId.toString();
+    return Array.from(this.caseEvents.values())
+      .filter(event => event.caseId === caseIdStr)
+      .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime());
+  }
+
+  async getClientCaseEvents(clientId: string | number): Promise<{ case: Case, events: CaseEvent[] }[]> {
+    const numericClientId = typeof clientId === 'string' ? parseInt(clientId) : clientId;
+    const clientCases = Array.from(this.cases.values()).filter(case_ => case_.clientId === numericClientId);
+    
+    const result = [];
+    for (const case_ of clientCases) {
+      const events = await this.getCaseEvents(case_.caseId);
+      result.push({ case: case_, events });
+    }
+    
+    return result;
+  }
+
+  async createCaseEvent(caseEvent: InsertCaseEvent): Promise<CaseEvent> {
+    const id = randomUUID();
+    const newEvent: CaseEvent = {
+      id,
+      caseId: caseEvent.caseId,
+      eventType: caseEvent.eventType,
+      occurredAt: new Date(),
+      details: caseEvent.details || null,
+      createdAt: new Date(),
+    };
+    this.caseEvents.set(id, newEvent);
+    return newEvent;
   }
 
   async getContact(id: string): Promise<Contact | undefined> {

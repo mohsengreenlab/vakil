@@ -1,10 +1,19 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertCaseSchema, insertContactSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Client authentication middleware
+  const requireClientAuth = (req: Request, res: Response, next: NextFunction) => {
+    if (req.session.clientId) {
+      next();
+    } else {
+      res.status(401).json({ success: false, message: 'کاربر احراز هویت نشده است' });
+    }
+  };
   
   // Home page
   app.get('/', (req, res) => {
@@ -136,6 +145,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, contacts });
     } catch (error) {
       res.status(500).json({ success: false, message: 'خطا در دریافت پیام‌ها' });
+    }
+  });
+
+  // CLIENT CASE HISTORY ENDPOINTS (protected by requireClientAuth)
+  
+  // Get client's case history with events
+  app.get('/api/client/case-history', requireClientAuth, async (req, res) => {
+    try {
+      const clientId = req.session.clientId;
+      if (!clientId) {
+        return res.status(401).json({ success: false, message: 'کاربر احراز هویت نشده' });
+      }
+
+      const caseHistory = await storage.getClientCaseEvents(clientId);
+      
+      // Sort cases by creation date (newest first)
+      caseHistory.sort((a, b) => {
+        const dateA = a.case.caseCreationDate?.getTime() || 0;
+        const dateB = b.case.caseCreationDate?.getTime() || 0;
+        return dateB - dateA;
+      });
+
+      res.json({ 
+        success: true, 
+        caseHistory,
+        clientId 
+      });
+    } catch (error) {
+      console.error('Error fetching client case history:', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت تاریخچه پرونده‌ها' });
+    }
+  });
+
+  // Get events for a specific case (only if it belongs to the current client)
+  app.get('/api/client/cases/:caseId/events', requireClientAuth, async (req, res) => {
+    try {
+      const clientId = req.session.clientId;
+      const { caseId } = req.params;
+      
+      if (!clientId) {
+        return res.status(401).json({ success: false, message: 'کاربر احراز هویت نشده' });
+      }
+
+      // Verify the case belongs to the current client
+      const case_ = await storage.getCase(caseId);
+      if (!case_ || case_.clientId.toString() !== clientId) {
+        return res.status(403).json({ success: false, message: 'دسترسی به این پرونده مجاز نمی‌باشد' });
+      }
+
+      // Get events for this case
+      const events = await storage.getCaseEvents(caseId);
+      
+      // Pagination support
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = (page - 1) * limit;
+      
+      const paginatedEvents = events.slice(offset, offset + limit);
+      const totalEvents = events.length;
+      const hasMore = offset + limit < totalEvents;
+
+      res.json({ 
+        success: true, 
+        case: case_,
+        events: paginatedEvents,
+        pagination: {
+          page,
+          limit,
+          total: totalEvents,
+          hasMore
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching case events:', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت رویدادهای پرونده' });
+    }
+  });
+
+  // Add a new event to a case (admin functionality - could be used later)
+  app.post('/api/cases/:caseId/events', async (req, res) => {
+    try {
+      const { caseId } = req.params;
+      const { eventType, details } = req.body;
+
+      // Verify case exists
+      const case_ = await storage.getCase(caseId);
+      if (!case_) {
+        return res.status(404).json({ success: false, message: 'پرونده یافت نشد' });
+      }
+
+      const newEvent = await storage.createCaseEvent({
+        caseId,
+        eventType,
+        details
+      });
+
+      res.json({ 
+        success: true, 
+        event: newEvent 
+      });
+    } catch (error) {
+      console.error('Error creating case event:', error);
+      res.status(500).json({ success: false, message: 'خطا در ایجاد رویداد پرونده' });
     }
   });
 

@@ -964,4 +964,72 @@ export class SingleStoreStorage {
     }
   }
 
+  // Case Events methods
+  async getCaseEvents(caseId: string | number): Promise<CaseEvent[]> {
+    try {
+      const caseIdStr = caseId.toString();
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM Case_Events WHERE case_id = ? ORDER BY occurred_at DESC',
+        [caseIdStr]
+      );
+      return (rows as any[]).map(event => ({
+        id: event.id,
+        caseId: event.case_id,
+        eventType: event.event_type,
+        occurredAt: event.occurred_at,
+        details: event.details,
+        createdAt: event.created_at
+      }));
+    } catch (error) {
+      console.error('Error getting case events:', error);
+      throw error;
+    }
+  }
+
+  async getClientCaseEvents(clientId: string | number): Promise<{ case: Case, events: CaseEvent[] }[]> {
+    try {
+      // Get all cases for the client
+      const clientCases = await this.getClientCases(clientId.toString());
+      
+      const result = [];
+      for (const case_ of clientCases) {
+        const events = await this.getCaseEvents(case_.caseId);
+        result.push({ case: case_, events });
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting client case events:', error);
+      throw error;
+    }
+  }
+
+  async createCaseEvent(caseEvent: InsertCaseEvent): Promise<CaseEvent> {
+    try {
+      const id = this.generateUUID();
+      await this.pool.execute(
+        'INSERT INTO Case_Events (id, case_id, event_type, details) VALUES (?, ?, ?, ?)',
+        [id, caseEvent.caseId, caseEvent.eventType, caseEvent.details]
+      );
+      
+      // Retrieve the created event
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM Case_Events WHERE id = ?',
+        [id]
+      );
+      const event = (rows as any)[0];
+      return {
+        id: event.id,
+        caseId: event.case_id,
+        eventType: event.event_type,
+        occurredAt: event.occurred_at,
+        details: event.details,
+        createdAt: event.created_at
+      };
+    } catch (error) {
+      console.error('Error creating case event:', error);
+      throw error;
+    }
+  }
+
 }
