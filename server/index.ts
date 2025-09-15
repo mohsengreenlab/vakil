@@ -127,7 +127,7 @@ app.get('/api/admin/qa', requireAuthAPI, async (req, res) => {
   }
 });
 
-app.post('/api/admin/qa', requireAuth, async (req, res) => {
+app.post('/api/admin/qa', requireAuthAPI, async (req, res) => {
   try {
     const { question, answer, topic, show } = req.body;
     
@@ -154,7 +154,7 @@ app.post('/api/admin/qa', requireAuth, async (req, res) => {
   }
 });
 
-app.put('/api/admin/qa/:id', requireAuth, async (req, res) => {
+app.put('/api/admin/qa/:id', requireAuthAPI, async (req, res) => {
   try {
     const { id } = req.params;
     const { question, answer, topic, show } = req.body;
@@ -177,7 +177,7 @@ app.put('/api/admin/qa/:id', requireAuth, async (req, res) => {
   }
 });
 
-app.delete('/api/admin/qa/:id', requireAuth, async (req, res) => {
+app.delete('/api/admin/qa/:id', requireAuthAPI, async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await storage.deleteQAItem(id);
