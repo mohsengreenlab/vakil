@@ -1,11 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AlertCircle, ChevronDown, ChevronRight, Clock, FileText, Search, Filter } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 
 interface CaseEvent {
@@ -42,11 +41,35 @@ export default function CaseHistory() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [openCases, setOpenCases] = useState<Set<number>>(new Set());
 
+  // Helper function to check if error is 401 Unauthorized
+  const isUnauthorizedError = (error: any): boolean => {
+    if (!error) return false;
+    // Check if error message starts with "401:"
+    return typeof error.message === 'string' && error.message.startsWith('401:');
+  };
+
   // Fetch case history data
   const { data, isLoading, error } = useQuery<CaseHistoryResponse>({
     queryKey: ['/api/client/case-history'],
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: (failureCount, error: any) => {
+      // Don't retry if it's an authentication error
+      return !isUnauthorizedError(error) && failureCount < 3;
+    },
   });
+
+  // Auto-redirect to login if authentication error
+  useEffect(() => {
+    if (error && isUnauthorizedError(error)) {
+      // Use full navigation to reach the server-rendered login page
+      window.location.assign('/client-login');
+    }
+  }, [error]);
+
+  // Show loading spinner during redirect to avoid flash
+  if (error && isUnauthorizedError(error)) {
+    return null;
+  }
 
   const toggleCase = (caseId: number) => {
     const newOpenCases = new Set(openCases);
@@ -119,7 +142,7 @@ export default function CaseHistory() {
     );
   }
 
-  if (error) {
+  if (error && !isUnauthorizedError(error)) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900" dir="rtl">
         <Card className="w-full max-w-md mx-4">
