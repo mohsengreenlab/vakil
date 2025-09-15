@@ -1908,10 +1908,25 @@ document.addEventListener('DOMContentLoaded', function() {
         eventForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // Validate that a case is selected
+            if (!currentCaseId) {
+                showToast('لطفاً ابتدا یک پرونده را انتخاب کنید', 'error');
+                return;
+            }
+            
             const formData = new FormData(e.target);
+            const eventType = formData.get('eventType');
+            const details = formData.get('details');
+            
+            // Validate required fields
+            if (!eventType) {
+                showToast('لطفاً نوع رویداد را انتخاب کنید', 'error');
+                return;
+            }
+            
             const eventData = {
-                eventType: formData.get('eventType'),
-                details: formData.get('details')
+                eventType: eventType,
+                details: details
             };
             
             try {
