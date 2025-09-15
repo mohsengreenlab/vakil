@@ -1032,4 +1032,70 @@ export class SingleStoreStorage {
     }
   }
 
+  async updateCaseEvent(eventId: string, updates: Partial<InsertCaseEvent>): Promise<CaseEvent | null> {
+    try {
+      // Build dynamic update query based on provided fields
+      const updateFields = [];
+      const values = [];
+      
+      if (updates.eventType !== undefined) {
+        updateFields.push('event_type = ?');
+        values.push(updates.eventType);
+      }
+      
+      if (updates.details !== undefined) {
+        updateFields.push('details = ?');
+        values.push(updates.details);
+      }
+      
+      if (updateFields.length === 0) {
+        throw new Error('No fields to update');
+      }
+      
+      values.push(eventId);
+      
+      await this.pool.execute(
+        `UPDATE Case_Events SET ${updateFields.join(', ')} WHERE id = ?`,
+        values
+      );
+      
+      // Retrieve the updated event
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM Case_Events WHERE id = ?',
+        [eventId]
+      );
+      const event = (rows as any)[0];
+      
+      if (!event) {
+        return null;
+      }
+      
+      return {
+        id: event.id,
+        caseId: event.case_id,
+        eventType: event.event_type,
+        occurredAt: event.occurred_at,
+        details: event.details,
+        createdAt: event.created_at
+      };
+    } catch (error) {
+      console.error('Error updating case event:', error);
+      throw error;
+    }
+  }
+
+  async deleteCaseEvent(eventId: string): Promise<boolean> {
+    try {
+      const [result] = await this.pool.execute(
+        'DELETE FROM Case_Events WHERE id = ?',
+        [eventId]
+      );
+      
+      return (result as any).affectedRows > 0;
+    } catch (error) {
+      console.error('Error deleting case event:', error);
+      throw error;
+    }
+  }
+
 }
