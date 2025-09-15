@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import { IStorage } from "./storage.js";
 import * as bcrypt from 'bcrypt';
 import { getConfig } from "./config.js";
+import { type CaseEvent, type InsertCaseEvent } from "@shared/schema";
 
 // Define interfaces based on the new schema requirements
 export interface Client {
@@ -993,7 +994,7 @@ export class SingleStoreStorage {
       
       const result = [];
       for (const case_ of clientCases) {
-        const events = await this.getCaseEvents(case_.caseId);
+        const events = await this.getCaseEvents(case_.case_id);
         result.push({ case: case_, events });
       }
       

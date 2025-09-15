@@ -260,6 +260,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin-only endpoints for case event management
+  app.get('/api/admin/cases/:caseId/events', requireAuth, async (req, res) => {
+    try {
+      const { caseId } = req.params;
+
+      // Verify case exists
+      const case_ = await storage.getCase(caseId);
+      if (!case_) {
+        return res.status(404).json({ success: false, message: 'پرونده یافت نشد' });
+      }
+
+      // Get events for this case
+      const events = await storage.getCaseEvents(caseId);
+
+      res.json({ 
+        success: true, 
+        case: case_,
+        events: events
+      });
+    } catch (error) {
+      console.error('Error fetching case events for admin:', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت رویدادهای پرونده' });
+    }
+  });
+
+  app.put('/api/admin/cases/:caseId/events/:eventId', requireAuth, async (req, res) => {
+    try {
+      const { caseId, eventId } = req.params;
+      const { eventType, details } = req.body;
+
+      // Verify case exists
+      const case_ = await storage.getCase(caseId);
+      if (!case_) {
+        return res.status(404).json({ success: false, message: 'پرونده یافت نشد' });
+      }
+
+      // Validate input
+      if (!eventType && details === undefined) {
+        return res.status(400).json({ success: false, message: 'حداقل یک فیلد برای بروزرسانی الزامی است' });
+      }
+
+      const updatedEvent = await storage.updateCaseEvent(eventId, {
+        eventType,
+        details
+      });
+
+      if (!updatedEvent) {
+        return res.status(404).json({ success: false, message: 'رویداد یافت نشد' });
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'رویداد با موفقیت بروزرسانی شد',
+        event: updatedEvent 
+      });
+    } catch (error) {
+      console.error('Error updating case event:', error);
+      res.status(500).json({ success: false, message: 'خطا در بروزرسانی رویداد پرونده' });
+    }
+  });
+
+  app.delete('/api/admin/cases/:caseId/events/:eventId', requireAuth, async (req, res) => {
+    try {
+      const { caseId, eventId } = req.params;
+
+      // Verify case exists
+      const case_ = await storage.getCase(caseId);
+      if (!case_) {
+        return res.status(404).json({ success: false, message: 'پرونده یافت نشد' });
+      }
+
+      const deleted = await storage.deleteCaseEvent(eventId);
+
+      if (!deleted) {
+        return res.status(404).json({ success: false, message: 'رویداد یافت نشد' });
+      }
+
+      res.json({ 
+        success: true, 
+        message: 'رویداد با موفقیت حذف شد' 
+      });
+    } catch (error) {
+      console.error('Error deleting case event:', error);
+      res.status(500).json({ success: false, message: 'خطا در حذف رویداد پرونده' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

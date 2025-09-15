@@ -28,6 +28,8 @@ export interface IStorage {
   getCaseEvents(caseId: string | number): Promise<CaseEvent[]>;
   getClientCaseEvents(clientId: string | number): Promise<{ case: Case, events: CaseEvent[] }[]>;
   createCaseEvent(caseEvent: InsertCaseEvent): Promise<CaseEvent>;
+  updateCaseEvent(eventId: string, updates: Partial<InsertCaseEvent>): Promise<CaseEvent | null>;
+  deleteCaseEvent(eventId: string): Promise<boolean>;
   
   // Contact methods
   getContact(id: string): Promise<Contact | undefined>;
@@ -230,6 +232,27 @@ export class MemStorage implements IStorage {
     };
     this.caseEvents.set(id, newEvent);
     return newEvent;
+  }
+
+  async updateCaseEvent(eventId: string, updates: Partial<InsertCaseEvent>): Promise<CaseEvent | null> {
+    const event = this.caseEvents.get(eventId);
+    if (!event) {
+      return null;
+    }
+
+    if (updates.eventType !== undefined) {
+      event.eventType = updates.eventType;
+    }
+    if (updates.details !== undefined) {
+      event.details = updates.details;
+    }
+
+    this.caseEvents.set(eventId, event);
+    return event;
+  }
+
+  async deleteCaseEvent(eventId: string): Promise<boolean> {
+    return this.caseEvents.delete(eventId);
   }
 
   async getContact(id: string): Promise<Contact | undefined> {
