@@ -279,31 +279,103 @@ const requireClientAuth = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+// HTML escaping function to prevent XSS attacks
+function escapeHtml(unsafe: string): string {
+  if (!unsafe || typeof unsafe !== 'string') return '';
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// Safe date formatting function
+function formatDate(date: any): string {
+  if (!date) return 'تاریخ نامشخص';
+  try {
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) return 'تاریخ نامعتبر';
+    return dateObj.toLocaleDateString('fa-IR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch (error) {
+    console.error('Date formatting error:', error);
+    return 'خطا در نمایش تاریخ';
+  }
+}
+
 // Client portal route
 app.get('/client/portal', requireClientAuth, async (req, res) => {
   try {
     console.log('Loading client portal for client ID:', req.session.clientId);
     
-    const clientCases = await storage.getClientCases(req.session.clientId);
-    console.log('Client cases loaded:', clientCases);
+    const clientCaseEvents = await storage.getClientCaseEvents(req.session.clientId);
+    console.log('Client case events loaded:', clientCaseEvents);
     
     const client = await storage.getClient(req.session.clientId);
     console.log('Client data loaded:', client);
     
     try {
-      // Build cases HTML
+      // Build cases HTML with events/history - with defensive programming
       let casesHtml = '';
-      if (clientCases && clientCases.length > 0) {
-        for (const caseItem of clientCases) {
-          const status = caseItem.last_case_status === 'lawyer-study' ? 'در حال مطالعه وکیل' : 
-                        caseItem.last_case_status === 'active' ? 'فعال' : 
-                        caseItem.last_case_status;
+      if (Array.isArray(clientCaseEvents) && clientCaseEvents.length > 0) {
+        for (const caseEventItem of clientCaseEvents) {
+          // Safely validate data shape before destructuring
+          if (!caseEventItem || typeof caseEventItem !== 'object') continue;
+          
+          const caseItem = caseEventItem.case;
+          const events = caseEventItem.events;
+          
+          // Skip if case data is missing
+          if (!caseItem) continue;
+          // Fix field name access - use snake_case from database
+          const rawStatus = (caseItem as any).last_case_status || 'pending';
+          const status = rawStatus === 'lawyer-study' ? 'در حال مطالعه وکیل' : 
+                        rawStatus === 'active' ? 'فعال' : 
+                        rawStatus === 'in-progress' ? 'در حال انجام' :
+                        rawStatus === 'pending' ? 'در انتظار' :
+                        escapeHtml(rawStatus);
+          
+          let eventsHtml = '';
+          if (Array.isArray(events) && events.length > 0) {
+            eventsHtml = '<div class="case-events"><h4>تاریخچه پرونده:</h4>';
+            for (const event of events) {
+              // Skip invalid event objects
+              if (!event || typeof event !== 'object') continue;
+              
+              // Fix field name access and add HTML escaping
+              const eventDate = formatDate((event as any).occurred_at || (event as any).occurredAt);
+              const eventType = escapeHtml((event as any).event_type || (event as any).eventType || 'رویداد');
+              const eventDetails = (event as any).details ? escapeHtml((event as any).details) : '';
+              
+              eventsHtml += `
+                <div class="event">
+                  <div class="event-header">
+                    <span class="event-type">${eventType}</span>
+                    <span class="event-date">${eventDate}</span>
+                  </div>
+                  ${eventDetails ? `<p class="event-details">${eventDetails}</p>` : ''}
+                </div>
+              `;
+            }
+            eventsHtml += '</div>';
+          } else {
+            eventsHtml = '<div class="no-events"><p>هنوز رویدادی برای این پرونده ثبت نشده است.</p></div>';
+          }
+          
+          // Fix field name access and add HTML escaping
+          const caseId = escapeHtml((caseItem as any).case_id || (caseItem as any).caseId || 'نامشخص');
+          const caseCreationDate = formatDate((caseItem as any).case_creation_date || (caseItem as any).caseCreationDate);
           
           casesHtml += `
             <div class="case">
-              <h3>شماره پرونده: ${caseItem.case_id}</h3>
+              <h3>شماره پرونده: ${caseId}</h3>
               <span class="status">${status}</span>
-              <p>تاریخ ایجاد: ${new Date(caseItem.case_creation_date).toLocaleDateString('fa-IR')}</p>
+              <p>تاریخ ایجاد: ${caseCreationDate}</p>
+              ${eventsHtml}
             </div>
           `;
         }
@@ -323,6 +395,15 @@ app.get('/client/portal', requireClientAuth, async (req, res) => {
                 .header { background: #2563eb; color: white; padding: 20px; margin-bottom: 20px; position: relative; }
                 .case { border: 1px solid #ddd; padding: 15px; margin: 10px 0; }
                 .status { background: #f3e8ff; color: #7c3aed; padding: 5px 10px; border-radius: 15px; font-size: 12px; }
+                .case-events { margin-top: 15px; }
+                .case-events h4 { color: #2563eb; margin-bottom: 10px; }
+                .event { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+                .event-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+                .event-type { background: #dbeafe; color: #1d4ed8; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+                .event-date { color: #64748b; font-size: 12px; }
+                .event-details { margin: 8px 0 0 0; color: #374151; font-size: 13px; line-height: 1.4; }
+                .no-events { margin-top: 15px; padding: 12px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; }
+                .no-events p { margin: 0; color: #92400e; }
                 .logout-btn { 
                     position: absolute; 
                     top: 20px; 
@@ -356,8 +437,8 @@ app.get('/client/portal', requireClientAuth, async (req, res) => {
                 <div class="header">
                     <button class="logout-btn" onclick="logout()">خروج</button>
                     <h1>پورتال موکل - دفتر وکالت پیشرو</h1>
-                    <p>خوش آمدید، ${client.first_name} ${client.last_name}</p>
-                    <p>کد ملی: ${client.national_id}</p>
+                    <p>خوش آمدید، ${escapeHtml((client as any)?.first_name || (client as any)?.firstName || '')} ${escapeHtml((client as any)?.last_name || (client as any)?.lastName || '')}</p>
+                    <p>کد ملی: ${escapeHtml((client as any)?.national_id || (client as any)?.nationalId || '')}</p>
                 </div>
                 <h2>پرونده‌های شما</h2>
                 ${casesHtml}
@@ -396,18 +477,42 @@ app.get('/client/portal', requireClientAuth, async (req, res) => {
       res.send(html);
     } catch (htmlError) {
       console.error('Error generating HTML:', htmlError);
-      res.send(`<html><body><h1>Client Portal - ${client.first_name} ${client.last_name}</h1><p>National ID: ${client.national_id}</p><p>Cases: ${clientCases.length}</p></body></html>`);
+      const safeFirstName = escapeHtml((client as any)?.first_name || (client as any)?.firstName || 'Unknown');
+      const safeLastName = escapeHtml((client as any)?.last_name || (client as any)?.lastName || 'User');
+      const safeNationalId = escapeHtml((client as any)?.national_id || (client as any)?.nationalId || 'N/A');
+      const caseCount = clientCaseEvents?.length || 0;
+      res.send(`<html><body><h1>Client Portal - ${safeFirstName} ${safeLastName}</h1><p>National ID: ${safeNationalId}</p><p>Cases: ${caseCount}</p></body></html>`);
     }
   } catch (error) {
-    console.error('CATCH BLOCK EXECUTED! Error loading client portal:', error);
-    console.error('Error stack:', error.stack);
+    // Log error details server-side for debugging
+    console.error('Error loading client portal:', error);
+    if (error instanceof Error) {
+      console.error('Error stack:', error.stack);
+    }
+    
+    // Send generic error message to client to prevent information disclosure
     res.status(500).send(`
-      <html><head><meta charset="UTF-8"><title>Debug Error</title></head><body>
-      <h1>Debug Error Information</h1>
-      <p><strong>Error:</strong> ${error.message}</p>
-      <p><strong>Stack:</strong></p>
-      <pre>${error.stack}</pre>
-      </body></html>
+      <html lang="fa" dir="rtl">
+        <head>
+          <meta charset="UTF-8">
+          <title>خطای سرور</title>
+          <style>
+            body { font-family: Tahoma; margin: 20px; background: #f5f5f5; direction: rtl; text-align: center; }
+            .error-container { max-width: 400px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            h1 { color: #dc2626; margin-bottom: 20px; }
+            p { color: #374151; line-height: 1.6; margin-bottom: 20px; }
+            .retry-link { color: #2563eb; text-decoration: none; }
+          </style>
+        </head>
+        <body>
+          <div class="error-container">
+            <h1>خطای موقتی</h1>
+            <p>متأسفانه در حال حاضر امکان نمایش اطلاعات پورتال موکل وجود ندارد.</p>
+            <p>لطفاً چند لحظه بعد دوباره تلاش کنید یا با پشتیبانی تماس بگیرید.</p>
+            <p><a href="/" class="retry-link">بازگشت به صفحه اصلی</a></p>
+          </div>
+        </body>
+      </html>
     `);
   }
 });
