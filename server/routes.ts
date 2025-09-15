@@ -6,6 +6,15 @@ import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Admin authentication middleware
+  const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+    if (req.session.adminId) {
+      next();
+    } else {
+      res.status(401).json({ success: false, message: 'دسترسی غیر مجاز - احراز هویت مدیر الزامی است' });
+    }
+  };
+  
   // Client authentication middleware
   const requireClientAuth = (req: Request, res: Response, next: NextFunction) => {
     if (req.session.clientId) {
@@ -108,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all cases (admin)
-  app.get('/api/cases', async (req, res) => {
+  app.get('/api/cases', requireAuth, async (req, res) => {
     try {
       const cases = await storage.getAllLegalCases();
       res.json({ success: true, cases });
@@ -118,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update case status (admin)
-  app.put('/api/cases/:id/status', async (req, res) => {
+  app.put('/api/cases/:id/status', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { status } = req.body;
@@ -139,7 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all contacts (admin)
-  app.get('/api/contacts', async (req, res) => {
+  app.get('/api/contacts', requireAuth, async (req, res) => {
     try {
       const contacts = await storage.getAllContacts();
       res.json({ success: true, contacts });
@@ -224,7 +233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add a new event to a case (admin functionality - could be used later)
-  app.post('/api/cases/:caseId/events', async (req, res) => {
+  app.post('/api/cases/:caseId/events', requireAuth, async (req, res) => {
     try {
       const { caseId } = req.params;
       const { eventType, details } = req.body;
