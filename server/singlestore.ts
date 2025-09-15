@@ -140,6 +140,14 @@ export class SingleStoreStorage {
     try {
       const connection = await this.pool.getConnection();
       
+      // Drop test_table if it exists to make space for Case_Events table
+      try {
+        await connection.execute('DROP TABLE IF EXISTS test_table');
+        console.log('🗑️ Dropped test_table to make space for Case_Events');
+      } catch (dropError) {
+        console.log('ℹ️ test_table does not exist or already dropped');
+      }
+      
       // Create clients table (without unique constraint on national_id)
       await connection.execute(`
         CREATE TABLE IF NOT EXISTS clients (
@@ -235,7 +243,7 @@ export class SingleStoreStorage {
           occurred_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
           details TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          SHARD KEY (case_id)
+          SHARD KEY (id)
         )
       `);
 
