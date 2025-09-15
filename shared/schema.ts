@@ -33,6 +33,16 @@ export const cases = pgTable("cases", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// PostgreSQL case_events table structure
+export const caseEvents = pgTable("Case_Events", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  caseId: varchar("case_id", { length: 7 }).notNull(),
+  eventType: text("event_type").notNull(),
+  occurredAt: timestamp("occurred_at").notNull().defaultNow(),
+  details: text("details"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const contacts = pgTable("contacts", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   firstName: text("first_name").notNull(),
@@ -72,6 +82,12 @@ export const insertContactSchema = createInsertSchema(contacts).pick({
   message: true,
 });
 
+export const insertCaseEventSchema = createInsertSchema(caseEvents).pick({
+  caseId: true,
+  eventType: true,
+  details: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
@@ -80,3 +96,5 @@ export type InsertCase = z.infer<typeof insertCaseSchema>;
 export type Case = typeof cases.$inferSelect;
 export type InsertContact = z.infer<typeof insertContactSchema>;
 export type Contact = typeof contacts.$inferSelect;
+export type InsertCaseEvent = z.infer<typeof insertCaseEventSchema>;
+export type CaseEvent = typeof caseEvents.$inferSelect;

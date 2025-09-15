@@ -226,6 +226,19 @@ export class SingleStoreStorage {
         )
       `);
 
+      // Create Case_Events table for tracking case events
+      await connection.execute(`
+        CREATE TABLE IF NOT EXISTS Case_Events (
+          id VARCHAR(36) PRIMARY KEY,
+          case_id VARCHAR(7) NOT NULL,
+          event_type TEXT NOT NULL,
+          occurred_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          details TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          SHARD KEY (case_id)
+        )
+      `);
+
       // Check existing QA table structure to understand ID type
       try {
         const [existingRows] = await connection.execute('SELECT * FROM QA LIMIT 1');
