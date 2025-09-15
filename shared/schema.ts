@@ -88,6 +88,12 @@ export const insertCaseEventSchema = createInsertSchema(caseEvents).pick({
   details: true,
 });
 
+// Schema for form data validation (without caseId since it comes from URL params)
+export const caseEventFormSchema = createInsertSchema(caseEvents).pick({
+  eventType: true,
+  details: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;

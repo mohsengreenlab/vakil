@@ -1,6 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import type { IStorage } from "./storage";
-import { insertCaseSchema, insertContactSchema, insertCaseEventSchema } from "@shared/schema";
+import { insertCaseSchema, insertContactSchema, insertCaseEventSchema, caseEventFormSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express, storage: IStorage): Promise<void> {
@@ -233,7 +233,7 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
       const { caseId } = req.params;
       
       // Validate input with Zod schema
-      const validatedData = insertCaseEventSchema.parse(req.body);
+      const validatedData = caseEventFormSchema.parse(req.body);
 
       // Verify case exists
       const case_ = await storage.getCase(caseId);
@@ -297,7 +297,7 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
       }
 
       // Validate input with Zod schema (partial for updates)
-      const partialEventSchema = insertCaseEventSchema.partial();
+      const partialEventSchema = caseEventFormSchema.partial();
       const validatedData = partialEventSchema.parse(req.body);
 
       // Ensure at least one field is provided
