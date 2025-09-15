@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import { SingleStoreStorage } from "./singlestore.js";
 import type { IStorage } from "./storage.js";
 import { getConfig } from "./config.js";
+import { registerRoutes } from "./routes.js";
 
 const app = express();
 
@@ -51,7 +52,7 @@ async function initializeApp() {
 }
 
 // Initialize storage
-const storage = await initializeApp();
+let storage: IStorage;
 
 // Set EJS as templating engine with layouts
 app.set('view engine', 'ejs');
@@ -843,34 +844,57 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-// Error handling middleware
-app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-  const status = err.status || err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
+// Error handling middleware will be registered after routes in startServer()
 
-  // Render error page for HTML requests
-  if (_req.accepts('html')) {
-    res.status(status).render('pages/500', {
-      title: 'خطای داخلی سرور',
-      error: message
-    });
-  } else {
-    res.status(status).json({ message });
+// Start server function
+async function startServer() {
+  // Initialize storage
+  storage = await initializeApp();
+  
+  // Register API routes
+  console.log('📝 Registering API routes...');
+  try {
+    await registerRoutes(app, storage);
+    console.log('✅ API routes registered successfully');
+  } catch (error) {
+    console.error('❌ Failed to register API routes:', error);
   }
-});
 
-// 404 handler
-app.use((req, res) => {
-  if (req.accepts('html')) {
-    res.status(404).render('pages/404', {
-      title: 'صفحه پیدا نشد'
-    });
-  } else {
-    res.status(404).json({ message: 'Page not found' });
-  }
-});
+  // Error handling middleware (must be registered AFTER routes)
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    const status = err.status || err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
 
-const port = parseInt(process.env.PORT || '5000', 10);
-app.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 Persian Legal Firm server running at http://localhost:${port}`);
+    // Render error page for HTML requests
+    if (_req.accepts('html')) {
+      res.status(status).render('pages/500', {
+        title: 'خطای داخلی سرور',
+        error: message
+      });
+    } else {
+      res.status(status).json({ message });
+    }
+  });
+
+  // 404 handler (must be registered AFTER routes)
+  app.use((req, res) => {
+    if (req.accepts('html')) {
+      res.status(404).render('pages/404', {
+        title: 'صفحه پیدا نشد'
+      });
+    } else {
+      res.status(404).json({ message: 'Page not found' });
+    }
+  });
+
+  const port = parseInt(process.env.PORT || '5000', 10);
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`🚀 Persian Legal Firm server running at http://localhost:${port}`);
+  });
+}
+
+// Start the server
+startServer().catch((error) => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
 });

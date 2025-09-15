@@ -1,17 +1,25 @@
 import type { Express, Request, Response, NextFunction } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import type { IStorage } from "./storage";
 import { insertCaseSchema, insertContactSchema, insertCaseEventSchema } from "@shared/schema";
 import { z } from "zod";
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express, storage: IStorage): Promise<void> {
   
-  // Admin authentication middleware
-  const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+  // Admin authentication middleware for API routes
+  const requireAuthAPI = (req: Request, res: Response, next: NextFunction) => {
     if (req.session.adminId) {
       next();
     } else {
       res.status(401).json({ success: false, message: 'دسترسی غیر مجاز - احراز هویت مدیر الزامی است' });
+    }
+  };
+  
+  // Admin authentication middleware for web pages
+  const requireAuth = (req: Request, res: Response, next: NextFunction) => {
+    if (req.session.adminId) {
+      next();
+    } else {
+      res.redirect('/admin24');
     }
   };
   
@@ -101,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all cases (admin)
-  app.get('/api/cases', requireAuth, async (req, res) => {
+  app.get('/api/cases', requireAuthAPI, async (req, res) => {
     try {
       const cases = await storage.getAllLegalCases();
       res.json({ success: true, cases });
@@ -111,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update case status (admin)
-  app.put('/api/cases/:id/status', requireAuth, async (req, res) => {
+  app.put('/api/cases/:id/status', requireAuthAPI, async (req, res) => {
     try {
       const { id } = req.params;
       const { status } = req.body;
@@ -132,7 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all contacts (admin)
-  app.get('/api/contacts', requireAuth, async (req, res) => {
+  app.get('/api/contacts', requireAuthAPI, async (req, res) => {
     try {
       const contacts = await storage.getAllContacts();
       res.json({ success: true, contacts });
@@ -220,7 +228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // The primary '/api/admin/cases' route is handled in server/index.ts
 
   // Add a new event to a case (admin functionality)
-  app.post('/api/cases/:caseId/events', requireAuth, async (req, res) => {
+  app.post('/api/cases/:caseId/events', requireAuthAPI, async (req, res) => {
     try {
       const { caseId } = req.params;
       
@@ -254,7 +262,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-only endpoints for case event management
-  app.get('/api/admin/cases/:caseId/events', requireAuth, async (req, res) => {
+  app.get('/api/admin/cases/:caseId/events', requireAuthAPI, async (req, res) => {
     try {
       const { caseId } = req.params;
 
@@ -278,7 +286,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/admin/cases/:caseId/events/:eventId', requireAuth, async (req, res) => {
+  app.put('/api/admin/cases/:caseId/events/:eventId', requireAuthAPI, async (req, res) => {
     try {
       const { caseId, eventId } = req.params;
 
@@ -318,7 +326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/cases/:caseId/events/:eventId', requireAuth, async (req, res) => {
+  app.delete('/api/admin/cases/:caseId/events/:eventId', requireAuthAPI, async (req, res) => {
     try {
       const { caseId, eventId } = req.params;
 
@@ -344,6 +352,5 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  const httpServer = createServer(app);
-  return httpServer;
+  // Routes registered successfully
 }
