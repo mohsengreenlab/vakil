@@ -32,10 +32,11 @@ Preferred communication style: Simple, everyday language.
 - **Fallback Storage**: In-memory storage implementation for development/testing
 
 ## Database Schema Design
-The application uses three main entities:
+The application uses four main entities:
 - **Users**: Authentication and role management (admin/client roles)
 - **Legal Cases**: Case submissions with client information, case type, urgency levels, and status tracking
 - **Contacts**: General contact form submissions from website visitors
+- **Case Events**: Event tracking system for legal cases with support for Persian legal event types like "صدور جلب", "مطالعه وکیل", "در انتظار رای دادگاه"
 
 ## Authentication and Authorization
 - **User Management**: Username/password authentication system
