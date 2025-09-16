@@ -46,6 +46,9 @@
                 <button onclick="showTab('qa')" class="tab-btn" data-tab="qa" data-testid="tab-qa">
                     پرسش و پاسخ
                 </button>
+                <button onclick="showTab('files')" class="tab-btn" data-tab="files" data-testid="tab-files">
+                    مدیریت فایل ها
+                </button>
             </nav>
         </div>
     </div>
@@ -566,6 +569,58 @@
                     <% }) %>
                 </div>
                 <% } %>
+            </div>
+        </div>
+
+        <!-- Files Management Tab -->
+        <div id="files-tab" class="tab-content hidden">
+            <h1 class="text-3xl font-bold mb-6">مدیریت فایل‌های موکلان</h1>
+            
+            <!-- Client List for File Management -->
+            <div class="card p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">انتخاب موکل برای مشاهده فایل‌ها</h2>
+                    <input type="search" id="files-clients-search" class="input-field w-64" placeholder="جستجو در موکلان..." data-testid="input-search-files-clients">
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>شناسه موکل</th>
+                                <th>نام و نام خانوادگی</th>
+                                <th>کد ملی</th>
+                                <th>شماره تلفن</th>
+                                <th>تعداد فایل</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="files-clients-table-body">
+                            <tr>
+                                <td colspan="6" class="text-center py-8 text-muted-foreground">در حال بارگذاری موکلان...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Client Files List (Initially Hidden) -->
+            <div id="client-files-section" class="card p-6 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold">فایل‌های موکل</h2>
+                        <p class="text-sm text-muted-foreground" id="selected-client-info">هیچ موکلی انتخاب نشده</p>
+                    </div>
+                    <button onclick="closeClientFiles()" class="btn-secondary" data-testid="button-close-files">
+                        بازگشت به لیست موکلان
+                    </button>
+                </div>
+                
+                <div id="client-files-content">
+                    <div class="text-center py-8 text-muted-foreground">
+                        در حال بارگذاری فایل‌ها...
+                    </div>
+                </div>
             </div>
         </div>
 
