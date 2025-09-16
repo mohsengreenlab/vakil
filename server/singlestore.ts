@@ -1046,6 +1046,10 @@ export class SingleStoreStorage {
         [id]
       );
       const event = (rows as any)[0];
+      
+      // Sync the case status after creating the event
+      await this.syncCaseStatus(caseEvent.caseId);
+      
       return {
         id: event.id,
         caseId: event.case_id,
@@ -1062,6 +1066,13 @@ export class SingleStoreStorage {
 
   async updateCaseEvent(eventId: string, updates: Partial<InsertCaseEvent>): Promise<CaseEvent | null> {
     try {
+      // First get the caseId for syncing later
+      const [caseIdRows] = await this.pool.execute(
+        'SELECT case_id FROM Case_Events WHERE id = ?',
+        [eventId]
+      );
+      const caseId = (caseIdRows as any)[0]?.case_id;
+      
       // Build dynamic update query based on provided fields
       const updateFields = [];
       const values = [];
@@ -1098,6 +1109,11 @@ export class SingleStoreStorage {
         return null;
       }
       
+      // Sync case status if the event was updated and we have the caseId
+      if (caseId) {
+        await this.syncCaseStatus(caseId);
+      }
+      
       return {
         id: event.id,
         caseId: event.case_id,
@@ -1114,14 +1130,96 @@ export class SingleStoreStorage {
 
   async deleteCaseEvent(eventId: string): Promise<boolean> {
     try {
+      // First get the caseId of the event being deleted for sync
+      const [eventRows] = await this.pool.execute(
+        'SELECT case_id FROM Case_Events WHERE id = ?',
+        [eventId]
+      );
+      const caseId = (eventRows as any)[0]?.case_id;
+      
       const [result] = await this.pool.execute(
         'DELETE FROM Case_Events WHERE id = ?',
         [eventId]
       );
       
-      return (result as any).affectedRows > 0;
+      const deleted = (result as any).affectedRows > 0;
+      
+      // Sync the case status if event was deleted
+      if (deleted && caseId) {
+        await this.syncCaseStatus(caseId);
+      }
+      
+      return deleted;
     } catch (error) {
       console.error('Error deleting case event:', error);
+      throw error;
+    }
+  }
+
+  // Sync function to update cases.last_case_status with latest event
+  private async syncCaseStatus(caseId: string): Promise<void> {
+    try {
+      // Get the most recent event and the client_id for this case
+      const [eventAndCaseRows] = await this.pool.execute(`
+        SELECT 
+          ce.event_type,
+          c.client_id
+        FROM Case_Events ce
+        INNER JOIN cases c ON ce.case_id = c.case_id
+        WHERE ce.case_id = ?
+        ORDER BY ce.occurred_at DESC
+        LIMIT 1
+      `, [caseId]);
+      
+      const result = (eventAndCaseRows as any)[0];
+      
+      if (result) {
+        // Case has events, update with latest event type
+        await this.pool.execute(
+          'UPDATE cases SET last_case_status = ? WHERE client_id = ? AND case_id = ?',
+          [result.event_type, result.client_id, caseId]
+        );
+        console.log(`🔄 Synced case ${caseId} status to: ${result.event_type}`);
+      } else {
+        // Case has no events, get client_id from cases table and set to 'pending'
+        const [caseRows] = await this.pool.execute(
+          'SELECT client_id FROM cases WHERE case_id = ?',
+          [caseId]
+        );
+        const caseData = (caseRows as any)[0];
+        
+        if (caseData) {
+          await this.pool.execute(
+            'UPDATE cases SET last_case_status = ? WHERE client_id = ? AND case_id = ?',
+            ['pending', caseData.client_id, caseId]
+          );
+          console.log(`🔄 Synced case ${caseId} status to: pending (no events)`);
+        }
+      }
+    } catch (error) {
+      console.error(`Error syncing case status for ${caseId}:`, error);
+      // Don't throw - allow the main operation to complete
+      console.warn(`⚠️  Case ${caseId} sync failed, but main operation continued`);
+    }
+  }
+
+  // Bulk sync all cases - useful for maintenance
+  async syncAllCaseStatuses(): Promise<void> {
+    try {
+      console.log('🔄 Starting bulk sync of all case statuses...');
+      
+      // Get all cases (client_id, case_id pairs)
+      const [caseRows] = await this.pool.execute('SELECT client_id, case_id FROM cases');
+      const cases = (caseRows as any[]);
+      
+      // Sync each case
+      for (const caseData of cases) {
+        await this.syncCaseStatus(caseData.case_id);
+      }
+      
+      console.log(`✅ Completed bulk sync for ${cases.length} cases`);
+    } catch (error) {
+      console.error('Error during bulk sync:', error);
       throw error;
     }
   }

@@ -29,6 +29,7 @@ export interface IStorage {
   createCaseEvent(caseEvent: InsertCaseEvent): Promise<CaseEvent>;
   updateCaseEvent(eventId: string, updates: Partial<InsertCaseEvent>): Promise<CaseEvent | null>;
   deleteCaseEvent(eventId: string): Promise<boolean>;
+  syncAllCaseStatuses(): Promise<void>;
   
   // Contact methods
   getContact(id: string): Promise<Contact | undefined>;
@@ -217,6 +218,36 @@ export class MemStorage implements IStorage {
       .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime());
   }
 
+  // Sync function to update cases.last_case_status with latest event
+  private async syncCaseStatus(caseId: string | number): Promise<void> {
+    const caseIdStr = caseId.toString();
+    const numericCaseId = typeof caseId === 'string' ? parseInt(caseId) : caseId;
+    
+    const events = await this.getCaseEvents(caseId);
+    const latestEventType = events.length > 0 ? events[0].eventType : null;
+    
+    const case_ = this.cases.get(numericCaseId);
+    if (case_) {
+      case_.lastCaseStatus = latestEventType || 'pending'; // Default to 'pending' if null
+      case_.lastStatusDate = new Date();
+      this.cases.set(numericCaseId, case_);
+      console.log(`🔄 Synced case ${caseId} status to: ${latestEventType || 'NULL'}`);
+    }
+  }
+
+  // Bulk sync all cases - useful for maintenance  
+  async syncAllCaseStatuses(): Promise<void> {
+    console.log('🔄 Starting bulk sync of all case statuses...');
+    
+    const allCases = Array.from(this.cases.values());
+    
+    for (const case_ of allCases) {
+      await this.syncCaseStatus(case_.caseId);
+    }
+    
+    console.log(`✅ Completed bulk sync for ${allCases.length} cases`);
+  }
+
   async getClientCaseEvents(clientId: string | number): Promise<{ case: Case, events: CaseEvent[] }[]> {
     const numericClientId = typeof clientId === 'string' ? parseInt(clientId) : clientId;
     const clientCases = Array.from(this.cases.values()).filter(case_ => case_.clientId === numericClientId);
@@ -241,6 +272,10 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
     };
     this.caseEvents.set(id, newEvent);
+    
+    // Sync the case status after creating the event
+    await this.syncCaseStatus(caseEvent.caseId);
+    
     return newEvent;
   }
 
@@ -258,11 +293,28 @@ export class MemStorage implements IStorage {
     }
 
     this.caseEvents.set(eventId, event);
+    
+    // Sync the case status after updating the event
+    await this.syncCaseStatus(event.caseId);
+    
     return event;
   }
 
   async deleteCaseEvent(eventId: string): Promise<boolean> {
-    return this.caseEvents.delete(eventId);
+    const event = this.caseEvents.get(eventId);
+    if (!event) {
+      return false;
+    }
+    
+    const caseId = event.caseId;
+    const deleted = this.caseEvents.delete(eventId);
+    
+    // Sync the case status after deleting the event
+    if (deleted) {
+      await this.syncCaseStatus(caseId);
+    }
+    
+    return deleted;
   }
 
   async getContact(id: string): Promise<Contact | undefined> {

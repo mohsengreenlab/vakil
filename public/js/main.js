@@ -361,6 +361,12 @@ function getStatusDisplayText(status) {
         'awaiting-court': 'در انتظار رای دادگاه',
         'verdict-issued': 'صدور رای'
     };
+    
+    // Handle NULL, undefined, or empty status
+    if (!status || status === null || status === undefined || status === '') {
+        return 'بدون وضعیت';
+    }
+    
     return statusMap[status] || status;
 }
 
