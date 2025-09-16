@@ -352,32 +352,18 @@ function removeFile(index) {
     showToast('فایل حذف شد', 'info');
 }
 
-// Admin functions
-async function updateCaseStatus(caseId, newStatus) {
-    try {
-        const response = await fetch(`/api/admin/cases/${caseId}/status`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ status: newStatus }),
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showToast('وضعیت پرونده به‌روزرسانی شد', 'success');
-            // Reload the page to show updated data
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } else {
-            showToast('خطا در به‌روزرسانی وضعیت', 'error');
-        }
-    } catch (error) {
-        showToast('خطا در ارتباط با سرور', 'error');
-    }
+// Helper function to convert status values to display text
+function getStatusDisplayText(status) {
+    const statusMap = {
+        'under-review': 'در انتظار بررسی',
+        'lawyer-study': 'در حال مطالعه وکیل',
+        'in-progress': 'در حال اقدام',
+        'awaiting-court': 'در انتظار رای دادگاه',
+        'verdict-issued': 'صدور رای'
+    };
+    return statusMap[status] || status;
 }
+
 
 // Password visibility toggle
 function togglePassword(inputId) {
@@ -635,15 +621,10 @@ function renderCasesTable(casesData = null) {
             <td>${caseItem.client_id}</td>
             <td class="font-medium">${getClientName(caseItem.client_id)}</td>
             <td>
-                <select onchange="updateCaseStatus('${caseItem.case_id}', this.value)" 
-                        class="status-select px-2 py-1 rounded border border-border text-sm min-w-[180px]" 
-                        data-testid="select-case-status-${caseItem.case_id}">
-                    <option value="under-review" ${caseItem.last_case_status === 'under-review' ? 'selected' : ''}>در انتظار بررسی</option>
-                    <option value="lawyer-study" ${caseItem.last_case_status === 'lawyer-study' ? 'selected' : ''}>در حال مطالعه وکیل</option>
-                    <option value="in-progress" ${caseItem.last_case_status === 'in-progress' ? 'selected' : ''}>در حال اقدام</option>
-                    <option value="awaiting-court" ${caseItem.last_case_status === 'awaiting-court' ? 'selected' : ''}>در انتظار رای دادگاه</option>
-                    <option value="verdict-issued" ${caseItem.last_case_status === 'verdict-issued' ? 'selected' : ''}>صدور رای</option>
-                </select>
+                <span class="status-display px-2 py-1 rounded bg-muted text-sm inline-block min-w-[180px]" 
+                      data-testid="text-case-status-${caseItem.case_id}">
+                    ${getStatusDisplayText(caseItem.last_case_status)}
+                </span>
             </td>
             <td>${new Date(caseItem.case_creation_date).toLocaleDateString('fa-IR')}</td>
             <td>

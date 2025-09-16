@@ -118,26 +118,6 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
     }
   });
 
-  // Update case status (admin)
-  app.put('/api/cases/:id/status', requireAuthAPI, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { status } = req.body;
-      
-      console.log(`🔄 Updating case ${id} status to ${status}`);
-      const updatedCase = await storage.updateCaseStatus(id, status);
-      if (updatedCase) {
-        console.log(`✅ Case ${id} status updated successfully to ${status}`);
-        res.json({ success: true, case: updatedCase });
-      } else {
-        console.log(`❌ Case ${id} not found`);
-        res.status(404).json({ success: false, message: 'پرونده یافت نشد' });
-      }
-    } catch (error) {
-      console.error('❌ Error updating case status:', error);
-      res.status(500).json({ success: false, message: 'خطا در به‌روزرسانی وضعیت' });
-    }
-  });
 
   // Get all contacts (admin)
   app.get('/api/contacts', requireAuthAPI, async (req, res) => {

@@ -450,22 +450,38 @@ export class SingleStoreStorage {
     }
   }
 
-  async getAllLegalCases(): Promise<LegalCase[]> {
+  async getAllLegalCases(): Promise<any[]> {
     try {
-      const [rows] = await this.pool.execute(
-        'SELECT * FROM contact_us_messages ORDER BY created_at DESC'
-      );
-      return (rows as any[]).map(contact => ({
-        id: contact.id,
-        clientName: `${contact.first_name} ${contact.last_name}`,
-        clientPhone: contact.phone_number,
-        clientEmail: contact.email,
-        caseType: contact.subject,
-        urgency: 'normal',
-        description: contact.message,
-        status: 'pending',
-        hasLawyer: false,
-        createdAt: contact.created_at
+      // Query cases with client information and get latest status from Case_Events
+      const [rows] = await this.pool.execute(`
+        SELECT 
+          c.case_id,
+          c.client_id, 
+          c.case_creation_date,
+          c.last_case_status,
+          cl.first_name,
+          cl.last_name,
+          cl.phone_numbers,
+          COALESCE(
+            (SELECT ce.event_type 
+             FROM Case_Events ce 
+             WHERE ce.case_id = c.case_id 
+             ORDER BY ce.occurred_at DESC 
+             LIMIT 1), 
+            c.last_case_status
+          ) as current_status
+        FROM cases c
+        LEFT JOIN clients cl ON c.client_id = cl.client_id
+        ORDER BY c.case_creation_date DESC
+      `);
+      
+      return (rows as any[]).map(row => ({
+        case_id: row.case_id,
+        client_id: row.client_id,
+        client_name: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
+        last_case_status: row.current_status,
+        case_creation_date: row.case_creation_date,
+        phone_numbers: row.phone_numbers
       }));
     } catch (error) {
       console.error('Error getting all legal cases:', error);

@@ -22,7 +22,6 @@ export interface IStorage {
   getCase(caseId: string | number): Promise<Case | undefined>;
   getAllCases(): Promise<Case[]>;
   createCase(clientId: string | number, status: string, caseId?: string): Promise<Case>;
-  updateCaseStatus(caseId: string | number, status: string): Promise<Case | undefined>;
   
   // Case Events methods
   getCaseEvents(caseId: string | number): Promise<CaseEvent[]>;
@@ -173,7 +172,23 @@ export class MemStorage implements IStorage {
   }
 
   async getAllCases(): Promise<Case[]> {
-    return Array.from(this.cases.values()).sort(
+    const allCases = Array.from(this.cases.values());
+    
+    // For each case, get the latest status from case events
+    const casesWithLatestStatus = await Promise.all(
+      allCases.map(async (case_) => {
+        const caseEvents = await this.getCaseEvents(case_.caseId);
+        // Get the most recent event's eventType as the current status
+        const latestStatus = caseEvents.length > 0 ? caseEvents[0].eventType : case_.lastCaseStatus;
+        
+        return {
+          ...case_,
+          lastCaseStatus: latestStatus
+        };
+      })
+    );
+    
+    return casesWithLatestStatus.sort(
       (a, b) => (b.caseCreationDate?.getTime() || 0) - (a.caseCreationDate?.getTime() || 0)
     );
   }
@@ -193,17 +208,6 @@ export class MemStorage implements IStorage {
     return case_;
   }
 
-  async updateCaseStatus(caseId: string | number, status: string): Promise<Case | undefined> {
-    const numericCaseId = typeof caseId === 'string' ? parseInt(caseId) : caseId;
-    const case_ = this.cases.get(numericCaseId);
-    if (case_) {
-      case_.lastCaseStatus = status;
-      case_.lastStatusDate = new Date();
-      this.cases.set(numericCaseId, case_);
-      return case_;
-    }
-    return undefined;
-  }
 
   // Case Events methods
   async getCaseEvents(caseId: string | number): Promise<CaseEvent[]> {
