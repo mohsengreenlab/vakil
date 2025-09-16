@@ -266,6 +266,20 @@ export class SingleStoreStorage {
         )
       `);
 
+      // Check existing client_files table data
+      try {
+        const [existingFiles] = await connection.execute('SELECT COUNT(*) as file_count FROM client_files');
+        const fileCount = (existingFiles as any)[0].file_count;
+        console.log(`📁 client_files table: ${fileCount} existing files found`);
+        
+        if (fileCount > 0) {
+          const [recentFiles] = await connection.execute('SELECT client_id, file_name, upload_date FROM client_files ORDER BY upload_date DESC LIMIT 5');
+          console.log('📁 Recent client files:', recentFiles);
+        }
+      } catch (checkError) {
+        console.log('ℹ️ client_files table check:', (checkError as Error).message);
+      }
+
       // Check existing QA table structure to understand ID type
       try {
         const [existingRows] = await connection.execute('SELECT * FROM QA LIMIT 1');
@@ -1275,10 +1289,13 @@ export class SingleStoreStorage {
       const clientIdStr = typeof clientId === 'number' ? clientId.toString() : clientId;
       const paddedClientId = clientIdStr.padStart(4, '0');
       
+      console.log(`📁 Fetching client files for client ${paddedClientId}`);
       const [rows] = await this.pool.execute(
         'SELECT * FROM client_files WHERE client_id = ? ORDER BY upload_date DESC',
         [paddedClientId]
       );
+      
+      console.log(`📁 Found ${(rows as any[]).length} files for client ${paddedClientId}`);
       
       return (rows as any[]).map(file => ({
         id: file.id,
@@ -1307,6 +1324,8 @@ export class SingleStoreStorage {
       const id = this.generateUUID();
       const clientIdStr = insertClientFile.clientId.toString().padStart(4, '0');
       const uploadDate = new Date();
+      
+      console.log(`📁 Creating new client file: ${insertClientFile.originalFileName} for client ${clientIdStr}`);
 
       await this.pool.execute(`
         INSERT INTO client_files (
@@ -1325,6 +1344,8 @@ export class SingleStoreStorage {
         uploadDate,
         new Date()
       ]);
+      
+      console.log(`✅ Successfully created client file record with ID: ${id}`);
 
       return {
         id,
