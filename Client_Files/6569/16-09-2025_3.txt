@@ -1,0 +1,43 @@
+1- Setup & Connectivity:
+
+Requires 2.4GHz Wi-Fi (not 5GHz).
+
+Companion app: "EcoBrew App" (iOS/Android).
+
+Pairing process: Hold "Connect" button for 3 seconds until light flashes blue.
+
+2- Brewing Features:
+
+Customizable profiles (strength, temperature, volume).
+
+Voice control via Alexa/Google Assistant.
+
+"Eco Mode" reduces energy by 30% (default: ON).
+
+3- Subscription Service:
+
+"BeanRefill" subscription: Monthly delivery of coffee beans.
+
+Pause/cancel anytime via app account.
+
+Free shipping over $30.
+
+4- Troubleshooting:
+
+Error Codes:
+
+E01: Water tank empty/low.
+
+E02: Coffee grounds drawer full.
+
+E03: Wi-Fi disconnected.
+
+Reset: Press and hold power button for 10 seconds.
+
+Descaling required every 3 months (use EcoBrew Descaler Kit).
+
+5- Warranty & Returns
+
+2-year limited warranty (excludes physical damage).
+
+30-day return policy for unused products.
