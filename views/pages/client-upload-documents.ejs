@@ -302,7 +302,7 @@
             <div class="section">
                 <div class="section-title">📎 ارسال مدرک جدید</div>
                 
-                <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                <button class="upload-btn" onclick="openFileDialog()">
                     📁 ارسال مدرک
                 </button>
                 <input type="file" id="file-input" class="file-input" accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.txt">
@@ -374,12 +374,23 @@
 
         // File input change handler
         document.getElementById('file-input').addEventListener('change', function(e) {
+            console.log('File input change event triggered');
             const file = e.target.files[0];
+            console.log('Selected file:', file ? file.name : 'No file');
             if (file) {
                 selectedFile = file;
                 showFilePreview(file);
+            } else {
+                console.log('No file selected');
             }
         });
+
+        // Open file dialog
+        function openFileDialog() {
+            console.log('Opening file dialog...');
+            const fileInput = document.getElementById('file-input');
+            fileInput.click();
+        }
 
         // Show file preview
         function showFilePreview(file) {
@@ -491,11 +502,29 @@
         // Reset form
         function resetForm() {
             selectedFile = null;
-            document.getElementById('file-input').value = '';
-            document.getElementById('description').value = '';
-            document.getElementById('confirm-checkbox').checked = false;
-            document.getElementById('file-preview').classList.remove('active');
+            const fileInput = document.getElementById('file-input');
+            const description = document.getElementById('description');
+            const checkbox = document.getElementById('confirm-checkbox');
+            const preview = document.getElementById('file-preview');
+            
+            // Clear file input
+            fileInput.value = '';
+            fileInput.files = null;
+            
+            // Clear description
+            description.value = '';
+            
+            // Uncheck checkbox
+            checkbox.checked = false;
+            
+            // Hide preview
+            preview.classList.remove('active');
+            preview.style.display = 'none';
+            
+            // Update submit button state
             updateSubmitButton();
+            
+            console.log('Form reset completed');
         }
 
         // Load files list
