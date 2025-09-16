@@ -241,7 +241,7 @@ app.post('/api/client/login', async (req, res) => {
       res.json({ 
         success: true, 
         message: 'ورود موفقیت‌آمیز',
-        redirectUrl: '/client/portal'
+        redirectUrl: '/client'
       });
     });
     
@@ -306,6 +306,40 @@ function formatDate(date: any): string {
     return 'خطا در نمایش تاریخ';
   }
 }
+
+// Client landing page route
+app.get('/client', requireClientAuth, async (req, res) => {
+  try {
+    const client = await storage.getClient(req.session.clientId);
+    res.render('pages/client-landing', { 
+      title: 'پورتال موکل - دفتر وکالت پیشرو',
+      page: 'client-landing',
+      client
+    });
+  } catch (error) {
+    console.error('Error loading client landing:', error);
+    res.status(500).render('pages/500', {
+      title: 'خطای سرور',
+      page: 'error'
+    });
+  }
+});
+
+// Client upload documents page
+app.get('/client/upload-documents', requireClientAuth, (req, res) => {
+  res.render('pages/client-upload-documents', { 
+    title: 'ارسال مدارک - دفتر وکالت پیشرو',
+    page: 'client-upload-documents'
+  });
+});
+
+// Client send message page
+app.get('/client/send-message', requireClientAuth, (req, res) => {
+  res.render('pages/client-send-message', { 
+    title: 'ارسال پیام - دفتر وکالت پیشرو',
+    page: 'client-send-message'
+  });
+});
 
 // Client portal route
 app.get('/client/portal', requireClientAuth, async (req, res) => {

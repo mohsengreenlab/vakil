@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        * { 
+            font-family: 'Tahoma', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            direction: rtl;
+            padding: 20px;
+        }
+        .container { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .header { 
+            margin-bottom: 40px; 
+        }
+        .header h1 { 
+            color: #2563eb; 
+            margin-bottom: 20px; 
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            display: block;
+        }
+        .message { 
+            color: #64748b; 
+            font-size: 18px; 
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .back-btn { 
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white; 
+            text-decoration: none;
+            padding: 12px 30px; 
+            border-radius: 25px; 
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            display: inline-block;
+            margin-left: 15px;
+        }
+        .back-btn:hover { 
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+        .logout-btn { 
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white; 
+            border: none; 
+            padding: 12px 30px; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+        .logout-btn:hover { 
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span class="icon">📄</span>
+            <h1>ارسال مدارک</h1>
+        </div>
+
+        <div class="message">
+            این صفحه در حال توسعه است.<br>
+            به زودی امکان ارسال مدارک در دسترس خواهد بود.
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <a href="/client" class="back-btn">بازگشت به صفحه اصلی</a>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">خروج از حساب</button>
+    </div>
+
+    <script>
+        async function logout() {
+            if (confirm('آیا مطمئن هستید که می‌خواهید خارج شوید؟')) {
+                try {
+                    const response = await fetch('/api/client/logout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        window.location.href = '/login';
+                    } else {
+                        alert('خطا در خروج: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('خطا در خروج');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

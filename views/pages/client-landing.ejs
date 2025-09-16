@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        * { 
+            font-family: 'Tahoma', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        body { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            direction: rtl;
+            padding: 20px;
+        }
+        .container { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        .header { 
+            margin-bottom: 40px; 
+        }
+        .header h1 { 
+            color: #2563eb; 
+            margin-bottom: 10px; 
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .welcome-text { 
+            color: #64748b; 
+            font-size: 16px; 
+            margin-bottom: 5px;
+        }
+        .client-info { 
+            color: #475569; 
+            font-size: 14px; 
+        }
+        .options-grid { 
+            display: grid; 
+            gap: 20px; 
+            margin-bottom: 30px;
+        }
+        .option-card { 
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 2px solid #e2e8f0;
+            padding: 30px 20px; 
+            border-radius: 15px; 
+            text-decoration: none; 
+            color: #1e293b;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .option-card:hover { 
+            transform: translateY(-5px);
+            border-color: #2563eb;
+            box-shadow: 0 15px 30px rgba(37, 99, 235, 0.2);
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        }
+        .option-card:active {
+            transform: translateY(-2px);
+        }
+        .option-icon { 
+            font-size: 40px; 
+            margin-bottom: 15px; 
+            display: block;
+        }
+        .option-title { 
+            font-size: 18px; 
+            font-weight: bold; 
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+        .option-description { 
+            font-size: 14px; 
+            color: #64748b;
+            line-height: 1.4;
+        }
+        .logout-btn { 
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white; 
+            border: none; 
+            padding: 12px 30px; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+        .logout-btn:hover { 
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+        .logout-btn:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>پورتال موکل</h1>
+            <p class="welcome-text">خوش آمدید</p>
+            <% if (client) { %>
+                <p class="client-info"><%= client.first_name || client.firstName || '' %> <%= client.last_name || client.lastName || '' %></p>
+            <% } %>
+        </div>
+
+        <div class="options-grid">
+            <a href="/client/portal" class="option-card">
+                <span class="option-icon">📁</span>
+                <div class="option-title">پیگیری پرونده</div>
+                <div class="option-description">مشاهده وضعیت پرونده‌ها و تاریخچه رویدادها</div>
+            </a>
+            
+            <a href="/client/upload-documents" class="option-card">
+                <span class="option-icon">📄</span>
+                <div class="option-title">ارسال مدارک</div>
+                <div class="option-description">ارسال و مدیریت مدارک مربوط به پرونده</div>
+            </a>
+            
+            <a href="/client/send-message" class="option-card">
+                <span class="option-icon">💬</span>
+                <div class="option-title">ارسال پیام</div>
+                <div class="option-description">ارتباط مستقیم با تیم حقوقی</div>
+            </a>
+        </div>
+
+        <button class="logout-btn" onclick="logout()">خروج از حساب</button>
+    </div>
+
+    <script>
+        async function logout() {
+            if (confirm('آیا مطمئن هستید که می‌خواهید خارج شوید؟')) {
+                try {
+                    const response = await fetch('/api/client/logout', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        window.location.href = '/login';
+                    } else {
+                        alert('خطا در خروج: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('خطا در خروج');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
