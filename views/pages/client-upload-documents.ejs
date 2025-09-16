@@ -14,43 +14,239 @@
         body { 
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             direction: rtl;
             padding: 20px;
         }
         .container { 
             background: white; 
-            padding: 40px; 
+            margin: 0 auto;
             border-radius: 20px; 
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            max-width: 500px;
+            max-width: 1000px;
             width: 100%;
-            text-align: center;
+            overflow: hidden;
         }
         .header { 
-            margin-bottom: 40px; 
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            padding: 30px;
+            text-align: center;
         }
         .header h1 { 
-            color: #2563eb; 
-            margin-bottom: 20px; 
             font-size: 28px;
             font-weight: bold;
+            margin-bottom: 10px;
         }
-        .icon {
-            font-size: 60px;
+        .header .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 40px;
+            border: 2px solid #f1f5f9;
+            border-radius: 15px;
+            padding: 25px;
+        }
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2563eb;
             margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .upload-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+        .file-input {
+            display: none;
+        }
+        .file-preview {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 2px dashed #cbd5e1;
+        }
+        .file-preview.active {
             display: block;
         }
-        .message { 
-            color: #64748b; 
-            font-size: 18px; 
-            line-height: 1.6;
-            margin-bottom: 30px;
+        .preview-content {
+            text-align: center;
+        }
+        .preview-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .preview-info {
+            color: #64748b;
+            margin-bottom: 15px;
+        }
+        .preview-name {
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        .description-field {
+            margin-top: 20px;
+        }
+        .description-field label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #374151;
+        }
+        .description-field textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .description-field textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .confirmation-section {
+            margin-top: 25px;
+            padding: 20px;
+            background: #fef3c7;
+            border-radius: 10px;
+            border: 2px solid #f59e0b;
+        }
+        .confirmation-text {
+            font-weight: bold;
+            color: #92400e;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .confirmation-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+        .confirmation-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .submit-btn {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            margin-top: 20px;
+            width: 100%;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .submit-btn:enabled {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .submit-btn:enabled:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+        }
+        .files-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .files-table th,
+        .files-table td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .files-table th {
+            background: #f8fafc;
+            font-weight: bold;
+            color: #374151;
+        }
+        .files-table tr:hover {
+            background: #f8fafc;
+        }
+        .download-link {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .download-link:hover {
+            text-decoration: underline;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+        }
+        .loading.active {
+            display: block;
+        }
+        .success-message {
+            display: none;
+            background: #d1fae5;
+            color: #065f46;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #10b981;
+        }
+        .success-message.active {
+            display: block;
+        }
+        .error-message {
+            display: none;
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #ef4444;
+        }
+        .error-message.active {
+            display: block;
+        }
+        .navigation {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
         }
         .back-btn { 
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            background: linear-gradient(135deg, #6b7280, #4b5563);
             color: white; 
             text-decoration: none;
             padding: 12px 30px; 
@@ -58,14 +254,14 @@
             font-size: 16px;
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
             display: inline-block;
             margin-left: 15px;
         }
         .back-btn:hover { 
-            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            background: linear-gradient(135deg, #4b5563, #374151);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
         }
         .logout-btn { 
             background: linear-gradient(135deg, #ef4444, #dc2626);
@@ -89,23 +285,275 @@
 <body>
     <div class="container">
         <div class="header">
-            <span class="icon">📄</span>
-            <h1>ارسال مدارک</h1>
+            <h1>📄 ارسال مدارک</h1>
+            <div class="subtitle">آپلود و مدیریت مدارک شما</div>
         </div>
 
-        <div class="message">
-            این صفحه در حال توسعه است.<br>
-            به زودی امکان ارسال مدارک در دسترس خواهد بود.
-        </div>
+        <div class="content">
+            <!-- Success/Error Messages -->
+            <div id="success-message" class="success-message">
+                فایل با موفقیت آپلود شد!
+            </div>
+            <div id="error-message" class="error-message">
+                خطا در آپلود فایل. لطفاً دوباره تلاش کنید.
+            </div>
 
-        <div style="margin-bottom: 20px;">
-            <a href="/client" class="back-btn">بازگشت به صفحه اصلی</a>
-        </div>
+            <!-- Upload Section -->
+            <div class="section">
+                <div class="section-title">📎 ارسال مدرک جدید</div>
+                
+                <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                    📁 ارسال مدرک
+                </button>
+                <input type="file" id="file-input" class="file-input" accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.txt">
 
-        <button class="logout-btn" onclick="logout()">خروج از حساب</button>
+                <div id="file-preview" class="file-preview">
+                    <div class="preview-content">
+                        <span id="preview-icon" class="preview-icon">📄</span>
+                        <div id="preview-name" class="preview-name"></div>
+                        <div id="preview-info" class="preview-info"></div>
+                    </div>
+
+                    <div class="description-field">
+                        <label for="description">توضیحات (اختیاری):</label>
+                        <textarea id="description" placeholder="توضیحات مربوط به فایل را اینجا بنویسید..."></textarea>
+                    </div>
+
+                    <div class="confirmation-section">
+                        <div class="confirmation-text">
+                            ⚠️ بعد از ارسال فایل امکان تغییر یا حذف آن وجود ندارد
+                        </div>
+                        <div class="confirmation-checkbox">
+                            <input type="checkbox" id="confirm-checkbox">
+                            <label for="confirm-checkbox">متوجه شدم و موافقم</label>
+                        </div>
+                    </div>
+
+                    <button id="submit-btn" class="submit-btn" onclick="submitFile()">ارسال فایل</button>
+                </div>
+
+                <div id="loading" class="loading">
+                    در حال آپلود فایل...
+                </div>
+            </div>
+
+            <!-- Files List Section -->
+            <div class="section">
+                <div class="section-title">📋 فایل‌های ارسال شده</div>
+                
+                <div id="files-loading" class="loading">در حال بارگذاری فایل‌ها...</div>
+                
+                <table id="files-table" class="files-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>نام فایل</th>
+                            <th>تاریخ آپلود</th>
+                            <th>اندازه</th>
+                            <th>توضیحات</th>
+                            <th>دانلود</th>
+                        </tr>
+                    </thead>
+                    <tbody id="files-tbody">
+                    </tbody>
+                </table>
+
+                <div id="no-files" style="display: none; text-align: center; color: #6b7280; padding: 40px;">
+                    هیچ فایلی ارسال نشده است
+                </div>
+            </div>
+
+            <div class="navigation">
+                <a href="/client" class="back-btn">بازگشت به صفحه اصلی</a>
+                <button class="logout-btn" onclick="logout()">خروج از حساب</button>
+            </div>
+        </div>
     </div>
 
     <script>
+        let selectedFile = null;
+
+        // File input change handler
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                selectedFile = file;
+                showFilePreview(file);
+            }
+        });
+
+        // Show file preview
+        function showFilePreview(file) {
+            const preview = document.getElementById('file-preview');
+            const icon = document.getElementById('preview-icon');
+            const name = document.getElementById('preview-name');
+            const info = document.getElementById('preview-info');
+
+            // Set icon based on file type
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'pdf') {
+                icon.textContent = '📄';
+            } else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+                icon.textContent = '🖼️';
+            } else if (['doc', 'docx'].includes(ext)) {
+                icon.textContent = '📝';
+            } else {
+                icon.textContent = '📄';
+            }
+
+            name.textContent = file.name;
+            info.textContent = `اندازه: ${formatFileSize(file.size)} | نوع: ${file.type || 'نامشخص'}`;
+
+            preview.classList.add('active');
+            updateSubmitButton();
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 بایت';
+            const k = 1024;
+            const sizes = ['بایت', 'کیلوبایت', 'مگابایت', 'گیگابایت'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // Update submit button state
+        function updateSubmitButton() {
+            const submitBtn = document.getElementById('submit-btn');
+            const checkbox = document.getElementById('confirm-checkbox');
+            
+            if (selectedFile && checkbox.checked) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+
+        // Checkbox change handler
+        document.getElementById('confirm-checkbox').addEventListener('change', updateSubmitButton);
+
+        // Submit file
+        async function submitFile() {
+            if (!selectedFile) return;
+
+            const loading = document.getElementById('loading');
+            const preview = document.getElementById('file-preview');
+            const description = document.getElementById('description').value;
+
+            try {
+                loading.classList.add('active');
+                preview.style.display = 'none';
+
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('description', description);
+
+                const response = await fetch('/api/client/files', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showMessage('success', 'فایل با موفقیت آپلود شد!');
+                    resetForm();
+                    loadFiles(); // Refresh file list
+                } else {
+                    showMessage('error', result.message || 'خطا در آپلود فایل');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showMessage('error', 'خطا در ارتباط با سرور');
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // Show success/error message
+        function showMessage(type, message) {
+            const successMsg = document.getElementById('success-message');
+            const errorMsg = document.getElementById('error-message');
+
+            successMsg.classList.remove('active');
+            errorMsg.classList.remove('active');
+
+            if (type === 'success') {
+                successMsg.textContent = message;
+                successMsg.classList.add('active');
+                setTimeout(() => successMsg.classList.remove('active'), 5000);
+            } else {
+                errorMsg.textContent = message;
+                errorMsg.classList.add('active');
+                setTimeout(() => errorMsg.classList.remove('active'), 5000);
+            }
+        }
+
+        // Reset form
+        function resetForm() {
+            selectedFile = null;
+            document.getElementById('file-input').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('confirm-checkbox').checked = false;
+            document.getElementById('file-preview').classList.remove('active');
+            updateSubmitButton();
+        }
+
+        // Load files list
+        async function loadFiles() {
+            const loading = document.getElementById('files-loading');
+            const table = document.getElementById('files-table');
+            const noFiles = document.getElementById('no-files');
+            const tbody = document.getElementById('files-tbody');
+
+            try {
+                loading.classList.add('active');
+                table.style.display = 'none';
+                noFiles.style.display = 'none';
+
+                const response = await fetch('/api/client/files');
+                const result = await response.json();
+
+                if (result.success) {
+                    if (result.files.length > 0) {
+                        tbody.innerHTML = '';
+                        result.files.forEach(file => {
+                            const row = createFileRow(file);
+                            tbody.appendChild(row);
+                        });
+                        table.style.display = 'table';
+                    } else {
+                        noFiles.style.display = 'block';
+                    }
+                } else {
+                    showMessage('error', 'خطا در دریافت فایل‌ها');
+                }
+            } catch (error) {
+                console.error('Load files error:', error);
+                showMessage('error', 'خطا در ارتباط با سرور');
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // Create file row
+        function createFileRow(file) {
+            const row = document.createElement('tr');
+            
+            const uploadDate = new Date(file.uploadDate);
+            const formattedDate = uploadDate.toLocaleDateString('fa-IR');
+
+            row.innerHTML = `
+                <td>${file.originalFileName}</td>
+                <td>${formattedDate}</td>
+                <td>${formatFileSize(parseInt(file.fileSize))}</td>
+                <td>${file.description || '-'}</td>
+                <td><a href="/api/client/files/${file.id}/download" class="download-link" target="_blank">دانلود</a></td>
+            `;
+            
+            return row;
+        }
+
+        // Logout function
         async function logout() {
             if (confirm('آیا مطمئن هستید که می‌خواهید خارج شوید؟')) {
                 try {
@@ -126,6 +574,9 @@
                 }
             }
         }
+
+        // Load files on page load
+        window.addEventListener('load', loadFiles);
     </script>
 </body>
 </html>

@@ -405,7 +405,7 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
 
       // Create file record in storage
       const fileData = {
-        clientId: clientId,
+        clientId: parseInt(clientId.toString()),
         fileName: req.file.filename,
         originalFileName: req.file.originalname,
         fileSize: req.file.size.toString(),
@@ -475,7 +475,7 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
       }
 
       // Security check: ensure file belongs to authenticated client
-      if (file.clientId !== clientId) {
+      if (file.clientId !== parseInt(clientId.toString())) {
         return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز' });
       }
 
