@@ -414,8 +414,12 @@
             name.textContent = file.name;
             info.textContent = `اندازه: ${formatFileSize(file.size)} | نوع: ${file.type || 'نامشخص'}`;
 
+            // Clear any inline display style and show preview
+            preview.style.display = '';
             preview.classList.add('active');
             updateSubmitButton();
+            
+            console.log('File preview shown for:', file.name);
         }
 
         // Format file size
