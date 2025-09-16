@@ -875,6 +875,14 @@ function showTab(tabName) {
     // Add active class to selected tab button
     document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
     
+    // Load data for specific tabs
+    if (tabName === 'files') {
+        loadClientsForFiles();
+        // Reset to client list view
+        document.getElementById('client-files-section').classList.add('hidden');
+        document.querySelector('#files-tab .card').style.display = 'block';
+    }
+    
     // Load data when switching to specific tabs
     if (tabName === 'qa') {
         loadQAItems();
@@ -1864,6 +1872,223 @@ function getStatusText(status) {
     return statusMap[status] || status;
 }
 
+// File Management Functions
+let allClientsForFiles = [];
+
+async function loadClientsForFiles() {
+    try {
+        const response = await fetch('/api/admin/clients');
+        const result = await response.json();
+        
+        if (result.success) {
+            allClientsForFiles = result.clients;
+            displayClientsForFiles(allClientsForFiles);
+        } else {
+            showToast('خطا در بارگذاری موکلان', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading clients for files:', error);
+        showToast('خطا در اتصال به سرور', 'error');
+    }
+}
+
+function displayClientsForFiles(clients) {
+    const tbody = document.getElementById('files-clients-table-body');
+    
+    if (clients.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">هیچ موکلی یافت نشد</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = clients.map(client => {
+        const phoneNumbers = typeof client.phoneNumbers === 'string' 
+            ? JSON.parse(client.phoneNumbers) 
+            : client.phoneNumbers;
+        const firstPhone = Array.isArray(phoneNumbers) ? phoneNumbers[0] : phoneNumbers;
+        
+        return `
+            <tr data-testid="files-client-row-${client.client_id}">
+                <td data-testid="files-client-id-${client.client_id}">${client.client_id}</td>
+                <td data-testid="files-client-name-${client.client_id}">${client.first_name} ${client.last_name}</td>
+                <td data-testid="files-client-national-${client.client_id}">${client.national_id}</td>
+                <td data-testid="files-client-phone-${client.client_id}">${firstPhone}</td>
+                <td data-testid="files-client-count-${client.client_id}">
+                    <span id="file-count-${client.client_id}">-</span>
+                </td>
+                <td>
+                    <button onclick="viewClientFiles('${client.client_id}', '${client.first_name} ${client.last_name}')" 
+                            class="btn-primary text-sm" 
+                            data-testid="button-view-files-${client.client_id}">
+                        مشاهده فایل‌ها
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    // Load file counts for each client
+    clients.forEach(client => {
+        loadClientFileCount(client.client_id);
+    });
+}
+
+async function loadClientFileCount(clientId) {
+    try {
+        const response = await fetch(`/api/admin/clients/${clientId}/files`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const countElement = document.getElementById(`file-count-${clientId}`);
+            if (countElement) {
+                countElement.textContent = result.files.length;
+            }
+        }
+    } catch (error) {
+        console.error(`Error loading file count for client ${clientId}:`, error);
+    }
+}
+
+async function viewClientFiles(clientId, clientName) {
+    try {
+        // Hide client list and show file section
+        document.querySelector('#files-tab .card').style.display = 'none';
+        document.getElementById('client-files-section').classList.remove('hidden');
+        
+        // Update client info
+        document.getElementById('selected-client-info').textContent = `موکل: ${clientName} (شناسه: ${clientId})`;
+        
+        // Load client files
+        const response = await fetch(`/api/admin/clients/${clientId}/files`);
+        const result = await response.json();
+        
+        if (result.success) {
+            displayClientFiles(result.files);
+        } else {
+            showToast(result.message || 'خطا در دریافت فایل‌ها', 'error');
+            closeClientFiles();
+        }
+    } catch (error) {
+        console.error('Error loading client files:', error);
+        showToast('خطا در اتصال به سرور', 'error');
+        closeClientFiles();
+    }
+}
+
+function displayClientFiles(files) {
+    const contentDiv = document.getElementById('client-files-content');
+    
+    if (files.length === 0) {
+        contentDiv.innerHTML = `
+            <div class="text-center py-8 text-muted-foreground">
+                این موکل هیچ فایلی آپلود نکرده است
+            </div>
+        `;
+        return;
+    }
+    
+    contentDiv.innerHTML = `
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>نام فایل</th>
+                        <th>توضیحات</th>
+                        <th>حجم فایل</th>
+                        <th>تاریخ آپلود</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${files.map(file => `
+                        <tr data-testid="file-row-${file.id}">
+                            <td data-testid="file-name-${file.id}" class="font-medium">${file.originalFileName}</td>
+                            <td data-testid="file-description-${file.id}" class="text-sm">${file.description || '-'}</td>
+                            <td data-testid="file-size-${file.id}" class="text-sm">${formatFileSize(file.fileSize)}</td>
+                            <td data-testid="file-date-${file.id}" class="text-sm">${formatDate(file.uploadDate)}</td>
+                            <td>
+                                <button onclick="downloadClientFile('${file.id}', '${file.originalFileName}')" 
+                                        class="btn-primary text-sm" 
+                                        data-testid="button-download-${file.id}">
+                                    دانلود
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function closeClientFiles() {
+    document.getElementById('client-files-section').classList.add('hidden');
+    document.querySelector('#files-tab .card').style.display = 'block';
+}
+
+async function downloadClientFile(fileId, fileName) {
+    try {
+        const response = await fetch(`/api/admin/files/${fileId}/download`);
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showToast('فایل با موفقیت دانلود شد', 'success');
+        } else {
+            const result = await response.json();
+            showToast(result.message || 'خطا در دانلود فایل', 'error');
+        }
+    } catch (error) {
+        console.error('Error downloading file:', error);
+        showToast('خطا در دانلود فایل', 'error');
+    }
+}
+
+function formatFileSize(bytes) {
+    const size = parseInt(bytes);
+    if (size < 1024) return size + ' B';
+    if (size < 1024 * 1024) return Math.round(size / 1024) + ' KB';
+    return Math.round(size / (1024 * 1024)) + ' MB';
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fa-IR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function searchFilesClients() {
+    const searchTerm = document.getElementById('files-clients-search').value.toLowerCase().trim();
+    
+    if (!searchTerm) {
+        displayClientsForFiles(allClientsForFiles);
+        return;
+    }
+    
+    const filteredClients = allClientsForFiles.filter(client => {
+        const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
+        const clientId = client.client_id.toString();
+        const nationalId = client.national_id.toLowerCase();
+        
+        return fullName.includes(searchTerm) || 
+               clientId.includes(searchTerm) || 
+               nationalId.includes(searchTerm);
+    });
+    
+    displayClientsForFiles(filteredClients);
+}
+
 // Logout function
 async function logout() {
     try {
@@ -2113,5 +2338,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // Add event listener for files client search
+    const filesClientsSearch = document.getElementById('files-clients-search');
+    if (filesClientsSearch) {
+        let searchTimeout;
+        filesClientsSearch.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(searchFilesClients, 300); // 300ms debounce
+        });
+        
+        // Also trigger search on Enter key
+        filesClientsSearch.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                clearTimeout(searchTimeout);
+                searchFilesClients();
+            }
+        });
+    }
 });
 </script>
