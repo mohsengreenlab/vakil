@@ -54,6 +54,20 @@ export const contacts = pgTable("contacts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Client files table for document uploads
+export const clientFiles = pgTable("client_files", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  clientId: serial("client_id").notNull(),
+  fileName: text("file_name").notNull(),
+  originalFileName: text("original_file_name").notNull(),
+  fileSize: text("file_size").notNull(),
+  mimeType: text("mime_type").notNull(),
+  description: text("description"),
+  uploadDate: timestamp("upload_date").defaultNow(),
+  filePath: text("file_path").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -94,6 +108,16 @@ export const caseEventFormSchema = createInsertSchema(caseEvents).pick({
   details: true,
 });
 
+export const insertClientFileSchema = createInsertSchema(clientFiles).pick({
+  clientId: true,
+  fileName: true,
+  originalFileName: true,
+  fileSize: true,
+  mimeType: true,
+  description: true,
+  filePath: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
@@ -104,3 +128,5 @@ export type InsertContact = z.infer<typeof insertContactSchema>;
 export type Contact = typeof contacts.$inferSelect;
 export type InsertCaseEvent = z.infer<typeof insertCaseEventSchema>;
 export type CaseEvent = typeof caseEvents.$inferSelect;
+export type InsertClientFile = z.infer<typeof insertClientFileSchema>;
+export type ClientFile = typeof clientFiles.$inferSelect;
