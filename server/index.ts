@@ -1045,9 +1045,8 @@ app.get('/api/admin/files/:fileId/download', requireAuthAPI, async (req, res) =>
       });
     }
     
-    // More flexible UUID validation that handles various formats (with/without dashes)
-    const uuidPattern = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
-    if (!uuidPattern.test(fileId.replace(/-/g, ''))) {
+    // Flexible validation for various ID formats (UUID, numeric, alphanumeric)
+    if (fileId.length > 64 || !/^[A-Za-z0-9_-]+$/.test(fileId)) {
       return res.status(400).json({ 
         success: false, 
         message: 'شناسه فایل نامعتبر است' 
@@ -1066,7 +1065,7 @@ app.get('/api/admin/files/:fileId/download', requireAuthAPI, async (req, res) =>
     const relativePath = path.relative(clientFilesBase, resolvedPath);
     
     // Check if file is outside allowed directory or contains path traversal attempts
-    if (relativePath.startsWith('..') || path.isAbsolute(relativePath) || relativePath.includes('..')) {
+    if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
       console.error('Security violation: Path traversal attempt detected', { 
         fileId, 
         filePath: file.filePath, 
@@ -1092,8 +1091,9 @@ app.get('/api/admin/files/:fileId/download', requireAuthAPI, async (req, res) =>
     // Fallback if filename becomes empty after sanitization
     const finalFilename = sanitizedFilename || `file_${fileId.substring(0, 8)}.bin`;
     
-    // Set headers for file download with proper UTF-8 encoding
-    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(finalFilename)}`);
+    // Set headers for file download with proper UTF-8 encoding and ASCII fallback
+    const asciiFilename = finalFilename.replace(/[^\x20-\x7E]/g, '_'); // ASCII fallback
+    res.setHeader('Content-Disposition', `attachment; filename="${asciiFilename}"; filename*=UTF-8''${encodeURIComponent(finalFilename)}`);
     res.setHeader('Content-Type', file.mimeType || 'application/octet-stream');
     res.setHeader('Content-Security-Policy', 'default-src \'none\'');
     res.setHeader('X-Content-Type-Options', 'nosniff');
