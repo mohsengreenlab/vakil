@@ -314,7 +314,8 @@ app.get('/client', requireClientAuth, async (req, res) => {
     res.render('pages/client-landing', { 
       title: 'پورتال موکل - دفتر وکالت پیشرو',
       page: 'client-landing',
-      client
+      client,
+      layout: false // Don't use main layout for client landing page
     });
   } catch (error) {
     console.error('Error loading client landing:', error);
@@ -329,7 +330,8 @@ app.get('/client', requireClientAuth, async (req, res) => {
 app.get('/client/upload-documents', requireClientAuth, (req, res) => {
   res.render('pages/client-upload-documents', { 
     title: 'ارسال مدارک - دفتر وکالت پیشرو',
-    page: 'client-upload-documents'
+    page: 'client-upload-documents',
+    layout: false // Don't use main layout for client upload page
   });
 });
 
@@ -337,7 +339,8 @@ app.get('/client/upload-documents', requireClientAuth, (req, res) => {
 app.get('/client/send-message', requireClientAuth, (req, res) => {
   res.render('pages/client-send-message', { 
     title: 'ارسال پیام - دفتر وکالت پیشرو',
-    page: 'client-send-message'
+    page: 'client-send-message',
+    layout: false // Don't use main layout for client send message page
   });
 });
 
