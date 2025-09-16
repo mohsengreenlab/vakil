@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import { IStorage } from "./storage.js";
 import * as bcrypt from 'bcrypt';
 import { getConfig } from "./config.js";
-import { type CaseEvent, type InsertCaseEvent } from "@shared/schema";
+import { type CaseEvent, type InsertCaseEvent, type ClientFile, type InsertClientFile } from "@shared/schema";
 
 // Define interfaces based on the new schema requirements
 export interface Client {
@@ -245,6 +245,24 @@ export class SingleStoreStorage {
           details TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           SHARD KEY (id)
+        )
+      `);
+
+      // Create client_files table for file uploads
+      await connection.execute(`
+        CREATE TABLE IF NOT EXISTS client_files (
+          id VARCHAR(36) PRIMARY KEY,
+          client_id VARCHAR(4) NOT NULL,
+          file_name VARCHAR(500) NOT NULL,
+          original_file_name VARCHAR(500) NOT NULL,
+          file_size VARCHAR(20) NOT NULL,
+          mime_type VARCHAR(255) NOT NULL,
+          description TEXT,
+          file_path VARCHAR(1000) NOT NULL,
+          upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          SHARD KEY (id),
+          INDEX (client_id)
         )
       `);
 
@@ -1220,6 +1238,121 @@ export class SingleStoreStorage {
       console.log(`✅ Completed bulk sync for ${cases.length} cases`);
     } catch (error) {
       console.error('Error during bulk sync:', error);
+      throw error;
+    }
+  }
+
+  // Client File methods
+  async getClientFile(fileId: string): Promise<ClientFile | undefined> {
+    try {
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM client_files WHERE id = ?',
+        [fileId]
+      );
+      const file = (rows as any)[0];
+      if (!file) return undefined;
+
+      return {
+        id: file.id,
+        clientId: parseInt(file.client_id),
+        fileName: file.file_name,
+        originalFileName: file.original_file_name,
+        fileSize: file.file_size,
+        mimeType: file.mime_type,
+        description: file.description,
+        filePath: file.file_path,
+        uploadDate: file.upload_date,
+        createdAt: file.created_at,
+      };
+    } catch (error) {
+      console.error('Error getting client file:', error);
+      throw error;
+    }
+  }
+
+  async getClientFiles(clientId: string | number): Promise<ClientFile[]> {
+    try {
+      const clientIdStr = typeof clientId === 'number' ? clientId.toString() : clientId;
+      const paddedClientId = clientIdStr.padStart(4, '0');
+      
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM client_files WHERE client_id = ? ORDER BY upload_date DESC',
+        [paddedClientId]
+      );
+      
+      return (rows as any[]).map(file => ({
+        id: file.id,
+        clientId: parseInt(file.client_id),
+        fileName: file.file_name,
+        originalFileName: file.original_file_name,
+        fileSize: file.file_size,
+        mimeType: file.mime_type,
+        description: file.description,
+        filePath: file.file_path,
+        uploadDate: file.upload_date,
+        createdAt: file.created_at,
+      }));
+    } catch (error) {
+      console.error('Error getting client files:', error);
+      throw error;
+    }
+  }
+
+  async createClientFile(insertClientFile: InsertClientFile): Promise<ClientFile> {
+    try {
+      if (!insertClientFile.clientId) {
+        throw new Error('Client ID is required for file upload');
+      }
+
+      const id = this.generateUUID();
+      const clientIdStr = insertClientFile.clientId.toString().padStart(4, '0');
+      const uploadDate = new Date();
+
+      await this.pool.execute(`
+        INSERT INTO client_files (
+          id, client_id, file_name, original_file_name, file_size, 
+          mime_type, description, file_path, upload_date, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        id,
+        clientIdStr,
+        insertClientFile.fileName,
+        insertClientFile.originalFileName,
+        insertClientFile.fileSize,
+        insertClientFile.mimeType,
+        insertClientFile.description || null,
+        insertClientFile.filePath,
+        uploadDate,
+        new Date()
+      ]);
+
+      return {
+        id,
+        clientId: insertClientFile.clientId,
+        fileName: insertClientFile.fileName,
+        originalFileName: insertClientFile.originalFileName,
+        fileSize: insertClientFile.fileSize,
+        mimeType: insertClientFile.mimeType,
+        description: insertClientFile.description || null,
+        filePath: insertClientFile.filePath,
+        uploadDate,
+        createdAt: new Date(),
+      };
+    } catch (error) {
+      console.error('Error creating client file:', error);
+      throw error;
+    }
+  }
+
+  async deleteClientFile(fileId: string): Promise<boolean> {
+    try {
+      const [result] = await this.pool.execute(
+        'DELETE FROM client_files WHERE id = ?',
+        [fileId]
+      );
+      return (result as any).affectedRows > 0;
+    } catch (error) {
+      console.error('Error deleting client file:', error);
       throw error;
     }
   }
