@@ -992,6 +992,14 @@ app.get('/api/admin/clients/:clientId/files', requireAuthAPI, async (req, res) =
   try {
     const { clientId } = req.params;
     
+    // Input validation and sanitization
+    if (!clientId || typeof clientId !== 'string' || !/^[0-9]+$/.test(clientId)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'شناسه موکل نامعتبر است' 
+      });
+    }
+    
     // Verify client exists
     const client = await storage.getClient(clientId);
     if (!client) {
@@ -1029,23 +1037,70 @@ app.get('/api/admin/files/:fileId/download', requireAuthAPI, async (req, res) =>
   try {
     const { fileId } = req.params;
     
+    // Input validation and sanitization - Updated to support various UUID formats
+    if (!fileId || typeof fileId !== 'string') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'شناسه فایل الزامی است' 
+      });
+    }
+    
+    // More flexible UUID validation that handles various formats (with/without dashes)
+    const uuidPattern = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
+    if (!uuidPattern.test(fileId.replace(/-/g, ''))) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'شناسه فایل نامعتبر است' 
+      });
+    }
+    
     const file = await storage.getClientFile(fileId);
     
     if (!file) {
       return res.status(404).json({ success: false, message: 'فایل یافت نشد' });
     }
 
+    // Enhanced security: Prevent path traversal attacks using path.relative()
+    const clientFilesBase = path.resolve(process.cwd(), 'Client_Files');
+    const resolvedPath = path.resolve(file.filePath);
+    const relativePath = path.relative(clientFilesBase, resolvedPath);
+    
+    // Check if file is outside allowed directory or contains path traversal attempts
+    if (relativePath.startsWith('..') || path.isAbsolute(relativePath) || relativePath.includes('..')) {
+      console.error('Security violation: Path traversal attempt detected', { 
+        fileId, 
+        filePath: file.filePath, 
+        resolvedPath, 
+        relativePath 
+      });
+      return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز' });
+    }
+
     // Check if file exists on disk
-    if (!fs.existsSync(file.filePath)) {
+    if (!fs.existsSync(resolvedPath)) {
       return res.status(404).json({ success: false, message: 'فایل فیزیکی یافت نشد' });
     }
 
-    // Set headers for file download
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.originalFileName)}"`);
-    res.setHeader('Content-Type', file.mimeType);
+    // Enhanced filename sanitization that preserves Persian/UTF-8 characters
+    // Remove only dangerous characters while keeping Persian, English, numbers, spaces, dots, dashes
+    const sanitizedFilename = file.originalFileName
+      .replace(/[<>:"|?*\x00-\x1f\x7f-\x9f]/g, '') // Remove control/dangerous chars
+      .replace(/^\.+/, '') // Remove leading dots 
+      .replace(/\.+$/, '') // Remove trailing dots
+      .trim(); // Remove leading/trailing spaces
+    
+    // Fallback if filename becomes empty after sanitization
+    const finalFilename = sanitizedFilename || `file_${fileId.substring(0, 8)}.bin`;
+    
+    // Set headers for file download with proper UTF-8 encoding
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(finalFilename)}`);
+    res.setHeader('Content-Type', file.mimeType || 'application/octet-stream');
+    res.setHeader('Content-Security-Policy', 'default-src \'none\'');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
 
     // Send file
-    res.sendFile(path.resolve(file.filePath));
+    res.sendFile(resolvedPath);
   } catch (error) {
     console.error('Error downloading file for admin:', error);
     res.status(500).json({ success: false, message: 'خطا در دانلود فایل' });
