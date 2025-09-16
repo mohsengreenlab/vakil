@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
+import fs from "fs";
 import expressEjsLayouts from "express-ejs-layouts";
 import session from "express-session";
 import bcrypt from "bcrypt";
@@ -983,6 +984,71 @@ app.post('/api/contact', async (req, res) => {
   } catch (error) {
     console.error('Error creating contact:', error);
     res.status(500).json({ success: false, message: 'خطا در ارسال پیام. لطفاً مجدداً تلاش کنید.' });
+  }
+});
+
+// Admin file management API endpoints
+app.get('/api/admin/clients/:clientId/files', requireAuthAPI, async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    
+    // Verify client exists
+    const client = await storage.getClient(clientId);
+    if (!client) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'موکل یافت نشد' 
+      });
+    }
+    
+    const files = await storage.getClientFiles(clientId);
+    res.json({
+      success: true,
+      client: {
+        id: client.clientId,
+        name: `${client.firstName} ${client.lastName}`
+      },
+      files: files.map(file => ({
+        id: file.id,
+        fileName: file.fileName,
+        originalFileName: file.originalFileName,
+        uploadDate: file.uploadDate,
+        description: file.description,
+        fileSize: file.fileSize,
+        mimeType: file.mimeType
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching client files for admin:', error);
+    res.status(500).json({ success: false, message: 'خطا در دریافت فایل‌های موکل' });
+  }
+});
+
+// Admin download client file
+app.get('/api/admin/files/:fileId/download', requireAuthAPI, async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    
+    const file = await storage.getClientFile(fileId);
+    
+    if (!file) {
+      return res.status(404).json({ success: false, message: 'فایل یافت نشد' });
+    }
+
+    // Check if file exists on disk
+    if (!fs.existsSync(file.filePath)) {
+      return res.status(404).json({ success: false, message: 'فایل فیزیکی یافت نشد' });
+    }
+
+    // Set headers for file download
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.originalFileName)}"`);
+    res.setHeader('Content-Type', file.mimeType);
+
+    // Send file
+    res.sendFile(path.resolve(file.filePath));
+  } catch (error) {
+    console.error('Error downloading file for admin:', error);
+    res.status(500).json({ success: false, message: 'خطا در دانلود فایل' });
   }
 });
 
