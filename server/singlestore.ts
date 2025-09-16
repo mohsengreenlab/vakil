@@ -249,16 +249,8 @@ export class SingleStoreStorage {
       `);
 
       // Create client_files table for file uploads
-      // First drop existing table if it has wrong column names
-      try {
-        await connection.execute('DROP TABLE IF EXISTS client_files');
-        console.log('🗑️ Dropped existing client_files table to recreate with correct structure');
-      } catch (dropError) {
-        console.log('ℹ️ client_files table does not exist or already dropped');
-      }
-      
       await connection.execute(`
-        CREATE TABLE client_files (
+        CREATE TABLE IF NOT EXISTS client_files (
           id VARCHAR(36) PRIMARY KEY,
           client_id VARCHAR(4) NOT NULL,
           file_name VARCHAR(500) NOT NULL,
