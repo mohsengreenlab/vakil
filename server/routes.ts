@@ -1,7 +1,10 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import type { IStorage } from "./storage";
-import { insertCaseSchema, insertContactSchema, insertCaseEventSchema, caseEventFormSchema } from "@shared/schema";
+import { insertCaseSchema, insertContactSchema, insertCaseEventSchema, caseEventFormSchema, insertClientFileSchema } from "@shared/schema";
 import { z } from "zod";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 export async function registerRoutes(app: Express, storage: IStorage): Promise<void> {
   
@@ -31,6 +34,64 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
       res.status(401).json({ success: false, message: 'کاربر احراز هویت نشده است' });
     }
   };
+
+  // Multer configuration for file uploads
+  const storage_multer = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const clientId = req.session.clientId;
+      if (!clientId) {
+        return cb(new Error('Client not authenticated'), '');
+      }
+      
+      const uploadDir = path.join(process.cwd(), 'Client_Files', clientId.toString());
+      
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      
+      cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+      // Format: DD-MM-YYYY
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const dateStr = `${day}-${month}-${year}`;
+      
+      // Get file extension
+      const ext = path.extname(file.originalname);
+      
+      // If multiple files on same day, add a counter
+      let filename = `${dateStr}${ext}`;
+      let counter = 1;
+      const uploadDir = path.join(process.cwd(), 'Client_Files', req.session.clientId!.toString());
+      
+      while (fs.existsSync(path.join(uploadDir, filename))) {
+        filename = `${dateStr}_${counter}${ext}`;
+        counter++;
+      }
+      
+      cb(null, filename);
+    }
+  });
+
+  const upload = multer({
+    storage: storage_multer,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: function (req, file, cb) {
+      // Accept PDF, images, and common document formats
+      const allowedTypes = /\.(pdf|jpg|jpeg|png|gif|doc|docx|txt)$/i;
+      if (allowedTypes.test(path.extname(file.originalname))) {
+        cb(null, true);
+      } else {
+        cb(new Error('نوع فایل مجاز نیست. فرمت‌های مجاز: PDF, JPG, PNG, DOC, DOCX, TXT'));
+      }
+    }
+  });
   
   // Home page
   app.get('/', (req, res) => {
@@ -329,6 +390,109 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
     } catch (error) {
       console.error('Error deleting case event:', error);
       res.status(500).json({ success: false, message: 'خطا در حذف رویداد پرونده' });
+    }
+  });
+
+  // Client file upload endpoint
+  app.post('/api/client/files', requireClientAuth, upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, message: 'هیچ فایلی انتخاب نشده است' });
+      }
+
+      const clientId = req.session.clientId!;
+      const { description } = req.body;
+
+      // Create file record in storage
+      const fileData = {
+        clientId: clientId,
+        fileName: req.file.filename,
+        originalFileName: req.file.originalname,
+        fileSize: req.file.size.toString(),
+        mimeType: req.file.mimetype,
+        description: description || null,
+        filePath: req.file.path,
+      };
+
+      const clientFile = await storage.createClientFile(fileData);
+
+      res.json({
+        success: true,
+        message: 'فایل با موفقیت آپلود شد',
+        file: {
+          id: clientFile.id,
+          fileName: clientFile.fileName,
+          originalFileName: clientFile.originalFileName,
+          uploadDate: clientFile.uploadDate,
+          description: clientFile.description,
+        },
+      });
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      
+      // Clean up uploaded file if database operation fails
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      res.status(500).json({ success: false, message: 'خطا در آپلود فایل' });
+    }
+  });
+
+  // Get client files list
+  app.get('/api/client/files', requireClientAuth, async (req, res) => {
+    try {
+      const clientId = req.session.clientId!;
+      const files = await storage.getClientFiles(clientId);
+
+      res.json({
+        success: true,
+        files: files.map(file => ({
+          id: file.id,
+          fileName: file.fileName,
+          originalFileName: file.originalFileName,
+          uploadDate: file.uploadDate,
+          description: file.description,
+          fileSize: file.fileSize,
+        })),
+      });
+    } catch (error) {
+      console.error('Error fetching client files:', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت فایل‌ها' });
+    }
+  });
+
+  // Download/view client file
+  app.get('/api/client/files/:fileId/download', requireClientAuth, async (req, res) => {
+    try {
+      const { fileId } = req.params;
+      const clientId = req.session.clientId!;
+
+      const file = await storage.getClientFile(fileId);
+      
+      if (!file) {
+        return res.status(404).json({ success: false, message: 'فایل یافت نشد' });
+      }
+
+      // Security check: ensure file belongs to authenticated client
+      if (file.clientId !== clientId) {
+        return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز' });
+      }
+
+      // Check if file exists on disk
+      if (!fs.existsSync(file.filePath)) {
+        return res.status(404).json({ success: false, message: 'فایل فیزیکی یافت نشد' });
+      }
+
+      // Set headers for file download
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.originalFileName)}"`);
+      res.setHeader('Content-Type', file.mimeType);
+
+      // Send file
+      res.sendFile(path.resolve(file.filePath));
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      res.status(500).json({ success: false, message: 'خطا در دانلود فایل' });
     }
   });
 

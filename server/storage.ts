@@ -360,6 +360,10 @@ export class MemStorage implements IStorage {
   }
 
   async createClientFile(insertClientFile: InsertClientFile): Promise<ClientFile> {
+    if (!insertClientFile.clientId) {
+      throw new Error('Client ID is required for file upload');
+    }
+    
     const id = randomUUID();
     const clientFile: ClientFile = {
       id,
