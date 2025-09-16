@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Client, type InsertClient, type Case, type InsertCase, type Contact, type InsertContact, type CaseEvent, type InsertCaseEvent } from "@shared/schema";
+import { type User, type InsertUser, type Client, type InsertClient, type Case, type InsertCase, type Contact, type InsertContact, type CaseEvent, type InsertCaseEvent, type ClientFile, type InsertClientFile } from "@shared/schema";
 import { type QAItem, type InsertQAItem } from "./singlestore.js";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
@@ -36,6 +36,12 @@ export interface IStorage {
   getAllContacts(): Promise<Contact[]>;
   createContact(contact: InsertContact): Promise<Contact>;
   
+  // Client File methods
+  getClientFile(fileId: string): Promise<ClientFile | undefined>;
+  getClientFiles(clientId: string | number): Promise<ClientFile[]>;
+  createClientFile(clientFile: InsertClientFile): Promise<ClientFile>;
+  deleteClientFile(fileId: string): Promise<boolean>;
+  
   // QA methods
   getPublicQAItems(): Promise<QAItem[]>;
   getAllQAItems(): Promise<QAItem[]>;
@@ -55,6 +61,7 @@ export class MemStorage implements IStorage {
   private cases: Map<number, Case>;
   private contacts: Map<string, Contact>;
   private caseEvents: Map<string, CaseEvent>;
+  private clientFiles: Map<string, ClientFile>;
   private nextClientId: number = 1000; // Start client IDs from 1000
   private nextCaseId: number = 1000000; // Start case IDs from 1000000
 
@@ -64,6 +71,7 @@ export class MemStorage implements IStorage {
     this.cases = new Map();
     this.contacts = new Map();
     this.caseEvents = new Map();
+    this.clientFiles = new Map();
     
     // SECURITY FIX: Only create admin user if ADMIN_PASSWORD environment variable is set
     // This removes the hardcoded "admin123" password vulnerability
@@ -337,6 +345,40 @@ export class MemStorage implements IStorage {
     };
     this.contacts.set(id, contact);
     return contact;
+  }
+
+  // Client File methods
+  async getClientFile(fileId: string): Promise<ClientFile | undefined> {
+    return this.clientFiles.get(fileId);
+  }
+
+  async getClientFiles(clientId: string | number): Promise<ClientFile[]> {
+    const numericClientId = typeof clientId === 'string' ? parseInt(clientId) : clientId;
+    return Array.from(this.clientFiles.values())
+      .filter(file => file.clientId === numericClientId)
+      .sort((a, b) => b.uploadDate!.getTime() - a.uploadDate!.getTime());
+  }
+
+  async createClientFile(insertClientFile: InsertClientFile): Promise<ClientFile> {
+    const id = randomUUID();
+    const clientFile: ClientFile = {
+      id,
+      clientId: insertClientFile.clientId,
+      fileName: insertClientFile.fileName,
+      originalFileName: insertClientFile.originalFileName,
+      fileSize: insertClientFile.fileSize,
+      mimeType: insertClientFile.mimeType,
+      description: insertClientFile.description || null,
+      filePath: insertClientFile.filePath,
+      uploadDate: new Date(),
+      createdAt: new Date(),
+    };
+    this.clientFiles.set(id, clientFile);
+    return clientFile;
+  }
+
+  async deleteClientFile(fileId: string): Promise<boolean> {
+    return this.clientFiles.delete(fileId);
   }
 
   // QA methods (stub implementations for MemStorage)
