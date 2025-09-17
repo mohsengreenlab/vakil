@@ -2473,20 +2473,72 @@ async function loadAdminUploadedFiles(clientId) {
                 return;
             }
             
-            container.innerHTML = adminFiles.map(file => {
+            // Clear container and build secure DOM elements
+            container.innerHTML = '';
+            
+            adminFiles.forEach(file => {
                 const uploadDate = new Date(file.uploadDate).toLocaleDateString('fa-IR');
-                return `
-                    <div class="border rounded-lg p-3 bg-blue-50 border-blue-200">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <div class="font-medium text-blue-900">📩 ${file.originalFileName}</div>
-                                <div class="text-sm text-blue-600 mt-1">تاریخ ارسال: ${uploadDate}</div>
-                                ${file.description ? `<div class="text-sm text-gray-600 mt-1">${file.description}</div>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                
+                // Create file container
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'border rounded-lg p-3 bg-blue-50 border-blue-200';
+                
+                // Create content wrapper
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'flex justify-between items-start';
+                
+                // Create file info section
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'flex-1';
+                
+                // File name (safe text content)
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'font-medium text-blue-900';
+                nameDiv.textContent = `📩 ${file.originalFileName || 'Unknown'}`;
+                infoDiv.appendChild(nameDiv);
+                
+                // Upload date
+                const dateDiv = document.createElement('div');
+                dateDiv.className = 'text-sm text-blue-600 mt-1';
+                dateDiv.textContent = `تاریخ ارسال: ${uploadDate}`;
+                infoDiv.appendChild(dateDiv);
+                
+                // Description (if exists)
+                if (file.description) {
+                    const descDiv = document.createElement('div');
+                    descDiv.className = 'text-sm text-gray-600 mt-1';
+                    descDiv.textContent = file.description;
+                    infoDiv.appendChild(descDiv);
+                }
+                
+                // Create button section
+                const buttonDiv = document.createElement('div');
+                buttonDiv.className = 'flex-shrink-0 mr-3';
+                
+                // Download button
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'admin-file-download-btn px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors';
+                downloadBtn.textContent = '📥 دانلود';
+                downloadBtn.dataset.fileId = String(file.id);
+                downloadBtn.dataset.testid = `button-download-admin-file-${file.id}`;
+                
+                // Add event listener
+                downloadBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const fileId = this.dataset.fileId;
+                    if (fileId) {
+                        downloadAdminFile(fileId);
+                    }
+                });
+                
+                buttonDiv.appendChild(downloadBtn);
+                
+                // Assemble the structure
+                contentDiv.appendChild(infoDiv);
+                contentDiv.appendChild(buttonDiv);
+                fileDiv.appendChild(contentDiv);
+                container.appendChild(fileDiv);
+            });
         }
     } catch (error) {
         console.error('Error loading admin files:', error);
@@ -2515,6 +2567,48 @@ function formatFileSize(bytes) {
     const sizes = ['بایت', 'کیلوبایت', 'مگابایت', 'گیگابایت'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+async function downloadAdminFile(fileId) {
+    if (!fileId || typeof fileId !== 'string') {
+        showToast('شناسه فایل نامعتبر است', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/files/${encodeURIComponent(fileId)}/download`);
+        
+        if (response.ok) {
+            const blob = await response.blob();
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let fileName = `file_${fileId.substring(0, 8)}.bin`; // fallback filename
+            
+            // Try to extract filename from Content-Disposition header
+            if (contentDisposition) {
+                const fileNameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                if (fileNameMatch) {
+                    fileName = fileNameMatch[1].replace(/['"]/g, '');
+                    fileName = decodeURIComponent(fileName);
+                }
+            }
+            
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            showToast('فایل با موفقیت دانلود شد', 'success');
+        } else {
+            const result = await response.json();
+            showToast(result.message || 'خطا در دانلود فایل', 'error');
+        }
+    } catch (error) {
+        console.error('Error downloading admin file:', error);
+        showToast('خطا در اتصال به سرور', 'error');
+    }
 }
 </script>
 
