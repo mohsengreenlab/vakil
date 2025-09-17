@@ -791,6 +791,20 @@
     background-color: #4b5563;
 }
 
+.btn-success {
+    background-color: #10b981;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-success:hover {
+    background-color: #059669;
+}
+
 .input-field {
     padding: 0.5rem 0.75rem;
     border: 1px solid #d1d5db;
@@ -1916,11 +1930,18 @@ function displayClientsForFiles(clients) {
                     <span id="file-count-${client.client_id}">-</span>
                 </td>
                 <td>
-                    <button onclick="viewClientFiles('${client.client_id}', '${client.first_name} ${client.last_name}')" 
-                            class="btn-primary text-sm" 
-                            data-testid="button-view-files-${client.client_id}">
-                        مشاهده فایل‌ها
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="viewClientFiles('${client.client_id}', '${client.first_name} ${client.last_name}')" 
+                                class="btn-primary text-sm" 
+                                data-testid="button-view-files-${client.client_id}">
+                            مشاهده فایل‌ها
+                        </button>
+                        <button onclick="openSendFileModal('${client.client_id}', '${client.first_name} ${client.last_name}')" 
+                                class="btn-success text-sm" 
+                                data-testid="button-send-file-${client.client_id}">
+                            ارسال فایل به موکل
+                        </button>
+                    </div>
                 </td>
             </tr>
         `;
@@ -2357,4 +2378,219 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Send File to Client Modal Functions
+let currentClientForFileUpload = null;
+
+function openSendFileModal(clientId, clientName) {
+    currentClientForFileUpload = { id: clientId, name: clientName };
+    
+    // Update modal title
+    document.getElementById('send-file-client-name').textContent = clientName;
+    document.getElementById('send-file-client-id').textContent = clientId;
+    
+    // Clear previous form data
+    document.getElementById('admin-file-input').value = '';
+    document.getElementById('admin-file-description').value = '';
+    document.getElementById('admin-file-preview').style.display = 'none';
+    
+    // Load previously uploaded files for this client
+    loadAdminUploadedFiles(clientId);
+    
+    // Show modal
+    document.getElementById('send-file-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSendFileModal() {
+    document.getElementById('send-file-modal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+    currentClientForFileUpload = null;
+}
+
+async function uploadFileToClient() {
+    const fileInput = document.getElementById('admin-file-input');
+    const description = document.getElementById('admin-file-description').value;
+    const submitBtn = document.getElementById('submit-file-btn');
+    
+    if (!fileInput.files.length) {
+        showToast('لطفاً فایلی انتخاب کنید', 'error');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('clientId', currentClientForFileUpload.id);
+    formData.append('description', description);
+    
+    try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'در حال ارسال...';
+        
+        const response = await fetch(`/api/admin/files/upload-to-client/${currentClientForFileUpload.id}`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('فایل با موفقیت برای موکل ارسال شد', 'success');
+            
+            // Clear form
+            fileInput.value = '';
+            document.getElementById('admin-file-description').value = '';
+            document.getElementById('admin-file-preview').style.display = 'none';
+            
+            // Reload the uploaded files list
+            loadAdminUploadedFiles(currentClientForFileUpload.id);
+        } else {
+            showToast(result.message || 'خطا در ارسال فایل', 'error');
+        }
+    } catch (error) {
+        console.error('Error uploading file to client:', error);
+        showToast('خطا در اتصال به سرور', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'ارسال فایل';
+    }
+}
+
+async function loadAdminUploadedFiles(clientId) {
+    const container = document.getElementById('admin-uploaded-files-list');
+    container.innerHTML = '<div class="text-center py-4">در حال بارگذاری...</div>';
+    
+    try {
+        const response = await fetch(`/api/admin/clients/${clientId}/files`);
+        const result = await response.json();
+        
+        if (result.success) {
+            const adminFiles = result.files.filter(file => file.uploadedByType === 'admin');
+            
+            if (adminFiles.length === 0) {
+                container.innerHTML = '<div class="text-center py-4 text-muted-foreground">هیچ فایلی برای این موکل ارسال نشده است</div>';
+                return;
+            }
+            
+            container.innerHTML = adminFiles.map(file => {
+                const uploadDate = new Date(file.uploadDate).toLocaleDateString('fa-IR');
+                return `
+                    <div class="border rounded-lg p-3 bg-blue-50 border-blue-200">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="font-medium text-blue-900">📩 ${file.originalFileName}</div>
+                                <div class="text-sm text-blue-600 mt-1">تاریخ ارسال: ${uploadDate}</div>
+                                ${file.description ? `<div class="text-sm text-gray-600 mt-1">${file.description}</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    } catch (error) {
+        console.error('Error loading admin files:', error);
+        container.innerHTML = '<div class="text-center py-4 text-red-600">خطا در بارگذاری فایل‌ها</div>';
+    }
+}
+
+function handleAdminFileSelect(event) {
+    const file = event.target.files[0];
+    const preview = document.getElementById('admin-file-preview');
+    const fileName = document.getElementById('admin-file-name');
+    const fileInfo = document.getElementById('admin-file-info');
+    
+    if (file) {
+        fileName.textContent = file.name;
+        fileInfo.textContent = `اندازه: ${formatFileSize(file.size)} | نوع: ${file.type}`;
+        preview.style.display = 'block';
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 بایت';
+    const k = 1024;
+    const sizes = ['بایت', 'کیلوبایت', 'مگابایت', 'گیگابایت'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 </script>
+
+<!-- Send File to Client Modal -->
+<div id="send-file-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="border-b px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-bold text-green-700">ارسال فایل به موکل</h3>
+                    <p class="text-sm text-gray-600 mt-1">
+                        موکل: <span id="send-file-client-name" class="font-medium"></span> 
+                        (شناسه: <span id="send-file-client-id" class="font-medium"></span>)
+                    </p>
+                </div>
+                <button onclick="closeSendFileModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+        </div>
+        
+        <!-- Modal Content -->
+        <div class="p-6">
+            <!-- File Upload Section -->
+            <div class="mb-6">
+                <h4 class="font-medium mb-3 text-green-700">📤 ارسال فایل جدید</h4>
+                
+                <div class="border-2 border-dashed border-green-300 rounded-lg p-4 bg-green-50">
+                    <input type="file" 
+                           id="admin-file-input" 
+                           class="hidden" 
+                           accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx,.txt"
+                           onchange="handleAdminFileSelect(event)">
+                    
+                    <button onclick="document.getElementById('admin-file-input').click()" 
+                            class="w-full py-8 text-green-600 hover:text-green-700 hover:bg-green-100 rounded-lg transition-colors">
+                        <div class="text-4xl mb-2">📁</div>
+                        <div class="font-medium">انتخاب فایل برای ارسال</div>
+                        <div class="text-sm">PDF, JPG, PNG, DOC, DOCX, TXT</div>
+                    </button>
+                    
+                    <!-- File Preview -->
+                    <div id="admin-file-preview" class="mt-4 p-3 bg-white rounded border" style="display: none;">
+                        <div class="flex items-center gap-3">
+                            <div class="text-2xl">📄</div>
+                            <div>
+                                <div id="admin-file-name" class="font-medium"></div>
+                                <div id="admin-file-info" class="text-sm text-gray-600"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Description Field -->
+                <div class="mt-4">
+                    <label for="admin-file-description" class="block text-sm font-medium mb-2">توضیحات (اختیاری)</label>
+                    <textarea id="admin-file-description" 
+                              rows="3" 
+                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" 
+                              placeholder="توضیحات مربوط به فایل را اینجا بنویسید..."></textarea>
+                </div>
+                
+                <!-- Submit Button -->
+                <button id="submit-file-btn" 
+                        onclick="uploadFileToClient()" 
+                        class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium transition-colors">
+                    ارسال فایل
+                </button>
+            </div>
+            
+            <!-- Previously Uploaded Files Section -->
+            <div class="border-t pt-6">
+                <h4 class="font-medium mb-3 text-blue-700">📋 فایل‌های قبلاً ارسال شده</h4>
+                <div id="admin-uploaded-files-list" class="space-y-3">
+                    <div class="text-center py-4">در حال بارگذاری...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

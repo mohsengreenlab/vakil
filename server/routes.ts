@@ -501,7 +501,7 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
   // Admin multer configuration for uploading files to clients
   const adminFileUploadStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-      const { clientId } = req.body;
+      const clientId = req.params.clientId;
       if (!clientId) {
         return cb(new Error('Client ID is required for file upload'), '');
       }
@@ -532,7 +532,7 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
       let filename = `admin_${dateStr}_${baseName}${ext}`;
       let counter = 1;
       
-      const { clientId } = req.body;
+      const clientId = req.params.clientId;
       const paddedClientId = clientId.toString().padStart(4, '0');
       const uploadDir = path.join(process.cwd(), 'Client_Files', paddedClientId);
       
@@ -562,13 +562,14 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
   });
 
   // Admin endpoint to upload file to specific client
-  app.post('/api/admin/files/upload-to-client', requireAuthAPI, adminFileUpload.single('file'), async (req, res) => {
+  app.post('/api/admin/files/upload-to-client/:clientId', requireAuthAPI, adminFileUpload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ success: false, message: 'هیچ فایلی انتخاب نشده است' });
       }
 
-      const { clientId, description } = req.body;
+      const { clientId } = req.params;
+      const { description } = req.body;
       
       if (!clientId) {
         // Clean up uploaded file if clientId is missing

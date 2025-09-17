@@ -280,6 +280,39 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
         }
+        
+        /* Received Files Section Specific Styles */
+        .received-files-table {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 2px solid #0284c7;
+            border-radius: 12px;
+        }
+        .received-files-table thead {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+        }
+        .received-files-table th {
+            color: white;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .received-files-table tbody tr:hover {
+            background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+        }
+        .section-description {
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        .download-btn.received {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            color: white;
+        }
+        .download-btn.received:hover {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 <body>
@@ -359,6 +392,34 @@
 
                 <div id="no-files" style="display: none; text-align: center; color: #6b7280; padding: 40px;">
                     هیچ فایلی ارسال نشده است
+                </div>
+            </div>
+
+            <!-- Received Files Section (Admin-uploaded files) -->
+            <div class="section">
+                <div class="section-title">📥 فایل های دریافتی</div>
+                <div class="section-description">فایل‌هایی که توسط دفتر حقوقی برای شما ارسال شده‌اند</div>
+                
+                <div id="received-files-loading" class="loading">در حال بارگذاری فایل‌های دریافتی...</div>
+                
+                <table id="received-files-table" class="files-table received-files-table" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th>نام فایل</th>
+                            <th>تاریخ ارسال</th>
+                            <th>اندازه</th>
+                            <th>توضیحات</th>
+                            <th>دانلود</th>
+                        </tr>
+                    </thead>
+                    <tbody id="received-files-tbody">
+                    </tbody>
+                </table>
+
+                <div id="no-received-files" style="display: none; text-align: center; color: #6b7280; padding: 40px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                    <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">هیچ فایل دریافتی وجود ندارد</div>
+                    <div style="font-size: 14px;">فایل‌هایی که دفتر حقوقی برای شما ارسال می‌کند اینجا نمایش داده خواهند شد</div>
                 </div>
             </div>
 
@@ -608,8 +669,89 @@
             }
         }
 
-        // Load files on page load
-        window.addEventListener('load', loadFiles);
+        // Load received files (admin-uploaded files)
+        async function loadReceivedFiles() {
+            const loading = document.getElementById('received-files-loading');
+            const table = document.getElementById('received-files-table');
+            const noFiles = document.getElementById('no-received-files');
+            const tbody = document.getElementById('received-files-tbody');
+
+            try {
+                loading.classList.add('active');
+                table.style.display = 'none';
+                noFiles.style.display = 'none';
+
+                const response = await fetch('/api/client/received-files');
+                const result = await response.json();
+
+                if (result.success) {
+                    if (result.files.length > 0) {
+                        tbody.innerHTML = '';
+                        result.files.forEach(file => {
+                            const row = createReceivedFileRow(file);
+                            tbody.appendChild(row);
+                        });
+                        table.style.display = 'table';
+                    } else {
+                        noFiles.style.display = 'block';
+                    }
+                } else {
+                    showMessage('error', 'خطا در دریافت فایل‌های دریافتی');
+                }
+            } catch (error) {
+                console.error('Load received files error:', error);
+                showMessage('error', 'خطا در ارتباط با سرور');
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // Create received file row with distinctive styling
+        function createReceivedFileRow(file) {
+            const row = document.createElement('tr');
+            
+            const uploadDate = new Date(file.uploadDate);
+            const formattedDate = uploadDate.toLocaleDateString('fa-IR');
+
+            row.innerHTML = `
+                <td>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 16px;">📩</span>
+                        <span>${file.originalFileName}</span>
+                    </div>
+                </td>
+                <td>${formattedDate}</td>
+                <td>${formatFileSize(parseInt(file.fileSize))}</td>
+                <td>${file.description || '-'}</td>
+                <td>
+                    <a href="/api/client/files/${file.id}/download" 
+                       class="download-link download-btn received" 
+                       target="_blank" 
+                       style="text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; display: inline-block;">
+                        📥 دانلود
+                    </a>
+                </td>
+            `;
+            
+            return row;
+        }
+
+        // Format file size helper function
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 بایت';
+            
+            const k = 1024;
+            const sizes = ['بایت', 'کیلوبایت', 'مگابایت', 'گیگابایت'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Load both client files and received files on page load
+        window.addEventListener('load', function() {
+            loadFiles();
+            loadReceivedFiles();
+        });
     </script>
 </body>
 </html>
