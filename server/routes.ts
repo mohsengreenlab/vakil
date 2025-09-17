@@ -1,6 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import type { IStorage } from "./storage";
-import { insertCaseSchema, insertContactSchema, insertCaseEventSchema, caseEventFormSchema, insertClientFileSchema } from "@shared/schema";
+import { insertCaseSchema, insertContactSchema, insertCaseEventSchema, caseEventFormSchema, insertClientFileSchema, insertMessageSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -640,6 +640,217 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
     } catch (error) {
       console.error('Error fetching received files:', error);
       res.status(500).json({ success: false, message: 'خطا در دریافت فایل‌های دریافتی' });
+    }
+  });
+
+  // MESSAGING API ROUTES
+
+  // Client sends message to admin
+  app.post('/api/client/messages', requireClientAuth, async (req, res) => {
+    try {
+      const clientId = req.session.clientId!;
+      
+      // Validate input using Zod schema
+      const validation = insertMessageSchema.safeParse({
+        clientId: parseInt(clientId.toString()),
+        senderRole: 'client',
+        messageContent: req.body.messageContent,
+      });
+      
+      if (!validation.success) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'داده‌های ورودی معتبر نیستند',
+          errors: validation.error.format()
+        });
+      }
+
+      const message = await storage.createMessage(validation.data);
+
+      res.json({
+        success: true,
+        message: 'پیام با موفقیت ارسال شد',
+        data: message
+      });
+    } catch (error) {
+      console.error('Error sending client message:', error);
+      res.status(500).json({ success: false, message: 'خطا در ارسال پیام' });
+    }
+  });
+
+  // Admin sends message to client
+  app.post('/api/admin/messages/:clientId', requireAuthAPI, async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      
+      // Verify client exists first
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ success: false, message: 'موکل یافت نشد' });
+      }
+      
+      // Validate input using Zod schema
+      const validation = insertMessageSchema.safeParse({
+        clientId: parseInt(clientId),
+        senderRole: 'admin',
+        messageContent: req.body.messageContent,
+      });
+      
+      if (!validation.success) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'داده‌های ورودی معتبر نیستند',
+          errors: validation.error.format()
+        });
+      }
+
+      const message = await storage.createMessage(validation.data);
+
+      res.json({
+        success: true,
+        message: 'پیام با موفقیت ارسال شد',
+        data: message
+      });
+    } catch (error) {
+      console.error('Error sending admin message:', error);
+      res.status(500).json({ success: false, message: 'خطا در ارسال پیام' });
+    }
+  });
+
+  // Get messages for a client (both client and admin can access)
+  app.get('/api/client/messages', requireClientAuth, async (req, res) => {
+    try {
+      const clientId = req.session.clientId!;
+      const messages = await storage.getClientMessages(clientId);
+
+      res.json({
+        success: true,
+        messages: messages
+      });
+    } catch (error) {
+      console.error('Error fetching client messages:', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت پیام‌ها' });
+    }
+  });
+
+  // Admin gets messages for a specific client
+  app.get('/api/admin/messages/:clientId', requireAuthAPI, async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      
+      // Verify client exists
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ success: false, message: 'موکل یافت نشد' });
+      }
+
+      const messages = await storage.getClientMessages(clientId);
+
+      res.json({
+        success: true,
+        client: {
+          clientId: client.clientId,
+          firstName: client.firstName,
+          lastName: client.lastName,
+        },
+        messages: messages
+      });
+    } catch (error) {
+      console.error('Error fetching admin client messages:', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت پیام‌ها' });
+    }
+  });
+
+  // Mark message as read
+  app.patch('/api/messages/:messageId/read', requireClientAuth, async (req, res) => {
+    try {
+      const { messageId } = req.params;
+      const clientId = req.session.clientId!;
+
+      // Get message and verify it belongs to this client
+      const message = await storage.getMessage(messageId);
+      if (!message) {
+        return res.status(404).json({ success: false, message: 'پیام یافت نشد' });
+      }
+
+      if (message.clientId !== parseInt(clientId.toString())) {
+        return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز' });
+      }
+
+      const success = await storage.markMessageAsRead(messageId);
+
+      if (success) {
+        res.json({ success: true, message: 'پیام به عنوان خوانده شده علامت‌گذاری شد' });
+      } else {
+        res.status(500).json({ success: false, message: 'خطا در علامت‌گذاری پیام' });
+      }
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+      res.status(500).json({ success: false, message: 'خطا در علامت‌گذاری پیام' });
+    }
+  });
+
+  // Get unread message count for client
+  app.get('/api/client/messages/unread-count', requireClientAuth, async (req, res) => {
+    try {
+      const clientId = req.session.clientId!;
+      const count = await storage.getUnreadMessageCount(clientId);
+
+      res.json({
+        success: true,
+        unreadCount: count
+      });
+    } catch (error) {
+      console.error('Error getting unread message count:', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت تعداد پیام‌های خوانده نشده' });
+    }
+  });
+
+  // Admin marks any message as read
+  app.patch('/api/admin/messages/:messageId/read', requireAuthAPI, async (req, res) => {
+    try {
+      const { messageId } = req.params;
+
+      // Verify message exists
+      const message = await storage.getMessage(messageId);
+      if (!message) {
+        return res.status(404).json({ success: false, message: 'پیام یافت نشد' });
+      }
+
+      const success = await storage.markMessageAsRead(messageId);
+
+      if (success) {
+        res.json({ success: true, message: 'پیام به عنوان خوانده شده علامت‌گذاری شد' });
+      } else {
+        res.status(500).json({ success: false, message: 'خطا در علامت‌گذاری پیام' });
+      }
+    } catch (error) {
+      console.error('Error marking message as read (admin):', error);
+      res.status(500).json({ success: false, message: 'خطا در علامت‌گذاری پیام' });
+    }
+  });
+
+  // Admin gets unread message count for any client
+  app.get('/api/admin/messages/:clientId/unread-count', requireAuthAPI, async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      
+      // Verify client exists
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ success: false, message: 'موکل یافت نشد' });
+      }
+
+      const count = await storage.getUnreadMessageCount(clientId);
+
+      res.json({
+        success: true,
+        clientId: client.clientId,
+        unreadCount: count
+      });
+    } catch (error) {
+      console.error('Error getting unread message count (admin):', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت تعداد پیام‌های خوانده نشده' });
     }
   });
 

@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Client, type InsertClient, type Case, type InsertCase, type Contact, type InsertContact, type CaseEvent, type InsertCaseEvent, type ClientFile, type InsertClientFile } from "@shared/schema";
+import { type User, type InsertUser, type Client, type InsertClient, type Case, type InsertCase, type Contact, type InsertContact, type CaseEvent, type InsertCaseEvent, type ClientFile, type InsertClientFile, type Message, type InsertMessage } from "@shared/schema";
 import { type QAItem, type InsertQAItem } from "./singlestore.js";
 import { randomUUID } from "crypto";
 import bcrypt from "bcrypt";
@@ -42,6 +42,13 @@ export interface IStorage {
   createClientFile(clientFile: InsertClientFile): Promise<ClientFile>;
   deleteClientFile(fileId: string): Promise<boolean>;
   
+  // Message methods
+  getMessage(messageId: string): Promise<Message | undefined>;
+  getClientMessages(clientId: string | number): Promise<Message[]>;
+  createMessage(message: InsertMessage): Promise<Message>;
+  markMessageAsRead(messageId: string): Promise<boolean>;
+  getUnreadMessageCount(clientId: string | number): Promise<number>;
+  
   // QA methods
   getPublicQAItems(): Promise<QAItem[]>;
   getAllQAItems(): Promise<QAItem[]>;
@@ -62,6 +69,7 @@ export class MemStorage implements IStorage {
   private contacts: Map<string, Contact>;
   private caseEvents: Map<string, CaseEvent>;
   private clientFiles: Map<string, ClientFile>;
+  private messages: Map<string, Message>;
   private nextClientId: number = 1000; // Start client IDs from 1000
   private nextCaseId: number = 1000000; // Start case IDs from 1000000
 
@@ -72,6 +80,7 @@ export class MemStorage implements IStorage {
     this.contacts = new Map();
     this.caseEvents = new Map();
     this.clientFiles = new Map();
+    this.messages = new Map();
     
     // SECURITY FIX: Only create admin user if ADMIN_PASSWORD environment variable is set
     // This removes the hardcoded "admin123" password vulnerability
@@ -374,6 +383,7 @@ export class MemStorage implements IStorage {
       mimeType: insertClientFile.mimeType,
       description: insertClientFile.description || null,
       filePath: insertClientFile.filePath,
+      uploadedByType: 'client',
       uploadDate: new Date(),
       createdAt: new Date(),
     };
@@ -383,6 +393,49 @@ export class MemStorage implements IStorage {
 
   async deleteClientFile(fileId: string): Promise<boolean> {
     return this.clientFiles.delete(fileId);
+  }
+
+  // Message methods
+  async getMessage(messageId: string): Promise<Message | undefined> {
+    return this.messages.get(messageId);
+  }
+
+  async getClientMessages(clientId: string | number): Promise<Message[]> {
+    const numericClientId = typeof clientId === 'string' ? parseInt(clientId) : clientId;
+    return Array.from(this.messages.values())
+      .filter(message => message.clientId === numericClientId)
+      .sort((a, b) => a.createdAt!.getTime() - b.createdAt!.getTime()); // Oldest first for conversation order
+  }
+
+  async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    const id = randomUUID();
+    const message: Message = {
+      id,
+      clientId: insertMessage.clientId,
+      senderRole: insertMessage.senderRole,
+      messageContent: insertMessage.messageContent,
+      isRead: 'false',
+      createdAt: new Date(),
+    };
+    this.messages.set(id, message);
+    return message;
+  }
+
+  async markMessageAsRead(messageId: string): Promise<boolean> {
+    const message = this.messages.get(messageId);
+    if (!message) {
+      return false;
+    }
+    message.isRead = 'true';
+    this.messages.set(messageId, message);
+    return true;
+  }
+
+  async getUnreadMessageCount(clientId: string | number): Promise<number> {
+    const numericClientId = typeof clientId === 'string' ? parseInt(clientId) : clientId;
+    return Array.from(this.messages.values())
+      .filter(message => message.clientId === numericClientId && message.isRead === 'false')
+      .length;
   }
 
   // QA methods (stub implementations for MemStorage)

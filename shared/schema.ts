@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, json, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, json, serial, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -69,6 +69,16 @@ export const clientFiles = pgTable("client_files", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Messages table for admin-client communication
+export const messages = pgTable("messages", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  clientId: integer("client_id").notNull(),
+  senderRole: text("sender_role").notNull(), // 'admin' or 'client'
+  messageContent: text("message_content").notNull(),
+  isRead: text("is_read").notNull().default("false"), // 'true' or 'false'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -119,6 +129,12 @@ export const insertClientFileSchema = createInsertSchema(clientFiles).pick({
   filePath: true,
 });
 
+export const insertMessageSchema = createInsertSchema(messages).pick({
+  clientId: true,
+  senderRole: true,
+  messageContent: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertClient = z.infer<typeof insertClientSchema>;
@@ -131,3 +147,5 @@ export type InsertCaseEvent = z.infer<typeof insertCaseEventSchema>;
 export type CaseEvent = typeof caseEvents.$inferSelect;
 export type InsertClientFile = z.infer<typeof insertClientFileSchema>;
 export type ClientFile = typeof clientFiles.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;

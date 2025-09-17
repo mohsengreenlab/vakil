@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import { IStorage } from "./storage.js";
 import * as bcrypt from 'bcrypt';
 import { getConfig } from "./config.js";
-import { type CaseEvent, type InsertCaseEvent, type ClientFile, type InsertClientFile } from "@shared/schema";
+import { type CaseEvent, type InsertCaseEvent, type ClientFile, type InsertClientFile, type Message, type InsertMessage } from "@shared/schema";
 
 // Define interfaces based on the new schema requirements
 export interface Client {
@@ -291,6 +291,22 @@ export class SingleStoreStorage {
       } catch (checkError) {
         console.log('ℹ️ client_files table check:', (checkError as Error).message);
       }
+
+      // Create messages table for admin-client communication
+      await connection.execute(`
+        CREATE TABLE IF NOT EXISTS messages (
+          id VARCHAR(36) PRIMARY KEY,
+          client_id VARCHAR(4) NOT NULL,
+          sender_role VARCHAR(10) NOT NULL,
+          message_content TEXT NOT NULL,
+          is_read VARCHAR(5) NOT NULL DEFAULT 'false',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          SHARD KEY (id),
+          INDEX (client_id),
+          INDEX (created_at)
+        )
+      `);
+      console.log('✅ Messages table created/verified for admin-client communication');
 
       // Check existing QA table structure to understand ID type
       try {
@@ -1392,6 +1408,115 @@ export class SingleStoreStorage {
       return (result as any).affectedRows > 0;
     } catch (error) {
       console.error('Error deleting client file:', error);
+      throw error;
+    }
+  }
+
+  // Message methods
+  async getMessage(messageId: string): Promise<Message | undefined> {
+    try {
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM messages WHERE id = ?',
+        [messageId]
+      );
+      const row = (rows as any)[0];
+      if (!row) return undefined;
+
+      return {
+        id: row.id,
+        clientId: parseInt(row.client_id),
+        senderRole: row.sender_role,
+        messageContent: row.message_content,
+        isRead: row.is_read,
+        createdAt: row.created_at,
+      };
+    } catch (error) {
+      console.error('Error getting message:', error);
+      throw error;
+    }
+  }
+
+  async getClientMessages(clientId: string | number): Promise<Message[]> {
+    try {
+      const clientIdStr = typeof clientId === 'string' ? clientId : clientId.toString();
+      const paddedClientId = clientIdStr.padStart(4, '0');
+      
+      const [rows] = await this.pool.execute(
+        'SELECT * FROM messages WHERE client_id = ? ORDER BY created_at ASC',
+        [paddedClientId]
+      );
+      
+      return (rows as any[]).map(row => ({
+        id: row.id,
+        clientId: parseInt(row.client_id),
+        senderRole: row.sender_role,
+        messageContent: row.message_content,
+        isRead: row.is_read,
+        createdAt: row.created_at,
+      }));
+    } catch (error) {
+      console.error('Error getting client messages:', error);
+      throw error;
+    }
+  }
+
+  async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    try {
+      const id = this.generateUUID();
+      const clientIdStr = insertMessage.clientId.toString().padStart(4, '0');
+      const createdAt = new Date();
+      
+      await this.pool.execute(`
+        INSERT INTO messages (id, client_id, sender_role, message_content, is_read, created_at)
+        VALUES (?, ?, ?, ?, 'false', ?)
+      `, [
+        id,
+        clientIdStr,
+        insertMessage.senderRole,
+        insertMessage.messageContent,
+        createdAt
+      ]);
+
+      return {
+        id,
+        clientId: insertMessage.clientId,
+        senderRole: insertMessage.senderRole,
+        messageContent: insertMessage.messageContent,
+        isRead: 'false',
+        createdAt,
+      };
+    } catch (error) {
+      console.error('Error creating message:', error);
+      throw error;
+    }
+  }
+
+  async markMessageAsRead(messageId: string): Promise<boolean> {
+    try {
+      const [result] = await this.pool.execute(
+        'UPDATE messages SET is_read = ? WHERE id = ?',
+        ['true', messageId]
+      );
+      return (result as any).affectedRows > 0;
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+      throw error;
+    }
+  }
+
+  async getUnreadMessageCount(clientId: string | number): Promise<number> {
+    try {
+      const clientIdStr = typeof clientId === 'string' ? clientId : clientId.toString();
+      const paddedClientId = clientIdStr.padStart(4, '0');
+      
+      const [rows] = await this.pool.execute(
+        'SELECT COUNT(*) as count FROM messages WHERE client_id = ? AND is_read = ?',
+        [paddedClientId, 'false']
+      );
+      
+      return (rows as any)[0].count || 0;
+    } catch (error) {
+      console.error('Error getting unread message count:', error);
       throw error;
     }
   }

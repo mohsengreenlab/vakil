@@ -49,6 +49,9 @@
                 <button onclick="showTab('files')" class="tab-btn" data-tab="files" data-testid="tab-files">
                     مدیریت فایل ها
                 </button>
+                <button onclick="showTab('client-messages')" class="tab-btn" data-tab="client-messages" data-testid="tab-client-messages">
+                    پیام های موکلان
+                </button>
             </nav>
         </div>
     </div>
@@ -624,6 +627,86 @@
             </div>
         </div>
 
+        <!-- Client Messages Tab -->
+        <div id="client-messages-tab" class="tab-content hidden">
+            <h1 class="text-3xl font-bold mb-6">پیام‌های موکلان</h1>
+            
+            <!-- Client List for Messaging -->
+            <div class="card p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">لیست موکلان</h2>
+                    <input type="search" id="messaging-clients-search" class="input-field w-64" placeholder="جستجو در موکلان..." data-testid="input-search-messaging-clients">
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>شناسه موکل</th>
+                                <th>نام و نام خانوادگی</th>
+                                <th>کد ملی</th>
+                                <th>شماره تلفن</th>
+                                <th>پیام‌های خوانده نشده</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="messaging-clients-table-body">
+                            <tr>
+                                <td colspan="6" class="text-center py-8 text-muted-foreground">در حال بارگذاری موکلان...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Client Messages Section (Initially Hidden) -->
+            <div id="client-messages-section" class="card p-6 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold">پیام‌رسانی با موکل</h2>
+                        <p class="text-sm text-muted-foreground" id="selected-client-messaging-info">هیچ موکلی انتخاب نشده</p>
+                    </div>
+                    <button onclick="closeClientMessages()" class="btn-secondary" data-testid="button-close-messages">
+                        بازگشت به لیست موکلان
+                    </button>
+                </div>
+                
+                <!-- Messages History -->
+                <div class="mb-6">
+                    <div id="messages-history" class="border border-border rounded-lg p-4 h-96 overflow-y-auto bg-muted/10">
+                        <div class="text-center text-muted-foreground">
+                            در حال بارگذاری پیام‌ها...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Send Message Form -->
+                <div class="border-t border-border pt-4">
+                    <form id="admin-send-message-form" class="flex gap-4">
+                        <input type="hidden" id="current-client-id" value="">
+                        <div class="flex-1">
+                            <textarea 
+                                id="admin-message-content" 
+                                class="input-field w-full resize-none" 
+                                rows="3" 
+                                placeholder="پیام خود را اینجا بنویسید..."
+                                data-testid="textarea-admin-message"
+                                required
+                            ></textarea>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button type="submit" class="btn-primary px-6" data-testid="button-send-admin-message">
+                                ارسال پیام
+                            </button>
+                            <button type="button" onclick="refreshMessages()" class="btn-secondary px-6 text-sm" data-testid="button-refresh-admin-messages">
+                                بروزرسانی
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
         <!-- QA Management Tab -->
         <div id="qa-tab" class="tab-content hidden">
             <div class="flex justify-between items-center mb-6">
@@ -895,6 +978,10 @@ function showTab(tabName) {
         // Reset to client list view
         document.getElementById('client-files-section').classList.add('hidden');
         document.querySelector('#files-tab .card').style.display = 'block';
+    } else if (tabName === 'client-messages') {
+        loadClientsForMessaging();
+        // Reset to client list view
+        document.getElementById('client-messages-section').classList.add('hidden');
     }
     
     // Load data when switching to specific tabs
@@ -2609,6 +2696,281 @@ async function downloadAdminFile(fileId) {
         console.error('Error downloading admin file:', error);
         showToast('خطا در اتصال به سرور', 'error');
     }
+}
+
+// Client Messages Functions
+let allClientsForMessaging = [];
+let currentClientForMessaging = null;
+
+async function loadClientsForMessaging() {
+    try {
+        const response = await fetch('/api/admin/clients');
+        const result = await response.json();
+        
+        if (result.success) {
+            allClientsForMessaging = result.clients;
+            await displayClientsForMessaging(allClientsForMessaging);
+        } else {
+            showToast('خطا در بارگذاری موکلان', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading clients for messaging:', error);
+        showToast('خطا در اتصال به سرور', 'error');
+    }
+}
+
+async function displayClientsForMessaging(clients) {
+    const tbody = document.getElementById('messaging-clients-table-body');
+    
+    if (clients.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">هیچ موکلی یافت نشد</td></tr>';
+        return;
+    }
+    
+    // Get unread message counts for all clients
+    const clientsWithMessages = await Promise.all(clients.map(async (client) => {
+        const unreadCount = await getUnreadMessageCount(client.client_id);
+        return { ...client, unreadCount };
+    }));
+    
+    tbody.innerHTML = clientsWithMessages.map(client => {
+        const phoneNumbers = typeof client.phoneNumbers === 'string' 
+            ? JSON.parse(client.phoneNumbers) 
+            : client.phoneNumbers || [];
+        
+        return `
+            <tr class="hover:bg-muted/30" data-testid="messaging-client-row-${client.client_id}">
+                <td class="p-4 font-medium">${client.client_id}</td>
+                <td class="p-4">${client.first_name} ${client.last_name}</td>
+                <td class="p-4">${client.national_id}</td>
+                <td class="p-4">${phoneNumbers.join(', ')}</td>
+                <td class="p-4">
+                    ${client.unreadCount > 0 ? 
+                        `<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">${client.unreadCount} جدید</span>` : 
+                        '<span class="text-muted-foreground">-</span>'
+                    }
+                </td>
+                <td class="p-4">
+                    <button onclick="openClientMessages('${client.client_id}', '${client.first_name} ${client.last_name}')" 
+                            class="btn-primary text-sm px-4 py-2" 
+                            data-testid="button-messages-${client.client_id}">
+                        پیام ها
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function getUnreadMessageCount(clientId) {
+    try {
+        const response = await fetch(`/api/admin/messages/${clientId}/unread-count`);
+        const result = await response.json();
+        
+        if (result.success) {
+            return result.unreadCount || 0;
+        } else {
+            console.error(`Error getting unread count for client ${clientId}:`, result.message);
+            return 0;
+        }
+    } catch (error) {
+        console.error(`Error getting unread count for client ${clientId}:`, error);
+        return 0;
+    }
+}
+
+async function openClientMessages(clientId, clientName) {
+    try {
+        currentClientForMessaging = { id: clientId, name: clientName };
+        
+        // Hide client list and show messaging section
+        document.querySelector('#client-messages-tab .card').style.display = 'none';
+        document.getElementById('client-messages-section').classList.remove('hidden');
+        
+        // Update client info
+        document.getElementById('selected-client-messaging-info').textContent = `موکل: ${clientName} (شناسه: ${clientId})`;
+        document.getElementById('current-client-id').value = clientId;
+        
+        // Load messages
+        await loadClientMessages(clientId);
+        
+    } catch (error) {
+        console.error('Error opening client messages:', error);
+        showToast('خطا در باز کردن پیام‌ها', 'error');
+        closeClientMessages();
+    }
+}
+
+async function loadClientMessages(clientId) {
+    try {
+        const messagesContainer = document.getElementById('messages-history');
+        messagesContainer.innerHTML = '<div class="text-center text-muted-foreground">در حال بارگذاری پیام‌ها...</div>';
+        
+        const response = await fetch(`/api/admin/messages/${clientId}`);
+        const result = await response.json();
+        
+        if (result.success) {
+            displayMessages(result.messages || []);
+        } else {
+            showToast('خطا در بارگذاری پیام‌ها', 'error');
+            messagesContainer.innerHTML = '<div class="text-center text-muted-foreground">خطا در بارگذاری پیام‌ها</div>';
+        }
+    } catch (error) {
+        console.error('Error loading client messages:', error);
+        showToast('خطا در اتصال به سرور', 'error');
+        document.getElementById('messages-history').innerHTML = '<div class="text-center text-muted-foreground">خطا در اتصال به سرور</div>';
+    }
+}
+
+function displayMessages(messages) {
+    const container = document.getElementById('messages-history');
+    
+    if (messages.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted-foreground">هنوز پیامی وجود ندارد</div>';
+        return;
+    }
+
+    container.innerHTML = messages.map(message => {
+        const isAdmin = message.senderRole === 'admin';
+        const messageClass = isAdmin ? 'admin-message' : 'client-message';
+        const alignClass = isAdmin ? 'justify-end' : 'justify-start';
+        
+        return `
+            <div class="flex ${alignClass} mb-4">
+                <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${messageClass}" 
+                     style="${isAdmin ? 'background: #2563eb; color: white; margin-left: auto;' : 'background: #f3f4f6; color: #374151; margin-right: auto;'}">
+                    <div class="message-content">${escapeHtml(message.messageContent)}</div>
+                    <div class="text-xs opacity-70 mt-1">
+                        ${isAdmin ? 'شما' : currentClientForMessaging?.name || 'موکل'} • ${formatMessageDate(message.createdAt)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Scroll to bottom
+    container.scrollTop = container.scrollHeight;
+}
+
+function formatMessageDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
+    
+    if (diffInHours < 24) {
+        return date.toLocaleTimeString('fa-IR', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    } else {
+        return date.toLocaleDateString('fa-IR', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function closeClientMessages() {
+    document.getElementById('client-messages-section').classList.add('hidden');
+    document.querySelector('#client-messages-tab .card').style.display = 'block';
+    currentClientForMessaging = null;
+}
+
+async function refreshMessages() {
+    if (currentClientForMessaging) {
+        await loadClientMessages(currentClientForMessaging.id);
+        showToast('پیام‌ها بروزرسانی شد', 'success');
+    }
+}
+
+// Handle admin message form submission
+document.addEventListener('DOMContentLoaded', function() {
+    const messageForm = document.getElementById('admin-send-message-form');
+    if (messageForm) {
+        messageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const clientId = document.getElementById('current-client-id').value;
+            const messageContent = document.getElementById('admin-message-content').value.trim();
+            
+            if (!clientId || !messageContent) {
+                showToast('لطفاً پیام خود را وارد کنید', 'error');
+                return;
+            }
+            
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'در حال ارسال...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`/api/admin/messages/${clientId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messageContent })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('پیام با موفقیت ارسال شد', 'success');
+                    document.getElementById('admin-message-content').value = '';
+                    
+                    // Reload messages to show the new message
+                    setTimeout(() => loadClientMessages(clientId), 500);
+                } else {
+                    showToast(result.message || 'خطا در ارسال پیام', 'error');
+                }
+            } catch (error) {
+                console.error('Error sending admin message:', error);
+                showToast('خطا در اتصال به سرور', 'error');
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    }
+});
+
+// Search function for messaging clients
+function searchMessagingClients() {
+    const searchTerm = document.getElementById('messaging-clients-search').value.toLowerCase().trim();
+    
+    if (!searchTerm) {
+        displayClientsForMessaging(allClientsForMessaging);
+        return;
+    }
+    
+    const filteredClients = allClientsForMessaging.filter(client => {
+        const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
+        const clientId = client.client_id.toString();
+        const nationalId = client.national_id || '';
+        
+        return fullName.includes(searchTerm) || 
+               clientId.includes(searchTerm) || 
+               nationalId.includes(searchTerm);
+    });
+    
+    displayClientsForMessaging(filteredClients);
+}
+
+// Add event listener for messaging clients search
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('messaging-clients-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', searchMessagingClients);
+    }
+});
+
 }
 </script>
 

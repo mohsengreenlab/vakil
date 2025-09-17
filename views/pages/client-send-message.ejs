@@ -15,97 +15,405 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
             direction: rtl;
             padding: 20px;
         }
-        .container { 
-            background: white; 
-            padding: 40px; 
-            border-radius: 20px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-        }
         .header { 
-            margin-bottom: 40px; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 20px 20px 0 0; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 0;
         }
         .header h1 { 
             color: #2563eb; 
-            margin-bottom: 20px; 
-            font-size: 28px;
+            margin-bottom: 10px; 
+            font-size: 24px;
             font-weight: bold;
         }
-        .icon {
-            font-size: 60px;
-            margin-bottom: 20px;
-            display: block;
-        }
-        .message { 
+        .header .subtitle { 
             color: #64748b; 
-            font-size: 18px; 
-            line-height: 1.6;
-            margin-bottom: 30px;
+            font-size: 14px; 
         }
-        .back-btn { 
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: white; 
+        .main-container { 
+            background: white; 
+            border-radius: 0 0 20px 20px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .messages-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: 400px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .message.client {
+            background: #2563eb;
+            color: white;
+            margin-left: auto;
+            margin-right: 0;
+            border-bottom-right-radius: 5px;
+        }
+        .message.admin {
+            background: #f3f4f6;
+            color: #374151;
+            margin-right: auto;
+            margin-left: 0;
+            border-bottom-left-radius: 5px;
+        }
+        .message-meta {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        .message.client .message-meta {
+            text-align: left;
+        }
+        .message.admin .message-meta {
+            text-align: right;
+        }
+        .loading-messages {
+            text-align: center;
+            color: #64748b;
+            padding: 40px;
+            font-style: italic;
+        }
+        .no-messages {
+            text-align: center;
+            color: #64748b;
+            padding: 40px;
+        }
+        .send-form {
+            padding: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #374151;
+        }
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
             text-decoration: none;
-            padding: 12px 30px; 
-            border-radius: 25px; 
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
             display: inline-block;
-            margin-left: 15px;
+            text-align: center;
         }
-        .back-btn:hover { 
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+        }
+        .btn-primary:hover {
             background: linear-gradient(135deg, #1d4ed8, #1e40af);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+            transform: translateY(-1px);
         }
-        .logout-btn { 
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        .btn-danger {
             background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white; 
-            border: none; 
-            padding: 12px 30px; 
-            border-radius: 25px; 
-            cursor: pointer; 
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+            color: white;
         }
-        .logout-btn:hover { 
+        .btn-danger:hover {
             background: linear-gradient(135deg, #dc2626, #b91c1c);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+        .status-message {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #f87171;
+        }
+        .typing-indicator {
+            padding: 10px;
+            color: #64748b;
+            font-style: italic;
+            text-align: center;
+        }
+        .refresh-btn {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+        .refresh-btn:hover {
+            background: #4f46e5;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="main-container">
         <div class="header">
-            <span class="icon">💬</span>
-            <h1>ارسال پیام</h1>
+            <h1>💬 پیام‌رسانی با تیم حقوقی</h1>
+            <p class="subtitle">پیام‌های خود را ارسال کنید و پاسخ‌های تیم حقوقی را دریافت نمایید</p>
         </div>
 
-        <div class="message">
-            این صفحه در حال توسعه است.<br>
-            به زودی امکان ارتباط مستقیم با تیم حقوقی در دسترس خواهد بود.
+        <div class="messages-container" id="messagesContainer">
+            <div class="loading-messages" id="loadingMessages">
+                در حال بارگذاری پیام‌ها...
+            </div>
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <a href="/client" class="back-btn">بازگشت به صفحه اصلی</a>
+        <div class="send-form">
+            <div id="statusMessage" class="status-message" style="display: none;"></div>
+            
+            <form id="messageForm">
+                <div class="form-group">
+                    <label for="messageContent">پیام جدید:</label>
+                    <textarea 
+                        id="messageContent" 
+                        name="messageContent" 
+                        placeholder="پیام خود را اینجا بنویسید..."
+                        required
+                        data-testid="textarea-message-content"
+                    ></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="sendBtn" data-testid="button-send-message">
+                        ارسال پیام
+                    </button>
+                    <button type="button" class="btn refresh-btn" onclick="loadMessages()" data-testid="button-refresh-messages">
+                        بروزرسانی
+                    </button>
+                    <a href="/client" class="btn btn-secondary" data-testid="link-back-client">
+                        بازگشت به صفحه اصلی
+                    </a>
+                    <button type="button" class="btn btn-danger" onclick="logout()" data-testid="button-logout">
+                        خروج از حساب
+                    </button>
+                </div>
+            </form>
         </div>
-
-        <button class="logout-btn" onclick="logout()">خروج از حساب</button>
     </div>
 
     <script>
+        let isLoading = false;
+
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInHours = (now - date) / (1000 * 60 * 60);
+            
+            if (diffInHours < 24) {
+                return date.toLocaleTimeString('fa-IR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            } else {
+                return date.toLocaleDateString('fa-IR', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            }
+        }
+
+        // Load messages from server
+        async function loadMessages() {
+            try {
+                const response = await fetch('/api/client/messages', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/client-login';
+                        return;
+                    }
+                    throw new Error(data.message || 'خطا در دریافت پیام‌ها');
+                }
+                
+                displayMessages(data.messages || []);
+            } catch (error) {
+                console.error('Error loading messages:', error);
+                document.getElementById('loadingMessages').innerHTML = 
+                    '<div style="color: #ef4444;">خطا در بارگذاری پیام‌ها: ' + error.message + '</div>';
+            }
+        }
+
+        // Display messages in the container
+        function displayMessages(messages) {
+            const container = document.getElementById('messagesContainer');
+            
+            if (messages.length === 0) {
+                container.innerHTML = '<div class="no-messages">هنوز پیامی وجود ندارد. اولین پیام خود را ارسال کنید!</div>';
+                return;
+            }
+
+            container.innerHTML = messages.map(message => `
+                <div class="message ${message.senderRole}" data-testid="message-${message.senderRole}-${message.id}">
+                    <div class="message-content">${escapeHtml(message.messageContent)}</div>
+                    <div class="message-meta">
+                        ${message.senderRole === 'client' ? 'شما' : 'تیم حقوقی'} • ${formatDate(message.createdAt)}
+                        ${message.isRead === 'false' && message.senderRole === 'admin' ? ' • جدید' : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+            
+            // Mark admin messages as read
+            markAdminMessagesAsRead(messages);
+        }
+
+        // Mark admin messages as read
+        function markAdminMessagesAsRead(messages) {
+            const unreadAdminMessages = messages.filter(m => m.senderRole === 'admin' && m.isRead === 'false');
+            
+            unreadAdminMessages.forEach(async (message) => {
+                try {
+                    await fetch(`/api/messages/${message.id}/read`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                } catch (error) {
+                    console.error('Error marking message as read:', error);
+                }
+            });
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Show status message
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Handle form submission
+        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (isLoading) return;
+            
+            const messageContent = document.getElementById('messageContent').value.trim();
+            if (!messageContent) {
+                showStatus('لطفاً پیام خود را وارد کنید', 'error');
+                return;
+            }
+            
+            isLoading = true;
+            const sendBtn = document.getElementById('sendBtn');
+            const originalText = sendBtn.textContent;
+            sendBtn.textContent = 'در حال ارسال...';
+            sendBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/client/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messageContent })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/client-login';
+                        return;
+                    }
+                    throw new Error(data.message || 'خطا در ارسال پیام');
+                }
+                
+                showStatus('پیام با موفقیت ارسال شد');
+                document.getElementById('messageContent').value = '';
+                
+                // Reload messages to show the new message
+                setTimeout(() => loadMessages(), 500);
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showStatus('خطا در ارسال پیام: ' + error.message, 'error');
+            } finally {
+                isLoading = false;
+                sendBtn.textContent = originalText;
+                sendBtn.disabled = false;
+            }
+        });
+
+        // Logout function
         async function logout() {
             if (confirm('آیا مطمئن هستید که می‌خواهید خارج شوید؟')) {
                 try {
@@ -116,7 +424,7 @@
                     
                     const data = await response.json();
                     if (data.success) {
-                        window.location.href = '/login';
+                        window.location.href = '/client-login';
                     } else {
                         alert('خطا در خروج: ' + data.message);
                     }
@@ -126,6 +434,12 @@
                 }
             }
         }
+
+        // Auto-refresh messages every 30 seconds
+        setInterval(loadMessages, 30000);
+
+        // Load messages when page loads
+        document.addEventListener('DOMContentLoaded', loadMessages);
     </script>
 </body>
 </html>
