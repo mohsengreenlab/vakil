@@ -496,5 +496,151 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
     }
   });
 
+  // Admin-to-client file delivery endpoints
+  
+  // Admin multer configuration for uploading files to clients
+  const adminFileUploadStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      const { clientId } = req.body;
+      if (!clientId) {
+        return cb(new Error('Client ID is required for file upload'), '');
+      }
+      
+      const paddedClientId = clientId.toString().padStart(4, '0');
+      const uploadDir = path.join(process.cwd(), 'Client_Files', paddedClientId);
+      
+      // Create directory if it doesn't exist
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      
+      cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+      // Format: admin_DD-MM-YYYY_originalname
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const dateStr = `${day}-${month}-${year}`;
+      
+      // Get file extension
+      const ext = path.extname(file.originalname);
+      const baseName = path.basename(file.originalname, ext);
+      
+      // Use original name with admin prefix and date
+      let filename = `admin_${dateStr}_${baseName}${ext}`;
+      let counter = 1;
+      
+      const { clientId } = req.body;
+      const paddedClientId = clientId.toString().padStart(4, '0');
+      const uploadDir = path.join(process.cwd(), 'Client_Files', paddedClientId);
+      
+      while (fs.existsSync(path.join(uploadDir, filename))) {
+        filename = `admin_${dateStr}_${baseName}_${counter}${ext}`;
+        counter++;
+      }
+      
+      cb(null, filename);
+    }
+  });
+
+  const adminFileUpload = multer({
+    storage: adminFileUploadStorage,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: function (req, file, cb) {
+      // Accept PDF, images, and common document formats
+      const allowedTypes = /\.(pdf|jpg|jpeg|png|gif|doc|docx|txt)$/i;
+      if (allowedTypes.test(path.extname(file.originalname))) {
+        cb(null, true);
+      } else {
+        cb(new Error('نوع فایل مجاز نیست. فرمت‌های مجاز: PDF, JPG, PNG, DOC, DOCX, TXT'));
+      }
+    }
+  });
+
+  // Admin endpoint to upload file to specific client
+  app.post('/api/admin/files/upload-to-client', requireAuthAPI, adminFileUpload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ success: false, message: 'هیچ فایلی انتخاب نشده است' });
+      }
+
+      const { clientId, description } = req.body;
+      
+      if (!clientId) {
+        // Clean up uploaded file if clientId is missing
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(400).json({ success: false, message: 'شناسه موکل الزامی است' });
+      }
+
+      // Create file record in storage with admin flag
+      const fileData = {
+        clientId: parseInt(clientId.toString()),
+        fileName: req.file.filename,
+        originalFileName: req.file.originalname,
+        fileSize: req.file.size.toString(),
+        mimeType: req.file.mimetype,
+        description: description || null,
+        filePath: req.file.path,
+        uploadedByType: 'admin'
+      };
+
+      const clientFile = await storage.createClientFile(fileData);
+
+      res.json({
+        success: true,
+        message: 'فایل با موفقیت برای موکل ارسال شد',
+        file: {
+          id: clientFile.id,
+          fileName: clientFile.fileName,
+          originalFileName: clientFile.originalFileName,
+          uploadDate: clientFile.uploadDate,
+          description: clientFile.description,
+          uploadedByType: clientFile.uploadedByType,
+        },
+      });
+    } catch (error) {
+      console.error('Error uploading admin file to client:', error);
+      
+      // Clean up uploaded file if database operation fails
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      res.status(500).json({ success: false, message: 'خطا در ارسال فایل به موکل' });
+    }
+  });
+
+  // Client endpoint to get admin-uploaded files (received files)
+  app.get('/api/client/received-files', requireClientAuth, async (req, res) => {
+    try {
+      const clientId = req.session.clientId!;
+      const allFiles = await storage.getClientFiles(clientId);
+      
+      // Filter only admin-uploaded files
+      const receivedFiles = allFiles.filter(file => file.uploadedByType === 'admin');
+
+      res.json({
+        success: true,
+        files: receivedFiles.map(file => ({
+          id: file.id,
+          fileName: file.fileName,
+          originalFileName: file.originalFileName,
+          uploadDate: file.uploadDate,
+          description: file.description,
+          fileSize: file.fileSize,
+        })),
+      });
+    } catch (error) {
+      console.error('Error fetching received files:', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت فایل‌های دریافتی' });
+    }
+  });
+
   // Routes registered successfully
 }

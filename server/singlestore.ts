@@ -260,11 +260,23 @@ export class SingleStoreStorage {
           description TEXT,
           file_path VARCHAR(1000) NOT NULL,
           upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          uploaded_by_type VARCHAR(10) NOT NULL DEFAULT 'client',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           SHARD KEY (id),
           INDEX (client_id)
         )
       `);
+
+      // Add uploaded_by_type column if it doesn't exist (for existing tables)
+      try {
+        await connection.execute(`
+          ALTER TABLE client_files ADD COLUMN uploaded_by_type VARCHAR(10) NOT NULL DEFAULT 'client'
+        `);
+        console.log('✅ Added uploaded_by_type column to client_files table');
+      } catch (alterError) {
+        // Column already exists or other issue - this is expected after first run
+        console.log('ℹ️ uploaded_by_type column already exists or table is properly configured');
+      }
 
       // Check existing client_files table data
       try {
@@ -1276,6 +1288,7 @@ export class SingleStoreStorage {
         description: file.description,
         filePath: file.file_path,
         uploadDate: file.upload_date,
+        uploadedByType: file.uploaded_by_type || 'client',
         createdAt: file.created_at,
       };
     } catch (error) {
@@ -1307,6 +1320,7 @@ export class SingleStoreStorage {
         description: file.description,
         filePath: file.file_path,
         uploadDate: file.upload_date,
+        uploadedByType: file.uploaded_by_type || 'client',
         createdAt: file.created_at,
       }));
     } catch (error) {
@@ -1326,12 +1340,14 @@ export class SingleStoreStorage {
       const uploadDate = new Date();
       
       console.log(`📁 Creating new client file: ${insertClientFile.originalFileName} for client ${clientIdStr}`);
+      
+      const uploadedByType = (insertClientFile as any).uploadedByType || 'client';
 
       await this.pool.execute(`
         INSERT INTO client_files (
           id, client_id, file_name, original_file_name, file_size, 
-          mime_type, description, file_path, upload_date, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          mime_type, description, file_path, upload_date, uploaded_by_type, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         id,
         clientIdStr,
@@ -1342,6 +1358,7 @@ export class SingleStoreStorage {
         insertClientFile.description || null,
         insertClientFile.filePath,
         uploadDate,
+        uploadedByType,
         new Date()
       ]);
       
@@ -1357,6 +1374,7 @@ export class SingleStoreStorage {
         description: insertClientFile.description || null,
         filePath: insertClientFile.filePath,
         uploadDate,
+        uploadedByType: uploadedByType,
         createdAt: new Date(),
       };
     } catch (error) {

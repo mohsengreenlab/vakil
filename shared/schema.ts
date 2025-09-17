@@ -65,6 +65,7 @@ export const clientFiles = pgTable("client_files", {
   description: text("description"),
   uploadDate: timestamp("upload_date").defaultNow(),
   filePath: text("file_path").notNull(),
+  uploadedByType: text("uploaded_by_type").notNull().default("client"), // 'client' or 'admin'
   createdAt: timestamp("created_at").defaultNow(),
 });
 
