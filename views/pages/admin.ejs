@@ -2241,7 +2241,13 @@ function showToast(message, type = 'info') {
 
 // Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    loadDashboardStats();
+    // Ensure overview tab is active by default
+    showTab('overview');
+    
+    // Load dashboard stats after a brief delay to ensure all elements are ready
+    setTimeout(function() {
+        loadDashboardStats();
+    }, 100);
     
     // Initialize QA form handlers
     const qaForm = document.getElementById('qaForm');
