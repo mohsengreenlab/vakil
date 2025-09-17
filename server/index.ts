@@ -1023,7 +1023,8 @@ app.get('/api/admin/clients/:clientId/files', requireAuthAPI, async (req, res) =
         uploadDate: file.uploadDate,
         description: file.description,
         fileSize: file.fileSize,
-        mimeType: file.mimeType
+        mimeType: file.mimeType,
+        uploadedByType: file.uploadedByType
       }))
     });
   } catch (error) {
