@@ -1,0 +1,100 @@
+1:
+Commercial experience in manual/automated testing from 1 year.
+
+Knowledge of Playwright (preferred) or Selenium at the level of writing simple automated tests .
+
+Understanding the principles of client-server interaction in the context of web applications.
+
+Ability to create clear test cases , checklists and defect reports .
+
+Basic understanding of the CI/CD process (familiarity with GitHub Actions would be a big plus).
+
+Basic understanding of Docker (for running local environments).
+---
+2:
+Understand how servers work and interact via API;
+Worked with Unity Editor and version control systems like Git;
+Have basic coding or command line skills;
+You love playing different genres and understand what players want.
+---
+3:
+Experience in testing complex systems from 2 years.
+
+Confident knowledge of SQL, ability to create queries to verify data.
+
+Understanding the principles of REST API, microservice architecture, message brokers.
+
+Skills in designing test cases and test plans.
+
+Proper recording of testing results and preparation of bug reports.
+
+
+----
+4:
+Working with Jira, Git, Docker, SQL (MariaDB/PostgreSQL).
+
+Understanding of Agile/Scrum , client-server interaction.
+
+Basic knowledge of PHP/JavaScript (for log analysis).
+
+Experience with Postman, Swagger (API testing).
+✔ Manual and automated testing of MIS functionality.
+✔ Writing test cases, checklists, bug reports (Jira).
+✔ Regression, integration, load testing. ✔ API
+testing (Postman, Swagger) and system fault tolerance . ✔ Interaction with developers to reproduce and fix bugs . ✔ Test automation (Selenium, Codeception — as needed).
+---
+5
+Understanding the principles of client-server architecture testing;
+Experience in static testing;
+Experience interacting with automated tests;
+Experience with message brokers (e.g. Kafka, RabbitMQ);
+Experience with SQL and NoSQL DBMS
+Practice of Shift-left approach in testing;
+Advanced mobile testing experience.
+---
+6
+Experience in QA from 2 years
+Knowledge of testing methods
+Experience with bug tracking systems (YouTrack, Jira)
+Experience with Fiddler/Charles
+Experience with Postman
+Experience with test management systems (TestRai)l;
+Good understanding of how client-server applications work
+Basic knowledge of json, xml (ability to navigate, edit, change the structure, if necessary)
+Ability to identify system vulnerabilities, ability to search for defects
+Analytical mind, logical thinking, responsibility
+Communication skills, independence in work, high learning ability
+-----
+7
+Experience in manual and automated testing from 2 years;
+
+Practical skills in API testing automation;
+
+Confident knowledge of Pytest + Selenium ;
+
+Knowledge of SQL and understanding of the principles of relational databases;
+
+Knowledge of testing theory;
+
+Skills in working with logs;
+
+Experience using DevTools in the testing process;
+
+Experience with Swagger and Postman tools ;
+
+Ability to create and maintain test documentation.
+---
+8
+Knowledge of tools for testing and collecting analytics (Git, Unity, Charles, Firebase, TestFlight, Android Studio)
+---
+9
+Higher education in the field of information technology or construction;
+
+Experience in manual testing, including integration testing ( XML );
+
+Skills in writing test documentation and requirements analysis (decomposition, identification of "gray areas");
+
+Understanding the task life cycle and principles of client-server architecture;
+
+Working with bug tracking systems ( Jira , etc.).
+
