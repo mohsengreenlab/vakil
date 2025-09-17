@@ -58,10 +58,15 @@
 
     <div class="container mx-auto px-4 py-8">
     
-    <script type="application/json" id="cases-data"><%- JSON.stringify(cases).replace(/</g,'\\u003c').replace(/--/g,'\\u002d\\u002d') %></script>
+    <script type="application/json" id="cases-data"><%- JSON.stringify(cases || []).replace(/</g,'\\u003c').replace(/--/g,'\\u002d\\u002d') %></script>
     <script>
         // Pass server data to JavaScript (XSS-safe)
-        window.serverCases = JSON.parse(document.getElementById('cases-data').textContent);
+        try {
+            window.serverCases = JSON.parse(document.getElementById('cases-data').textContent || '[]');
+        } catch (error) {
+            console.error('Error parsing cases data:', error);
+            window.serverCases = [];
+        }
     </script>
         <!-- Overview Tab -->
         <div id="overview-tab" class="tab-content">
@@ -3050,3 +3055,51 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+
+<script>
+// Expose functions globally for inline onclick handlers
+window.showTab = showTab;
+window.logout = logout;
+window.showAddClientForm = showAddClientForm;
+window.hideAddClientForm = hideAddClientForm;
+window.showAddCaseForm = showAddCaseForm;
+window.hideAddCaseForm = hideAddCaseForm;
+window.showAssignCaseForm = showAssignCaseForm;
+window.hideAssignCaseForm = hideAssignCaseForm;
+window.performLiveSearch = performLiveSearch;
+window.clearClientsSearch = clearClientsSearch;
+window.performCasesLiveSearch = performCasesLiveSearch;
+window.clearCasesSearch = clearCasesSearch;
+window.viewClient = viewClient;
+window.viewCaseDetails = viewCaseDetails;
+window.closeCaseEventsModal = closeCaseEventsModal;
+window.toggleAddEventForm = toggleAddEventForm;
+window.showAddEventForm = showAddEventForm;
+window.hideAddEventForm = hideAddEventForm;
+window.cancelAddEvent = cancelAddEvent;
+window.editCaseEvent = editCaseEvent;
+window.closeEditEventModal = closeEditEventModal;
+window.deleteCaseEvent = deleteCaseEvent;
+window.convertToClient = convertToClient;
+window.updateCaseStatus = updateCaseStatus;
+window.replyToContact = replyToContact;
+window.showAddQAForm = showAddQAForm;
+window.hideAddQAForm = hideAddQAForm;
+window.showEditQAForm = showEditQAForm;
+window.hideEditQAForm = hideEditQAForm;
+window.editQAItem = editQAItem;
+window.deleteQAItem = deleteQAItem;
+window.closeClientFiles = closeClientFiles;
+window.downloadClientFile = downloadClientFile;
+window.viewClientFiles = viewClientFiles;
+window.searchFilesClients = searchFilesClients;
+window.openSendFileModal = openSendFileModal;
+window.closeSendFileModal = closeSendFileModal;
+window.uploadFileToClient = uploadFileToClient;
+window.handleAdminFileSelect = handleAdminFileSelect;
+window.downloadAdminFile = downloadAdminFile;
+window.openClientMessages = openClientMessages;
+window.closeClientMessages = closeClientMessages;
+window.refreshMessages = refreshMessages;
+window.searchMessagingClients = searchMessagingClients;
+</script>
