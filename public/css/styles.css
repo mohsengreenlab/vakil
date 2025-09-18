@@ -257,7 +257,7 @@ body {
 
 .table th {
     background: var(--primary);
-    color: var(--primary-foreground);
+    color: rgb(56, 66, 82);
     padding: 1rem;
     text-align: right;
     font-weight: 600;
