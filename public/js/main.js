@@ -613,7 +613,7 @@ function renderCasesTable(casesData = null) {
     if (!dataToRender || dataToRender.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-8 text-muted-foreground">
+                <td colspan="4" class="text-center py-8 text-muted-foreground">
                     ${(allCases && allCases.length === 0) ? 'هیچ پرونده‌ای یافت نشد' : 'هیچ نتیجه‌ای برای جستجوی شما یافت نشد'}
                 </td>
             </tr>
@@ -625,14 +625,12 @@ function renderCasesTable(casesData = null) {
         <tr data-testid="case-row-${caseItem.case_id}">
             <td class="font-medium">${caseItem.case_id}</td>
             <td>${caseItem.client_id}</td>
-            <td class="font-medium">${getClientName(caseItem.client_id)}</td>
             <td>
                 <span class="status-display px-2 py-1 rounded bg-muted text-sm inline-block min-w-[180px]" 
                       data-testid="text-case-status-${caseItem.case_id}">
                     ${getStatusDisplayText(caseItem.last_case_status)}
                 </span>
             </td>
-            <td>${new Date(caseItem.case_creation_date).toLocaleDateString('fa-IR')}</td>
             <td>
                 <button onclick="viewCaseDetails('${caseItem.case_id}')" class="text-primary hover:underline text-sm" data-testid="button-view-case-${caseItem.case_id}">
                     نمایش جزئیات
@@ -653,10 +651,3 @@ function getStatusText(status) {
     return statusMap[status] || status;
 }
 
-function getClientName(clientId) {
-    if (typeof clients !== 'undefined' && clients && clients.length > 0) {
-        const client = clients.find(c => c.client_id === clientId);
-        return client ? `${client.first_name} ${client.last_name}` : 'نامشخص';
-    }
-    return 'نامشخص';
-}

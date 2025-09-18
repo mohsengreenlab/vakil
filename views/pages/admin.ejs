@@ -1356,51 +1356,7 @@ function clearCasesSearch() {
     showToast('جستجو پاک شد', 'info');
 }
 
-// Cases table rendering
-function renderCasesTable(cases) {
-    const tableBody = document.getElementById('cases-table-body');
-    
-    if (!cases || cases.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-muted-foreground">هیچ پرونده‌ای یافت نشد</td></tr>';
-        return;
-    }
-    
-    tableBody.innerHTML = cases.map(caseItem => {
-        const caseId = caseItem.case_id || caseItem.caseId;
-        const clientId = caseItem.client_id || caseItem.clientId;
-        const status = caseItem.last_case_status || caseItem.status;
-        
-        const statusText = getStatusText(status);
-        
-        return `
-            <tr data-testid="case-row-${caseId}">
-                <td class="font-medium">${caseId}</td>
-                <td>${clientId}</td>
-                <td>
-                    <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                        ${statusText}
-                    </span>
-                </td>
-                <td>
-                    <div class="flex gap-2">
-                        <button 
-                            onclick="viewCaseDetails('${caseId}')" 
-                            class="text-primary hover:underline text-sm" 
-                            data-testid="button-view-details-${caseId}">
-                            نمایش جزئیات
-                        </button>
-                        <button 
-                            onclick="updateCaseStatus('${caseId}', prompt('وضعیت جدید را وارد کنید:'))" 
-                            class="text-accent hover:underline text-sm" 
-                            data-testid="button-update-status-${caseId}">
-                            تغییر وضعیت
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
+// Cases table rendering is now handled by public/js/main.js
 
 // Form submission handlers
 document.getElementById('clientForm').addEventListener('submit', async function(e) {
