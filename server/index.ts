@@ -706,7 +706,7 @@ app.post('/api/admin/login', async (req, res) => {
     // Fetch admin from database
     const admin = await storage.getUserByUsername(username);
     
-    if (!admin) {
+    if (!admin || admin.role !== 'admin') {
       return res.status(401).json({ 
         success: false, 
         message: 'نام کاربری یا رمز عبور اشتباه است' 

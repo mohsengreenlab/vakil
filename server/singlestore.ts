@@ -198,11 +198,11 @@ export class SingleStoreStorage {
       // Create users table for admin authentication with role-based access
       await connection.execute(`
         CREATE TABLE IF NOT EXISTS users (
-          id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-          username TEXT NOT NULL UNIQUE,
-          password TEXT NOT NULL,
-          email TEXT,
-          role TEXT NOT NULL DEFAULT 'client',
+          id VARCHAR(36) PRIMARY KEY,
+          username VARCHAR(255) NOT NULL UNIQUE,
+          password VARCHAR(255) NOT NULL,
+          email VARCHAR(255),
+          role VARCHAR(50) NOT NULL DEFAULT 'client',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           SHARD KEY (username)
         )
