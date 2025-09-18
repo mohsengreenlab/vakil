@@ -424,7 +424,7 @@ export class SingleStoreStorage implements IStorage {
         username: user.username,
         password: user.password,
         email: user.email || null,
-        role: user.role,
+        role: user.role || 'client',
         createdAt: new Date()
       };
     } catch (error) {
@@ -645,13 +645,13 @@ export class SingleStoreStorage implements IStorage {
       await connection.commit();
 
       return {
-        client_id: clientId,
-        first_name: firstName,
-        last_name: lastName,
-        national_id: nationalId,
-        phone_numbers: JSON.stringify(phoneNumbers),
-        password: plainPassword || undefined,
-        created_at: new Date()
+        clientId: parseInt(clientId),
+        firstName: firstName,
+        lastName: lastName,
+        nationalId: nationalId,
+        phoneNumbers: phoneNumbers,
+        password: plainPassword || null,
+        createdAt: new Date()
       };
     } catch (error) {
       await connection.rollback();
@@ -729,15 +729,35 @@ export class SingleStoreStorage implements IStorage {
       const [rows] = await this.pool.execute(
         'SELECT * FROM clients ORDER BY created_at DESC'
       );
-      return (rows as any[]).map(dbClient => ({
-        clientId: parseInt(dbClient.client_id),
-        firstName: dbClient.first_name,
-        lastName: dbClient.last_name,
-        nationalId: dbClient.national_id,
-        phoneNumbers: JSON.parse(dbClient.phone_numbers),
-        password: dbClient.password,
-        createdAt: dbClient.created_at
-      }));
+      return (rows as any[]).map(dbClient => {
+        // Safely parse phone numbers with fallback for invalid JSON
+        let phoneNumbers: string[] = [];
+        try {
+          if (dbClient.phone_numbers) {
+            // If it's already a valid JSON array, parse it
+            if (dbClient.phone_numbers.startsWith('[') && dbClient.phone_numbers.endsWith(']')) {
+              phoneNumbers = JSON.parse(dbClient.phone_numbers);
+            } else {
+              // If it's a plain number or string, wrap it in an array
+              phoneNumbers = [dbClient.phone_numbers.toString()];
+            }
+          }
+        } catch (parseError) {
+          // If JSON parsing fails, treat it as a single phone number
+          phoneNumbers = [dbClient.phone_numbers?.toString() || ''];
+          console.warn('Failed to parse phone_numbers for client', dbClient.client_id, '- using as single phone number:', dbClient.phone_numbers);
+        }
+
+        return {
+          clientId: parseInt(dbClient.client_id),
+          firstName: dbClient.first_name,
+          lastName: dbClient.last_name,
+          nationalId: dbClient.national_id,
+          phoneNumbers: phoneNumbers,
+          password: dbClient.password,
+          createdAt: dbClient.created_at
+        };
+      });
     } catch (error) {
       console.error('Error getting all clients:', error);
       throw error;
@@ -809,13 +829,31 @@ export class SingleStoreStorage implements IStorage {
         return null;
       }
       
+      // Safely parse phone numbers with fallback for invalid JSON
+      let phoneNumbers: string[] = [];
+      try {
+        if (client.phone_numbers) {
+          // If it's already a valid JSON array, parse it
+          if (client.phone_numbers.startsWith('[') && client.phone_numbers.endsWith(']')) {
+            phoneNumbers = JSON.parse(client.phone_numbers);
+          } else {
+            // If it's a plain number or string, wrap it in an array
+            phoneNumbers = [client.phone_numbers.toString()];
+          }
+        }
+      } catch (parseError) {
+        // If JSON parsing fails, treat it as a single phone number
+        phoneNumbers = [client.phone_numbers?.toString() || ''];
+        console.warn('Failed to parse phone_numbers for client', client.client_id, '- using as single phone number:', client.phone_numbers);
+      }
+
       return {
         clientId: parseInt(client.client_id),
         firstName: client.first_name,
         lastName: client.last_name,
         nationalId: client.national_id,
-        phoneNumbers: JSON.parse(client.phone_numbers),
-        password: undefined, // Don't return password
+        phoneNumbers: phoneNumbers,
+        password: null, // Don't return password
         createdAt: client.created_at
       };
     } catch (error) {
@@ -1053,7 +1091,7 @@ export class SingleStoreStorage implements IStorage {
       
       const result = [];
       for (const case_ of clientCases) {
-        const events = await this.getCaseEvents(case_.case_id);
+        const events = await this.getCaseEvents(case_.caseId);
         result.push({ case: case_, events });
       }
       
