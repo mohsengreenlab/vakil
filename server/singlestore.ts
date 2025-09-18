@@ -148,6 +148,14 @@ export class SingleStoreStorage {
       } catch (dropError) {
         console.log('ℹ️ test_table does not exist or already dropped');
       }
+
+      // Drop unused admins table - we now use the users table with roles
+      try {
+        await connection.execute('DROP TABLE IF EXISTS admins');
+        console.log('🗑️ Dropped unused admins table - using users table with roles instead');
+      } catch (dropError) {
+        console.log('ℹ️ admins table does not exist or already dropped');
+      }
       
       // Create clients table (without unique constraint on national_id)
       await connection.execute(`
