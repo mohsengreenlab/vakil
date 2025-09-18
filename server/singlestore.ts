@@ -195,6 +195,18 @@ export class SingleStoreStorage {
         )
       `);
 
+      // Create users table for admin authentication with role-based access
+      await connection.execute(`
+        CREATE TABLE IF NOT EXISTS users (
+          id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+          username TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL,
+          email TEXT,
+          role TEXT NOT NULL DEFAULT 'client',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          SHARD KEY (username)
+        )
+      `);
 
       // Create contact_us_messages table
       await connection.execute(`
@@ -313,10 +325,10 @@ export class SingleStoreStorage {
         console.log('ℹ️ QA table check:', (checkError as Error).message);
       }
 
-      // Insert default admin if not exists
+      // Insert default admin if not exists in users table
       const [adminExists] = await connection.execute(
-        'SELECT COUNT(*) as count FROM admins WHERE username = ?',
-        ['admin']
+        'SELECT COUNT(*) as count FROM users WHERE username = ? AND role = ?',
+        ['admin', 'admin']
       );
       
       // SECURITY FIX: Only create admin user if ADMIN_PASSWORD environment variable is set
@@ -327,8 +339,8 @@ export class SingleStoreStorage {
           const adminId = this.generateUUID();
           const hashedPassword = bcrypt.hashSync(process.env.ADMIN_PASSWORD, 12);
           await connection.execute(
-            'INSERT INTO admins (id, username, password) VALUES (?, ?, ?)',
-            [adminId, 'admin', hashedPassword]
+            'INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, ?)',
+            [adminId, 'admin', hashedPassword, 'admin']
           );
           console.log('✅ SingleStore: Admin user created with environment-provided password');
         } else {
@@ -341,8 +353,8 @@ export class SingleStoreStorage {
           const bcrypt = await import('bcrypt');
           const hashedPassword = bcrypt.hashSync(process.env.ADMIN_PASSWORD, 12);
           await connection.execute(
-            'UPDATE admins SET password = ? WHERE username = ? AND password NOT LIKE "$2%"',
-            [hashedPassword, 'admin']
+            'UPDATE users SET password = ? WHERE username = ? AND role = ? AND password NOT LIKE "$2%"',
+            [hashedPassword, 'admin', 'admin']
           );
           console.log('✅ SingleStore: Updated legacy plaintext passwords');
         }
@@ -398,22 +410,22 @@ export class SingleStoreStorage {
     }
   }
 
-  // Legacy compatibility methods for existing code
+  // User methods for admin authentication
   async getUser(id: string): Promise<User | undefined> {
     try {
       const [rows] = await this.pool.execute(
-        'SELECT * FROM admins WHERE id = ?',
+        'SELECT * FROM users WHERE id = ?',
         [id]
       );
-      const admin = (rows as any)[0];
-      if (admin) {
+      const user = (rows as any)[0];
+      if (user) {
         return {
-          id: admin.id,
-          username: admin.username,
-          password: admin.password,
-          email: null,
-          role: 'admin',
-          createdAt: admin.created_at
+          id: user.id,
+          username: user.username,
+          password: user.password,
+          email: user.email,
+          role: user.role,
+          createdAt: user.created_at
         };
       }
       return undefined;
@@ -426,18 +438,18 @@ export class SingleStoreStorage {
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
       const [rows] = await this.pool.execute(
-        'SELECT * FROM admins WHERE username = ? ORDER BY created_at DESC LIMIT 1',
+        'SELECT * FROM users WHERE username = ? ORDER BY created_at DESC LIMIT 1',
         [username]
       );
-      const admin = (rows as any)[0];
-      if (admin) {
+      const user = (rows as any)[0];
+      if (user) {
         return {
-          id: admin.id,
-          username: admin.username,
-          password: admin.password,
-          email: null,
-          role: 'admin',
-          createdAt: admin.created_at
+          id: user.id,
+          username: user.username,
+          password: user.password,
+          email: user.email,
+          role: user.role,
+          createdAt: user.created_at
         };
       }
       return undefined;
@@ -453,8 +465,8 @@ export class SingleStoreStorage {
       const id = this.generateUUID();
       const hashedPassword = bcrypt.hashSync(user.password, 10);
       await this.pool.execute(
-        'INSERT INTO admins (id, username, password) VALUES (?, ?, ?)',
-        [id, user.username, hashedPassword]
+        'INSERT INTO users (id, username, password, email, role) VALUES (?, ?, ?, ?, ?)',
+        [id, user.username, hashedPassword, user.email || null, user.role]
       );
       return {
         id,
