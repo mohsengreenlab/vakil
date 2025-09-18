@@ -381,7 +381,6 @@
                             <tr>
                                 <th>شناسه پرونده</th>
                                 <th>شناسه موکل</th>
-                                <th>نام موکل</th>
                                 <th>وضعیت</th>
                                 <th>تاریخ ایجاد</th>
                                 <th>عملیات</th>
@@ -389,7 +388,7 @@
                         </thead>
                         <tbody id="cases-table-body">
                             <tr>
-                                <td colspan="6" class="text-center py-8 text-muted-foreground">در حال بارگذاری...</td>
+                                <td colspan="5" class="text-center py-8 text-muted-foreground">در حال بارگذاری...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1307,12 +1306,69 @@ function clearClientsFilter() {
     clearClientsSearch();
 }
 
+// Cases search and filter functionality
+function performCasesLiveSearch() {
+    const searchTerm = document.getElementById('cases-search').value.toLowerCase().trim();
+    const selectedCriteria = document.querySelector('input[name="casesSearchCriteria"]:checked').value;
+    
+    let filteredCases = [...window.serverCases];
+    
+    // Apply search filter based on selected criteria
+    if (searchTerm) {
+        filteredCases = filteredCases.filter(caseItem => {
+            const caseId = (caseItem.case_id || caseItem.caseId || '').toString().toLowerCase();
+            const clientId = (caseItem.client_id || caseItem.clientId || '').toString().toLowerCase();
+            const status = (caseItem.last_case_status || caseItem.status || '').toLowerCase();
+            const createdAt = (caseItem.case_creation_date || caseItem.caseCreationDate || caseItem.created_at || '').toString().toLowerCase();
+            
+            switch (selectedCriteria) {
+                case 'case_id':
+                    return caseId.includes(searchTerm);
+                case 'client_id':
+                    return clientId.includes(searchTerm);
+                case 'last_case_status':
+                    return status.includes(searchTerm);
+                case 'case_creation_date':
+                    return createdAt.includes(searchTerm);
+                case 'all':
+                default:
+                    return caseId.includes(searchTerm) || 
+                           clientId.includes(searchTerm) || 
+                           status.includes(searchTerm) || 
+                           createdAt.includes(searchTerm);
+            }
+        });
+    }
+    
+    // Apply default sorting by most recent
+    filteredCases.sort((a, b) => {
+        const dateA = new Date(a.case_creation_date || a.caseCreationDate || a.created_at).getTime();
+        const dateB = new Date(b.case_creation_date || b.caseCreationDate || b.created_at).getTime();
+        return dateB - dateA;
+    });
+    
+    renderCasesTable(filteredCases);
+    
+    // Update search result count
+    const resultCount = filteredCases.length;
+    const totalCount = window.serverCases.length;
+    showToast(`${resultCount} پرونده از ${totalCount} پرونده یافت شد`, 'success');
+}
+
+// Clear cases search
+function clearCasesSearch() {
+    document.getElementById('cases-search').value = '';
+    document.querySelector('input[name="casesSearchCriteria"][value="all"]').checked = true;
+    renderCasesTable(window.serverCases);
+    showToast('جستجو پاک شد', 'info');
+}
+
 // Cases table rendering
 function renderCasesTable(cases) {
     const tableBody = document.getElementById('cases-table-body');
     
     if (!cases || cases.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">هیچ پرونده‌ای یافت نشد</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-muted-foreground">هیچ پرونده‌ای یافت نشد</td></tr>';
         return;
     }
     
@@ -1331,7 +1387,6 @@ function renderCasesTable(cases) {
             <tr data-testid="case-row-${caseId}">
                 <td class="font-medium">${caseId}</td>
                 <td>${clientId}</td>
-                <td>موکل ${clientId}</td>
                 <td>
                     <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
                         ${statusText}
