@@ -353,10 +353,6 @@
                                 <span class="text-sm">وضعیت پرونده</span>
                             </label>
                             <label class="flex items-center gap-2">
-                                <input type="radio" name="casesSearchCriteria" value="case_creation_date" class="radio" data-testid="radio-case-date">
-                                <span class="text-sm">تاریخ ایجاد</span>
-                            </label>
-                            <label class="flex items-center gap-2">
                                 <input type="radio" name="casesSearchCriteria" value="all" class="radio" checked data-testid="radio-cases-all">
                                 <span class="text-sm">همه موارد</span>
                             </label>
@@ -382,13 +378,12 @@
                                 <th>شناسه پرونده</th>
                                 <th>شناسه موکل</th>
                                 <th>وضعیت</th>
-                                <th>تاریخ ایجاد</th>
                                 <th>عملیات</th>
                             </tr>
                         </thead>
                         <tbody id="cases-table-body">
                             <tr>
-                                <td colspan="5" class="text-center py-8 text-muted-foreground">در حال بارگذاری...</td>
+                                <td colspan="4" class="text-center py-8 text-muted-foreground">در حال بارگذاری...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1319,7 +1314,6 @@ function performCasesLiveSearch() {
             const caseId = (caseItem.case_id || caseItem.caseId || '').toString().toLowerCase();
             const clientId = (caseItem.client_id || caseItem.clientId || '').toString().toLowerCase();
             const status = (caseItem.last_case_status || caseItem.status || '').toLowerCase();
-            const createdAt = (caseItem.case_creation_date || caseItem.caseCreationDate || caseItem.created_at || '').toString().toLowerCase();
             
             switch (selectedCriteria) {
                 case 'case_id':
@@ -1328,14 +1322,11 @@ function performCasesLiveSearch() {
                     return clientId.includes(searchTerm);
                 case 'last_case_status':
                     return status.includes(searchTerm);
-                case 'case_creation_date':
-                    return createdAt.includes(searchTerm);
                 case 'all':
                 default:
                     return caseId.includes(searchTerm) || 
                            clientId.includes(searchTerm) || 
-                           status.includes(searchTerm) || 
-                           createdAt.includes(searchTerm);
+                           status.includes(searchTerm);
             }
         });
     }
@@ -1368,7 +1359,7 @@ function renderCasesTable(cases) {
     const tableBody = document.getElementById('cases-table-body');
     
     if (!cases || cases.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-muted-foreground">هیچ پرونده‌ای یافت نشد</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-muted-foreground">هیچ پرونده‌ای یافت نشد</td></tr>';
         return;
     }
     
@@ -1376,10 +1367,6 @@ function renderCasesTable(cases) {
         const caseId = caseItem.case_id || caseItem.caseId;
         const clientId = caseItem.client_id || caseItem.clientId;
         const status = caseItem.last_case_status || caseItem.status;
-        const createdAt = caseItem.case_creation_date || caseItem.caseCreationDate || caseItem.created_at;
-        
-        const formattedDate = createdAt ? 
-            new Date(createdAt).toLocaleDateString('fa-IR') : 'نامشخص';
             
         const statusText = getStatusText(status);
         
@@ -1392,7 +1379,6 @@ function renderCasesTable(cases) {
                         ${statusText}
                     </span>
                 </td>
-                <td>${formattedDate}</td>
                 <td>
                     <div class="flex gap-2">
                         <button 
