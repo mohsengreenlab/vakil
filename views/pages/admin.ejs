@@ -58,18 +58,7 @@
 
     <div class="container mx-auto px-4 py-8">
     
-    <script type="application/json" id="cases-data"><%- JSON.stringify(cases || []).replace(/</g,'\\u003c').replace(/--/g,'\\u002d\\u002d') %></script>
-    <script>
-        // Pass server data to JavaScript (XSS-safe)
-        try {
-            window.serverCases = JSON.parse(document.getElementById('cases-data').textContent || '[]');
-            console.log('DEBUG: Server cases loaded:', window.serverCases);
-            console.log('DEBUG: Sample server case:', window.serverCases.length > 0 ? window.serverCases[0] : 'No cases');
-        } catch (error) {
-            console.error('Error parsing cases data:', error);
-            window.serverCases = [];
-        }
-    </script>
+    <!-- Cases data will be loaded via API calls instead of server-side embedding -->
         <!-- Overview Tab -->
         <div id="overview-tab" class="tab-content">
             <h1 class="text-3xl font-bold mb-6">داشبورد مدیریت</h1>
@@ -1127,6 +1116,11 @@ async function loadCases() {
         
         if (result.success) {
             cases = result.cases;
+            // Update search functionality data sources
+            if (typeof allCases !== 'undefined') {
+                allCases = [...cases];
+                filteredCases = [...cases];  
+            }
             renderCasesTable(cases);
         } else {
             document.getElementById('cases-table-body').innerHTML = 
@@ -1157,7 +1151,7 @@ function renderClientsTable(clientsData) {
     tbody.innerHTML = pageData.map(client => {
         // Phone numbers are already normalized in loadClients()
         const phoneNumbers = client.phoneNumbers || [];
-        const caseCount = cases.filter(c => c.client_id === client.clientId).length;
+        const caseCount = (cases || []).filter(c => c.client_id === client.clientId).length;
         
         return `
             <tr class="hover:bg-muted/30" data-testid="client-row-${client.clientId}">
@@ -1308,7 +1302,7 @@ function performCasesLiveSearch() {
     const searchTerm = document.getElementById('cases-search').value.toLowerCase().trim();
     const selectedCriteria = document.querySelector('input[name="casesSearchCriteria"]:checked').value;
     
-    let filteredCases = [...window.serverCases];
+    let filteredCases = [...cases]; // Use client-side loaded cases data
     
     // Apply search filter based on selected criteria
     if (searchTerm) {
@@ -1344,7 +1338,7 @@ function performCasesLiveSearch() {
     
     // Update search result count
     const resultCount = filteredCases.length;
-    const totalCount = window.serverCases.length;
+    const totalCount = cases.length;
     showToast(`${resultCount} پرونده از ${totalCount} پرونده یافت شد`, 'success');
 }
 
@@ -1352,7 +1346,7 @@ function performCasesLiveSearch() {
 function clearCasesSearch() {
     document.getElementById('cases-search').value = '';
     document.querySelector('input[name="casesSearchCriteria"][value="all"]').checked = true;
-    renderCasesTable(window.serverCases);
+    renderCasesTable(cases);
     showToast('جستجو پاک شد', 'info');
 }
 

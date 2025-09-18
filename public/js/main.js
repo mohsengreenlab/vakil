@@ -502,19 +502,9 @@ function clearFormDraft(formId) {
 let allCases = [];
 let filteredCases = [];
 
-// Initialize cases from server data and add event listeners
+// Initialize cases search functionality - data will be loaded via API
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize cases search functionality
-    if (typeof window.serverCases !== 'undefined') {
-        allCases = [...window.serverCases];
-        filteredCases = [...allCases];
-        // Render initial table if we're on the cases tab
-        setTimeout(() => {
-            if (document.getElementById('cases-table-body')) {
-                renderCasesTable();
-            }
-        }, 100);
-    }
+    // Cases will be loaded when the cases tab is activated
     
     // Add live search event listeners
     const casesSearchInput = document.getElementById('cases-search');
