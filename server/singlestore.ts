@@ -713,11 +713,19 @@ export class SingleStoreStorage implements IStorage {
       let phoneNumbers: string[] = [];
       try {
         if (dbClient.phone_numbers) {
-          // If it's already a valid JSON array, parse it
-          if (dbClient.phone_numbers.startsWith('[') && dbClient.phone_numbers.endsWith(']')) {
-            phoneNumbers = JSON.parse(dbClient.phone_numbers);
+          // Check if it's already an array
+          if (Array.isArray(dbClient.phone_numbers)) {
+            phoneNumbers = dbClient.phone_numbers;
+          } else if (typeof dbClient.phone_numbers === 'string') {
+            // If it's a string, try to parse as JSON
+            if (dbClient.phone_numbers.startsWith('[') && dbClient.phone_numbers.endsWith(']')) {
+              phoneNumbers = JSON.parse(dbClient.phone_numbers);
+            } else {
+              // If it's a plain number or string, wrap it in an array
+              phoneNumbers = [dbClient.phone_numbers];
+            }
           } else {
-            // If it's a plain number or string, wrap it in an array
+            // For any other type, convert to string and wrap in array
             phoneNumbers = [dbClient.phone_numbers.toString()];
           }
         }
@@ -752,11 +760,19 @@ export class SingleStoreStorage implements IStorage {
         let phoneNumbers: string[] = [];
         try {
           if (dbClient.phone_numbers) {
-            // If it's already a valid JSON array, parse it
-            if (dbClient.phone_numbers.startsWith('[') && dbClient.phone_numbers.endsWith(']')) {
-              phoneNumbers = JSON.parse(dbClient.phone_numbers);
+            // Check if it's already an array
+            if (Array.isArray(dbClient.phone_numbers)) {
+              phoneNumbers = dbClient.phone_numbers;
+            } else if (typeof dbClient.phone_numbers === 'string') {
+              // If it's a string, try to parse as JSON
+              if (dbClient.phone_numbers.startsWith('[') && dbClient.phone_numbers.endsWith(']')) {
+                phoneNumbers = JSON.parse(dbClient.phone_numbers);
+              } else {
+                // If it's a plain number or string, wrap it in an array
+                phoneNumbers = [dbClient.phone_numbers];
+              }
             } else {
-              // If it's a plain number or string, wrap it in an array
+              // For any other type, convert to string and wrap in array
               phoneNumbers = [dbClient.phone_numbers.toString()];
             }
           }
