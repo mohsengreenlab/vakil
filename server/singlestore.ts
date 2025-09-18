@@ -195,17 +195,6 @@ export class SingleStoreStorage {
         )
       `);
 
-      // Create admins table (sharded by username for natural lookups)
-      await connection.execute(`
-        CREATE TABLE IF NOT EXISTS admins (
-          id VARCHAR(36),
-          username VARCHAR(255) NOT NULL,
-          password VARCHAR(255) NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          PRIMARY KEY (username, id),
-          SHARD KEY (username)
-        )
-      `);
 
       // Create contact_us_messages table
       await connection.execute(`
