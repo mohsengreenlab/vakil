@@ -63,6 +63,8 @@
         // Pass server data to JavaScript (XSS-safe)
         try {
             window.serverCases = JSON.parse(document.getElementById('cases-data').textContent || '[]');
+            console.log('DEBUG: Server cases loaded:', window.serverCases);
+            console.log('DEBUG: Sample server case:', window.serverCases.length > 0 ? window.serverCases[0] : 'No cases');
         } catch (error) {
             console.error('Error parsing cases data:', error);
             window.serverCases = [];
@@ -1128,12 +1130,12 @@ async function loadCases() {
             renderCasesTable(cases);
         } else {
             document.getElementById('cases-table-body').innerHTML = 
-                '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">خطا در بارگذاری پرونده‌ها</td></tr>';
+                '<tr><td colspan="4" class="text-center py-8 text-muted-foreground">خطا در بارگذاری پرونده‌ها</td></tr>';
         }
     } catch (error) {
         console.error('Error loading cases:', error);
         document.getElementById('cases-table-body').innerHTML = 
-            '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">خطا در بارگذاری پرونده‌ها</td></tr>';
+            '<tr><td colspan="4" class="text-center py-8 text-muted-foreground">خطا در بارگذاری پرونده‌ها</td></tr>';
     }
 }
 
@@ -1367,7 +1369,7 @@ function renderCasesTable(cases) {
         const caseId = caseItem.case_id || caseItem.caseId;
         const clientId = caseItem.client_id || caseItem.clientId;
         const status = caseItem.last_case_status || caseItem.status;
-            
+        
         const statusText = getStatusText(status);
         
         return `
@@ -2006,6 +2008,11 @@ async function deleteCaseEvent(eventId) {
 
 // Helper function to get Persian status text
 function getStatusText(status) {
+    // Handle undefined, null, or empty status values
+    if (!status) {
+        return 'وضعیت نامشخص';
+    }
+    
     const statusMap = {
         'under-review': 'در انتظار بررسی',
         'lawyer-study': 'در حال مطالعه وکیل',
