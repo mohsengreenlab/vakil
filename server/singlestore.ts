@@ -709,12 +709,30 @@ export class SingleStoreStorage implements IStorage {
       const dbClient = (rows as any)[0];
       if (!dbClient) return undefined;
       
+      // Safely parse phone numbers with fallback for invalid JSON
+      let phoneNumbers: string[] = [];
+      try {
+        if (dbClient.phone_numbers) {
+          // If it's already a valid JSON array, parse it
+          if (dbClient.phone_numbers.startsWith('[') && dbClient.phone_numbers.endsWith(']')) {
+            phoneNumbers = JSON.parse(dbClient.phone_numbers);
+          } else {
+            // If it's a plain number or string, wrap it in an array
+            phoneNumbers = [dbClient.phone_numbers.toString()];
+          }
+        }
+      } catch (parseError) {
+        // If JSON parsing fails, treat it as a single phone number
+        phoneNumbers = [dbClient.phone_numbers?.toString() || ''];
+        console.warn('Failed to parse phone_numbers for client', dbClient.client_id, '- using as single phone number:', dbClient.phone_numbers);
+      }
+
       return {
         clientId: parseInt(dbClient.client_id),
         firstName: dbClient.first_name,
         lastName: dbClient.last_name,
         nationalId: dbClient.national_id,
-        phoneNumbers: JSON.parse(dbClient.phone_numbers),
+        phoneNumbers: phoneNumbers,
         password: dbClient.password,
         createdAt: dbClient.created_at
       };
