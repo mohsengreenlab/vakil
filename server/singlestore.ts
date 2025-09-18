@@ -3,45 +3,9 @@ import { readFileSync } from "fs";
 import { IStorage } from "./storage.js";
 import * as bcrypt from 'bcrypt';
 import { getConfig } from "./config.js";
-import { type CaseEvent, type InsertCaseEvent, type ClientFile, type InsertClientFile, type Message, type InsertMessage } from "@shared/schema";
+import { type User, type InsertUser, type Client, type InsertClient, type Case, type InsertCase, type Contact, type InsertContact, type CaseEvent, type InsertCaseEvent, type ClientFile, type InsertClientFile, type Message, type InsertMessage } from "@shared/schema";
 
-// Define interfaces based on the new schema requirements
-export interface Client {
-  client_id: string;
-  first_name: string;
-  last_name: string;
-  national_id: string;
-  phone_numbers: string; // JSON string of phone numbers array
-  password?: string;
-  created_at: Date;
-}
-
-export interface Case {
-  case_id: string;
-  client_id: string;
-  case_creation_date: Date;
-  last_case_status: string;
-  created_at: Date;
-}
-
-export interface Admin {
-  id: string;
-  username: string;
-  password: string;
-  created_at: Date;
-}
-
-export interface ContactMessage {
-  id: string;
-  first_name: string;
-  last_name: string;
-  phone_number: string;
-  email: string;
-  subject: string;
-  message: string;
-  created_at: Date;
-}
-
+// QA-specific types for SingleStore
 export interface QAItem {
   id: string;
   question: string;
@@ -51,16 +15,9 @@ export interface QAItem {
   date_created: Date;
 }
 
-// Legacy type adapters for existing code compatibility
-export interface User {
-  id: string;
-  username: string;
-  password: string;
-  email: string | null;
-  role: string;
-  createdAt: Date | null;
-}
+export type InsertQAItem = Omit<QAItem, 'id' | 'date_created'>;
 
+// Legacy interface for backward compatibility
 export interface LegalCase {
   id: string;
   clientName: string;
@@ -74,23 +31,9 @@ export interface LegalCase {
   createdAt: Date | null;
 }
 
-export interface Contact {
-  id: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  email: string | null;
-  subject: string;
-  message: string;
-  createdAt: Date | null;
-}
-
-export type InsertUser = Omit<User, 'id' | 'createdAt'>;
 export type InsertLegalCase = Omit<LegalCase, 'id' | 'status' | 'createdAt'>;
-export type InsertContact = Omit<Contact, 'id' | 'createdAt'>;
-export type InsertQAItem = Omit<QAItem, 'id' | 'date_created'>;
 
-export class SingleStoreStorage {
+export class SingleStoreStorage implements IStorage {
   private pool: mysql.Pool;
 
   constructor() {
@@ -744,11 +687,12 @@ export class SingleStoreStorage {
       );
 
       return {
-        case_id: caseId,
-        client_id: String(clientId),
-        case_creation_date: new Date(caseCreationDate),
-        last_case_status: lastCaseStatus,
-        created_at: new Date()
+        caseId: parseInt(caseId),
+        clientId: parseInt(String(clientId)),
+        caseCreationDate: new Date(caseCreationDate),
+        lastCaseStatus: lastCaseStatus,
+        lastStatusDate: new Date(),
+        createdAt: new Date()
       };
     } catch (error) {
       console.error('Error creating case:', error);
@@ -762,7 +706,18 @@ export class SingleStoreStorage {
         'SELECT * FROM clients WHERE client_id = ?',
         [String(clientId)]
       );
-      return (rows as any)[0] || undefined;
+      const dbClient = (rows as any)[0];
+      if (!dbClient) return undefined;
+      
+      return {
+        clientId: parseInt(dbClient.client_id),
+        firstName: dbClient.first_name,
+        lastName: dbClient.last_name,
+        nationalId: dbClient.national_id,
+        phoneNumbers: JSON.parse(dbClient.phone_numbers),
+        password: dbClient.password,
+        createdAt: dbClient.created_at
+      };
     } catch (error) {
       console.error('Error getting client:', error);
       throw error;
@@ -774,7 +729,15 @@ export class SingleStoreStorage {
       const [rows] = await this.pool.execute(
         'SELECT * FROM clients ORDER BY created_at DESC'
       );
-      return rows as Client[];
+      return (rows as any[]).map(dbClient => ({
+        clientId: parseInt(dbClient.client_id),
+        firstName: dbClient.first_name,
+        lastName: dbClient.last_name,
+        nationalId: dbClient.national_id,
+        phoneNumbers: JSON.parse(dbClient.phone_numbers),
+        password: dbClient.password,
+        createdAt: dbClient.created_at
+      }));
     } catch (error) {
       console.error('Error getting all clients:', error);
       throw error;
@@ -847,13 +810,13 @@ export class SingleStoreStorage {
       }
       
       return {
-        client_id: client.client_id,
-        first_name: client.first_name,
-        last_name: client.last_name,
-        national_id: client.national_id,
-        phone_numbers: client.phone_numbers,
+        clientId: parseInt(client.client_id),
+        firstName: client.first_name,
+        lastName: client.last_name,
+        nationalId: client.national_id,
+        phoneNumbers: JSON.parse(client.phone_numbers),
         password: undefined, // Don't return password
-        created_at: client.created_at
+        createdAt: client.created_at
       };
     } catch (error) {
       console.error('Error authenticating client:', error);

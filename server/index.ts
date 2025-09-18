@@ -226,8 +226,8 @@ app.post('/api/client/login', async (req, res) => {
     }
     
     // Set session
-    req.session.clientId = client.client_id;
-    req.session.clientNationalId = client.national_id;
+    req.session.clientId = client.clientId.toString();
+    req.session.clientNationalId = client.nationalId;
     
     // Explicitly save session before responding to prevent race condition
     req.session.save((saveError) => {
