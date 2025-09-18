@@ -1038,8 +1038,8 @@ async function loadClientsForSelect() {
             
             result.clients.forEach(client => {
                 const option = document.createElement('option');
-                option.value = client.client_id;
-                option.textContent = `${client.client_id} - ${client.first_name} ${client.last_name}`;
+                option.value = client.clientId;
+                option.textContent = `${client.clientId} - ${client.firstName} ${client.lastName}`;
                 select.appendChild(option);
             });
         }
@@ -1102,10 +1102,10 @@ async function loadClients() {
             // Normalize phone numbers on the client side to handle database inconsistencies
             const normalizedClients = result.clients.map(client => ({
                 ...client,
-                phone_numbers: Array.isArray(client.phone_numbers) 
-                    ? client.phone_numbers 
+                phone_numbers: Array.isArray(client.phoneNumbers) 
+                    ? client.phoneNumbers 
                     : (typeof client.phone_numbers === 'string' 
-                        ? JSON.parse(client.phone_numbers || '[]') 
+                        ? JSON.parse(client.phoneNumbers || '[]') 
                         : [])
             }));
             
@@ -1160,26 +1160,26 @@ function renderClientsTable(clientsData) {
     
     tbody.innerHTML = pageData.map(client => {
         // Phone numbers are already normalized in loadClients()
-        const phoneNumbers = client.phone_numbers || [];
-        const caseCount = cases.filter(c => c.client_id === client.client_id).length;
+        const phoneNumbers = client.phoneNumbers || [];
+        const caseCount = cases.filter(c => c.client_id === client.clientId).length;
         
         return `
-            <tr class="hover:bg-muted/30" data-testid="client-row-${client.client_id}">
-                <td class="p-4 font-medium">${client.client_id}</td>
-                <td class="p-4">${client.first_name} ${client.last_name}</td>
-                <td class="p-4">${client.national_id}</td>
+            <tr class="hover:bg-muted/30" data-testid="client-row-${client.clientId}">
+                <td class="p-4 font-medium">${client.clientId}</td>
+                <td class="p-4">${client.firstName} ${client.lastName}</td>
+                <td class="p-4">${client.nationalId}</td>
                 <td class="p-4">${phoneNumbers.join(', ')}</td>
                 <td class="p-4">${new Date(client.created_at).toLocaleDateString('fa-IR')}</td>
                 <td class="p-4">${caseCount}</td>
                 <td class="p-4">
                     <div class="flex gap-2">
-                        <button onclick="viewClient('${client.client_id}')" class="text-primary hover:underline text-sm" data-testid="button-view-client-${client.client_id}">
+                        <button onclick="viewClient('${client.clientId}')" class="text-primary hover:underline text-sm" data-testid="button-view-client-${client.clientId}">
                             مشاهده
                         </button>
                         <button class="assign-case-btn text-accent hover:underline text-sm" 
-                                data-client-id="${client.client_id}" 
-                                data-client-name="${client.first_name} ${client.last_name}" 
-                                data-testid="button-assign-case-${client.client_id}">
+                                data-client-id="${client.clientId}" 
+                                data-client-name="${client.firstName} ${client.lastName}" 
+                                data-testid="button-assign-case-${client.clientId}">
                             تخصیص پرونده
                         </button>
                     </div>
@@ -1252,22 +1252,22 @@ function performLiveSearch() {
         filteredClients = filteredClients.filter(client => {
             switch (selectedCriteria) {
                 case 'client_id':
-                    return client.client_id.toString().toLowerCase().includes(searchTerm);
+                    return client.clientId.toString().toLowerCase().includes(searchTerm);
                 case 'first_name':
-                    return client.first_name.toLowerCase().includes(searchTerm);
+                    return client.firstName.toLowerCase().includes(searchTerm);
                 case 'last_name':
-                    return client.last_name.toLowerCase().includes(searchTerm);
+                    return client.lastName.toLowerCase().includes(searchTerm);
                 case 'national_id':
-                    return client.national_id.toLowerCase().includes(searchTerm);
+                    return client.nationalId.toLowerCase().includes(searchTerm);
                 case 'phone_numbers':
-                    const clientPhones = client.phone_numbers || [];
+                    const clientPhones = client.phoneNumbers || [];
                     return clientPhones.some(phone => phone.toLowerCase().includes(searchTerm));
                 case 'all':
                 default:
-                    const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
-                    const nationalId = client.national_id.toLowerCase();
-                    const clientId = client.client_id.toString().toLowerCase();
-                    const allPhones = client.phone_numbers || [];
+                    const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
+                    const nationalId = client.nationalId.toLowerCase();
+                    const clientId = client.clientId.toString().toLowerCase();
+                    const allPhones = client.phoneNumbers || [];
                     const phoneMatch = allPhones.some(phone => phone.toLowerCase().includes(searchTerm));
                     return fullName.includes(searchTerm) || nationalId.includes(searchTerm) || 
                            clientId.includes(searchTerm) || phoneMatch;
@@ -2013,24 +2013,24 @@ function displayClientsForFiles(clients) {
         const firstPhone = Array.isArray(phoneNumbers) ? phoneNumbers[0] : phoneNumbers;
         
         return `
-            <tr data-testid="files-client-row-${client.client_id}">
-                <td data-testid="files-client-id-${client.client_id}">${client.client_id}</td>
-                <td data-testid="files-client-name-${client.client_id}">${client.first_name} ${client.last_name}</td>
-                <td data-testid="files-client-national-${client.client_id}">${client.national_id}</td>
-                <td data-testid="files-client-phone-${client.client_id}">${firstPhone}</td>
-                <td data-testid="files-client-count-${client.client_id}">
-                    <span id="file-count-${client.client_id}">-</span>
+            <tr data-testid="files-client-row-${client.clientId}">
+                <td data-testid="files-client-id-${client.clientId}">${client.client_id}</td>
+                <td data-testid="files-client-name-${client.clientId}">${client.firstName} ${client.lastName}</td>
+                <td data-testid="files-client-national-${client.clientId}">${client.nationalId}</td>
+                <td data-testid="files-client-phone-${client.clientId}">${firstPhone}</td>
+                <td data-testid="files-client-count-${client.clientId}">
+                    <span id="file-count-${client.clientId}">-</span>
                 </td>
                 <td>
                     <div class="flex gap-2">
-                        <button onclick="viewClientFiles('${client.client_id}', '${client.first_name} ${client.last_name}')" 
+                        <button onclick="viewClientFiles('${client.clientId}', '${client.firstName} ${client.lastName}')" 
                                 class="btn-primary text-sm" 
-                                data-testid="button-view-files-${client.client_id}">
+                                data-testid="button-view-files-${client.clientId}">
                             مشاهده فایل‌ها
                         </button>
-                        <button onclick="openSendFileModal('${client.client_id}', '${client.first_name} ${client.last_name}')" 
+                        <button onclick="openSendFileModal('${client.clientId}', '${client.firstName} ${client.lastName}')" 
                                 class="btn-success text-sm" 
-                                data-testid="button-send-file-${client.client_id}">
+                                data-testid="button-send-file-${client.clientId}">
                             ارسال فایل به موکل
                         </button>
                     </div>
@@ -2041,7 +2041,7 @@ function displayClientsForFiles(clients) {
     
     // Load file counts for each client
     clients.forEach(client => {
-        loadClientFileCount(client.client_id);
+        loadClientFileCount(client.clientId);
     });
 }
 
@@ -2190,9 +2190,9 @@ function searchFilesClients() {
     }
     
     const filteredClients = allClientsForFiles.filter(client => {
-        const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
-        const clientId = client.client_id.toString();
-        const nationalId = client.national_id.toLowerCase();
+        const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
+        const clientId = client.clientId.toString();
+        const nationalId = client.nationalId.toLowerCase();
         
         return fullName.includes(searchTerm) || 
                clientId.includes(searchTerm) || 
@@ -2740,7 +2740,7 @@ async function displayClientsForMessaging(clients) {
     
     // Get unread message counts for all clients
     const clientsWithMessages = await Promise.all(clients.map(async (client) => {
-        const unreadCount = await getUnreadMessageCount(client.client_id);
+        const unreadCount = await getUnreadMessageCount(client.clientId);
         return { ...client, unreadCount };
     }));
     
@@ -2750,10 +2750,10 @@ async function displayClientsForMessaging(clients) {
             : client.phoneNumbers || [];
         
         return `
-            <tr class="hover:bg-muted/30" data-testid="messaging-client-row-${client.client_id}">
-                <td class="p-4 font-medium">${client.client_id}</td>
-                <td class="p-4">${client.first_name} ${client.last_name}</td>
-                <td class="p-4">${client.national_id}</td>
+            <tr class="hover:bg-muted/30" data-testid="messaging-client-row-${client.clientId}">
+                <td class="p-4 font-medium">${client.clientId}</td>
+                <td class="p-4">${client.firstName} ${client.lastName}</td>
+                <td class="p-4">${client.nationalId}</td>
                 <td class="p-4">${phoneNumbers.join(', ')}</td>
                 <td class="p-4">
                     ${client.unreadCount > 0 ? 
@@ -2762,9 +2762,9 @@ async function displayClientsForMessaging(clients) {
                     }
                 </td>
                 <td class="p-4">
-                    <button onclick="openClientMessages('${client.client_id}', '${client.first_name} ${client.last_name}')" 
+                    <button onclick="openClientMessages('${client.clientId}', '${client.firstName} ${client.lastName}')" 
                             class="btn-primary text-sm px-4 py-2" 
-                            data-testid="button-messages-${client.client_id}">
+                            data-testid="button-messages-${client.clientId}">
                         پیام ها
                     </button>
                 </td>
@@ -2962,9 +2962,9 @@ function searchMessagingClients() {
     }
     
     const filteredClients = allClientsForMessaging.filter(client => {
-        const fullName = `${client.first_name} ${client.last_name}`.toLowerCase();
-        const clientId = client.client_id.toString();
-        const nationalId = client.national_id || '';
+        const fullName = `${client.firstName} ${client.lastName}`.toLowerCase();
+        const clientId = client.clientId.toString();
+        const nationalId = client.nationalId || '';
         
         return fullName.includes(searchTerm) || 
                clientId.includes(searchTerm) || 
