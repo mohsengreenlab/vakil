@@ -638,12 +638,14 @@ app.get('/admin24/dashboard', requireAuth, async (req, res) => {
   try {
     const cases = await storage.getAllCases();
     const contacts = await storage.getAllContacts();
+    const clients = await storage.getAllClients();
     
     res.render('pages/admin', { 
       title: 'پنل مدیریت - دفتر وکالت پیشرو',
       page: 'admin',
       cases: cases,
       contacts: contacts,
+      clients: clients,
       adminUsername: req.session.adminUsername
     });
   } catch (error) {
