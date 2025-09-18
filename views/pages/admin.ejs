@@ -1151,7 +1151,7 @@ function renderClientsTable(clientsData) {
     tbody.innerHTML = pageData.map(client => {
         // Phone numbers are already normalized in loadClients()
         const phoneNumbers = client.phoneNumbers || [];
-        const caseCount = (cases || []).filter(c => c.client_id === client.clientId).length;
+        const caseCount = (cases || []).filter(c => c.clientId === client.clientId).length;
         
         return `
             <tr class="hover:bg-muted/30" data-testid="client-row-${client.clientId}">
@@ -1159,7 +1159,7 @@ function renderClientsTable(clientsData) {
                 <td class="p-4">${client.firstName} ${client.lastName}</td>
                 <td class="p-4">${client.nationalId}</td>
                 <td class="p-4">${phoneNumbers.join(', ')}</td>
-                <td class="p-4">${new Date(client.created_at).toLocaleDateString('fa-IR')}</td>
+                <td class="p-4">${client.createdAt ? new Date(client.createdAt).toLocaleDateString('fa-IR') : 'تاریخ نامشخص'}</td>
                 <td class="p-4">${caseCount}</td>
                 <td class="p-4">
                     <div class="flex gap-2">
