@@ -1651,46 +1651,9 @@ export class SingleStoreStorage implements IStorage {
       await connection.execute('ALTER TABLE messages_new RENAME TO messages');
       changes.push('Replaced old table with new table');
       
-      // Step 7: Add CHECK constraint to enforce the rule
-      try {
-        await connection.execute(`
-          ALTER TABLE messages ADD CONSTRAINT chk_is_read_rule 
-          CHECK (
-            (sender_role = 'admin' AND is_read IS NULL) OR 
-            (sender_role = 'client' AND is_read IS NOT NULL)
-          )
-        `);
-        changes.push('Added CHECK constraint to enforce is_read rules');
-      } catch (constraintError) {
-        if ((constraintError as any).code === 'ER_DUP_KEYNAME') {
-          changes.push('CHECK constraint already exists');
-        } else {
-          throw constraintError;
-        }
-      }
-      
-      // Step 4: Create trigger for automatic handling of future admin messages
-      try {
-        // Drop trigger if exists
-        await connection.execute('DROP TRIGGER IF EXISTS tr_admin_message_is_read');
-        
-        // Create new trigger
-        await connection.execute(`
-          CREATE TRIGGER tr_admin_message_is_read
-          BEFORE INSERT ON messages
-          FOR EACH ROW
-          BEGIN
-            IF NEW.sender_role = 'admin' THEN
-              SET NEW.is_read = NULL;
-            ELSEIF NEW.sender_role = 'client' AND NEW.is_read IS NULL THEN
-              SET NEW.is_read = 'false';
-            END IF;
-          END
-        `);
-        changes.push('Created trigger for automatic is_read handling');
-      } catch (triggerError) {
-        changes.push(`Trigger creation note: ${(triggerError as any).message}`);
-      }
+      // Step 7: Note about CHECK constraints and triggers
+      changes.push('CHECK constraints and triggers are not supported by SingleStore');
+      changes.push('Data integrity is enforced through application logic instead');
       
       connection.release();
       

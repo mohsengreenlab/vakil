@@ -855,7 +855,7 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
   });
 
   // Admin-only endpoint to migrate messages is_read field
-  app.post('/api/admin/migrate-messages-isread', async (req, res) => {
+  app.post('/api/admin/migrate-messages-isread', requireAuthAPI, async (req, res) => {
     try {
       // Only allow this for SingleStore storage
       if (typeof (storage as any).migrateMessagesIsReadField !== 'function') {
