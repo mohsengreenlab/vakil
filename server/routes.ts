@@ -744,6 +744,9 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
         return res.status(404).json({ success: false, message: 'موکل یافت نشد' });
       }
 
+      // Mark all client messages as read when admin views them
+      await storage.markAllClientMessagesAsRead(clientId);
+
       const messages = await storage.getClientMessages(clientId);
 
       res.json({

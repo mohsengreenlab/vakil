@@ -443,7 +443,7 @@ export class MemStorage implements IStorage {
     let markedCount = 0;
     
     // Find all unread client messages for this client and mark them as read
-    for (const [messageId, message] of this.messages) {
+    Array.from(this.messages.entries()).forEach(([messageId, message]) => {
       if (message.clientId === numericClientId && 
           message.senderRole === 'client' && 
           message.isRead === 'false') {
@@ -451,7 +451,7 @@ export class MemStorage implements IStorage {
         this.messages.set(messageId, message);
         markedCount++;
       }
-    }
+    });
     
     return markedCount;
   }
