@@ -439,15 +439,18 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
     }
   });
 
-  // Get client files list
+  // Get client files list (only files uploaded by the client, not admin)
   app.get('/api/client/files', requireClientAuth, async (req, res) => {
     try {
       const clientId = req.session.clientId!;
-      const files = await storage.getClientFiles(clientId);
+      const allFiles = await storage.getClientFiles(clientId);
+      
+      // Filter only client-uploaded files (exclude admin files)
+      const clientFiles = allFiles.filter(file => file.uploadedByType !== 'admin');
 
       res.json({
         success: true,
-        files: files.map(file => ({
+        files: clientFiles.map(file => ({
           id: file.id,
           fileName: file.fileName,
           originalFileName: file.originalFileName,
