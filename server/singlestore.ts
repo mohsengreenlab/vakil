@@ -1553,6 +1553,23 @@ export class SingleStoreStorage implements IStorage {
     }
   }
 
+  async markAllClientMessagesAsRead(clientId: string | number): Promise<number> {
+    try {
+      const clientIdStr = typeof clientId === 'string' ? clientId : clientId.toString();
+      const paddedClientId = clientIdStr.padStart(4, '0');
+      
+      // Only mark client messages as read (admin messages should remain NULL)
+      const [result] = await this.pool.execute(
+        'UPDATE messages SET is_read = ? WHERE client_id = ? AND sender_role = ? AND is_read = ?',
+        ['true', paddedClientId, 'client', 'false']
+      );
+      return (result as any).affectedRows || 0;
+    } catch (error) {
+      console.error('Error marking all client messages as read:', error);
+      throw error;
+    }
+  }
+
   async getUnreadMessageCount(clientId: string | number): Promise<number> {
     try {
       const clientIdStr = typeof clientId === 'string' ? clientId : clientId.toString();
