@@ -47,6 +47,7 @@ export interface IStorage {
   getClientMessages(clientId: string | number): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
   markMessageAsRead(messageId: string): Promise<boolean>;
+  markAllClientMessagesAsRead(clientId: string | number): Promise<number>;
   getUnreadMessageCount(clientId: string | number): Promise<number>;
   
   // QA methods
@@ -435,6 +436,24 @@ export class MemStorage implements IStorage {
       return true;
     }
     return false; // Don't mark admin messages as read
+  }
+
+  async markAllClientMessagesAsRead(clientId: string | number): Promise<number> {
+    const numericClientId = typeof clientId === 'string' ? parseInt(clientId) : clientId;
+    let markedCount = 0;
+    
+    // Find all unread client messages for this client and mark them as read
+    for (const [messageId, message] of this.messages) {
+      if (message.clientId === numericClientId && 
+          message.senderRole === 'client' && 
+          message.isRead === 'false') {
+        message.isRead = 'true';
+        this.messages.set(messageId, message);
+        markedCount++;
+      }
+    }
+    
+    return markedCount;
   }
 
   async getUnreadMessageCount(clientId: string | number): Promise<number> {
