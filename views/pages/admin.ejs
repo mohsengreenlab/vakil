@@ -2088,45 +2088,131 @@ async function viewClientFiles(clientId, clientName) {
 function displayClientFiles(files) {
     const contentDiv = document.getElementById('client-files-content');
     
+    // Separate files by upload type
+    const adminFiles = files.filter(file => file.uploadedByType === 'admin');
+    const clientFiles = files.filter(file => file.uploadedByType !== 'admin');
+    
+    // If no files at all
     if (files.length === 0) {
         contentDiv.innerHTML = `
             <div class="text-center py-8 text-muted-foreground">
-                این موکل هیچ فایلی آپلود نکرده است
+                <div style="font-size: 48px; margin-bottom: 16px;">📁</div>
+                <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">هیچ فایلی وجود ندارد</div>
+                <div style="font-size: 14px;">هنوز هیچ فایلی توسط ادمین یا موکل آپلود نشده است</div>
             </div>
         `;
         return;
     }
     
     contentDiv.innerHTML = `
-        <div class="overflow-x-auto">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>نام فایل</th>
-                        <th>توضیحات</th>
-                        <th>حجم فایل</th>
-                        <th>تاریخ آپلود</th>
-                        <th>عملیات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${files.map(file => `
-                        <tr data-testid="file-row-${file.id}">
-                            <td data-testid="file-name-${file.id}" class="font-medium">${file.originalFileName}</td>
-                            <td data-testid="file-description-${file.id}" class="text-sm">${file.description || '-'}</td>
-                            <td data-testid="file-size-${file.id}" class="text-sm">${formatFileSize(file.fileSize)}</td>
-                            <td data-testid="file-date-${file.id}" class="text-sm">${formatDate(file.uploadDate)}</td>
-                            <td>
-                                <button onclick="downloadClientFile('${file.id}', '${file.originalFileName}')" 
-                                        class="btn-primary text-sm" 
-                                        data-testid="button-download-${file.id}">
-                                    دانلود
-                                </button>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+        <!-- Admin-Sent Files Section -->
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-4 pb-2 border-b-2 border-blue-200">
+                <div class="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                    <span style="font-size: 16px;">📤</span>
+                </div>
+                <h3 class="text-xl font-bold text-blue-600" data-testid="admin-files-title">فایل‌های ارسالی ادمین</h3>
+                <span class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full" data-testid="admin-files-count">${adminFiles.length} فایل</span>
+            </div>
+            
+            ${adminFiles.length === 0 ? `
+                <div class="text-center py-6 bg-blue-50/50 rounded-lg border-2 border-dashed border-blue-200" data-testid="admin-files-empty">
+                    <div style="font-size: 32px; margin-bottom: 12px;">📤</div>
+                    <div class="text-blue-600 font-medium mb-2">هیچ فایلی توسط ادمین ارسال نشده</div>
+                    <div class="text-sm text-blue-500">فایل‌هایی که ادمین برای این موکل ارسال می‌کند اینجا نمایش داده خواهند شد</div>
+                </div>
+            ` : `
+                <div class="overflow-x-auto">
+                    <table class="table bg-blue-50/30 border border-blue-200 rounded-lg">
+                        <thead class="bg-blue-100">
+                            <tr>
+                                <th class="text-blue-800">نام فایل</th>
+                                <th class="text-blue-800">توضیحات</th>
+                                <th class="text-blue-800">حجم فایل</th>
+                                <th class="text-blue-800">تاریخ ارسال</th>
+                                <th class="text-blue-800">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${adminFiles.map(file => `
+                                <tr data-testid="admin-file-row-${file.id}" class="hover:bg-blue-50">
+                                    <td data-testid="admin-file-name-${file.id}" class="font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <span style="font-size: 14px;">📩</span>
+                                            ${file.originalFileName}
+                                        </div>
+                                    </td>
+                                    <td data-testid="admin-file-description-${file.id}" class="text-sm">${file.description || '-'}</td>
+                                    <td data-testid="admin-file-size-${file.id}" class="text-sm">${formatFileSize(file.fileSize)}</td>
+                                    <td data-testid="admin-file-date-${file.id}" class="text-sm">${formatDate(file.uploadDate)}</td>
+                                    <td>
+                                        <button onclick="downloadClientFile('${file.id}', '${file.originalFileName}')" 
+                                                class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors" 
+                                                data-testid="button-download-admin-${file.id}">
+                                            📥 دانلود
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `}
+        </div>
+        
+        <!-- Client-Sent Files Section -->
+        <div>
+            <div class="flex items-center gap-3 mb-4 pb-2 border-b-2 border-green-200">
+                <div class="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
+                    <span style="font-size: 16px;">📥</span>
+                </div>
+                <h3 class="text-xl font-bold text-green-600" data-testid="client-files-title">فایل‌های دریافتی از موکل</h3>
+                <span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full" data-testid="client-files-count">${clientFiles.length} فایل</span>
+            </div>
+            
+            ${clientFiles.length === 0 ? `
+                <div class="text-center py-6 bg-green-50/50 rounded-lg border-2 border-dashed border-green-200" data-testid="client-files-empty">
+                    <div style="font-size: 32px; margin-bottom: 12px;">📥</div>
+                    <div class="text-green-600 font-medium mb-2">هیچ فایلی توسط موکل ارسال نشده</div>
+                    <div class="text-sm text-green-500">فایل‌هایی که موکل آپلود می‌کند اینجا نمایش داده خواهند شد</div>
+                </div>
+            ` : `
+                <div class="overflow-x-auto">
+                    <table class="table bg-green-50/30 border border-green-200 rounded-lg">
+                        <thead class="bg-green-100">
+                            <tr>
+                                <th class="text-green-800">نام فایل</th>
+                                <th class="text-green-800">توضیحات</th>
+                                <th class="text-green-800">حجم فایل</th>
+                                <th class="text-green-800">تاریخ آپلود</th>
+                                <th class="text-green-800">عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${clientFiles.map(file => `
+                                <tr data-testid="client-file-row-${file.id}" class="hover:bg-green-50">
+                                    <td data-testid="client-file-name-${file.id}" class="font-medium">
+                                        <div class="flex items-center gap-2">
+                                            <span style="font-size: 14px;">📄</span>
+                                            ${file.originalFileName}
+                                        </div>
+                                    </td>
+                                    <td data-testid="client-file-description-${file.id}" class="text-sm">${file.description || '-'}</td>
+                                    <td data-testid="client-file-size-${file.id}" class="text-sm">${formatFileSize(file.fileSize)}</td>
+                                    <td data-testid="client-file-date-${file.id}" class="text-sm">${formatDate(file.uploadDate)}</td>
+                                    <td>
+                                        <button onclick="downloadClientFile('${file.id}', '${file.originalFileName}')" 
+                                                class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors" 
+                                                data-testid="button-download-client-${file.id}">
+                                            📁 دانلود
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `}
         </div>
     `;
 }

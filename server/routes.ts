@@ -888,5 +888,46 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
     }
   });
 
+  // Admin gets all files for a specific client (for file management dashboard)
+  app.get('/api/admin/clients/:clientId/files', requireAuthAPI, async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      
+      if (!clientId) {
+        return res.status(400).json({ success: false, message: 'شناسه موکل الزامی است' });
+      }
+
+      // Verify client exists
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ success: false, message: 'موکل یافت نشد' });
+      }
+
+      // Get all files for this client (both admin and client uploaded)
+      const files = await storage.getClientFiles(clientId);
+
+      res.json({
+        success: true,
+        files: files.map(file => ({
+          id: file.id,
+          fileName: file.fileName,
+          originalFileName: file.originalFileName,
+          uploadDate: file.uploadDate,
+          description: file.description,
+          fileSize: file.fileSize,
+          uploadedByType: file.uploadedByType || 'client', // Default to 'client' if not set
+        })),
+        clientInfo: {
+          clientId: client.clientId,
+          firstName: client.firstName,
+          lastName: client.lastName,
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching client files (admin):', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت فایل‌های موکل' });
+    }
+  });
+
   // Routes registered successfully
 }
