@@ -75,7 +75,7 @@ export const messages = mysqlTable("messages", {
   clientId: int("client_id").notNull(),
   senderRole: varchar("sender_role", { length: 10 }).notNull(),
   messageContent: text("message_content").notNull(),
-  isRead: varchar("is_read", { length: 5 }).notNull().default("false"),
+  isRead: varchar("is_read", { length: 5 }), // NULL for admin messages, 'true'/'false' for client messages
   createdAt: timestamp("created_at").defaultNow(),
 });
 

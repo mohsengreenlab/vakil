@@ -854,5 +854,33 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
     }
   });
 
+  // Admin-only endpoint to migrate messages is_read field
+  app.post('/api/admin/migrate-messages-isread', async (req, res) => {
+    try {
+      // Only allow this for SingleStore storage
+      if (typeof (storage as any).migrateMessagesIsReadField !== 'function') {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Migration not available for this storage type' 
+        });
+      }
+
+      const result = await (storage as any).migrateMessagesIsReadField();
+      
+      res.json({
+        success: result.success,
+        message: result.success ? 'Migration completed successfully' : 'Migration failed',
+        changes: result.changes
+      });
+    } catch (error) {
+      console.error('Error during messages migration:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'خطا در مهاجرت داده‌ها',
+        error: (error as Error).message
+      });
+    }
+  });
+
   // Routes registered successfully
 }

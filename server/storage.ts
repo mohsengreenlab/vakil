@@ -409,12 +409,14 @@ export class MemStorage implements IStorage {
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
     const id = randomUUID();
+    // Set is_read based on sender role: NULL for admin, 'false' for client
+    const isReadValue = insertMessage.senderRole === 'admin' ? null : 'false';
     const message: Message = {
       id,
       clientId: insertMessage.clientId,
       senderRole: insertMessage.senderRole,
       messageContent: insertMessage.messageContent,
-      isRead: 'false',
+      isRead: isReadValue,
       createdAt: new Date(),
     };
     this.messages.set(id, message);
@@ -426,15 +428,20 @@ export class MemStorage implements IStorage {
     if (!message) {
       return false;
     }
-    message.isRead = 'true';
-    this.messages.set(messageId, message);
-    return true;
+    // Only mark client messages as read (admin messages should remain NULL)
+    if (message.senderRole === 'client') {
+      message.isRead = 'true';
+      this.messages.set(messageId, message);
+      return true;
+    }
+    return false; // Don't mark admin messages as read
   }
 
   async getUnreadMessageCount(clientId: string | number): Promise<number> {
     const numericClientId = typeof clientId === 'string' ? parseInt(clientId) : clientId;
+    // Only count unread client messages (admin messages have NULL is_read and shouldn't be counted)
     return Array.from(this.messages.values())
-      .filter(message => message.clientId === numericClientId && message.isRead === 'false')
+      .filter(message => message.clientId === numericClientId && message.senderRole === 'client' && message.isRead === 'false')
       .length;
   }
 

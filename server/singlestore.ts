@@ -1510,14 +1510,18 @@ export class SingleStoreStorage implements IStorage {
       const clientIdStr = insertMessage.clientId.toString().padStart(4, '0');
       const createdAt = new Date();
       
+      // Set is_read based on sender role: NULL for admin, 'false' for client
+      const isReadValue = insertMessage.senderRole === 'admin' ? null : 'false';
+      
       await this.pool.execute(`
         INSERT INTO messages (id, client_id, sender_role, message_content, is_read, created_at)
-        VALUES (?, ?, ?, ?, 'false', ?)
+        VALUES (?, ?, ?, ?, ?, ?)
       `, [
         id,
         clientIdStr,
         insertMessage.senderRole,
         insertMessage.messageContent,
+        isReadValue,
         createdAt
       ]);
 
@@ -1526,7 +1530,7 @@ export class SingleStoreStorage implements IStorage {
         clientId: insertMessage.clientId,
         senderRole: insertMessage.senderRole,
         messageContent: insertMessage.messageContent,
-        isRead: 'false',
+        isRead: isReadValue,
         createdAt,
       };
     } catch (error) {
@@ -1537,9 +1541,10 @@ export class SingleStoreStorage implements IStorage {
 
   async markMessageAsRead(messageId: string): Promise<boolean> {
     try {
+      // Only mark client messages as read (admin messages should remain NULL)
       const [result] = await this.pool.execute(
-        'UPDATE messages SET is_read = ? WHERE id = ?',
-        ['true', messageId]
+        'UPDATE messages SET is_read = ? WHERE id = ? AND sender_role = ?',
+        ['true', messageId, 'client']
       );
       return (result as any).affectedRows > 0;
     } catch (error) {
@@ -1553,15 +1558,148 @@ export class SingleStoreStorage implements IStorage {
       const clientIdStr = typeof clientId === 'string' ? clientId : clientId.toString();
       const paddedClientId = clientIdStr.padStart(4, '0');
       
+      // Only count unread client messages (admin messages have NULL is_read and shouldn't be counted)
       const [rows] = await this.pool.execute(
-        'SELECT COUNT(*) as count FROM messages WHERE client_id = ? AND is_read = ?',
-        [paddedClientId, 'false']
+        'SELECT COUNT(*) as count FROM messages WHERE client_id = ? AND sender_role = ? AND is_read = ?',
+        [paddedClientId, 'client', 'false']
       );
       
       return (rows as any)[0].count || 0;
     } catch (error) {
       console.error('Error getting unread message count:', error);
       throw error;
+    }
+  }
+
+  async migrateMessagesIsReadField(): Promise<{success: boolean, changes: string[]}> {
+    const changes: string[] = [];
+    
+    try {
+      const connection = await this.pool.getConnection();
+      
+      console.log('🔄 Starting messages is_read field migration...');
+      
+      // Step 1: Add new nullable column
+      try {
+        await connection.execute(
+          'ALTER TABLE messages ADD COLUMN is_read_new VARCHAR(5) NULL DEFAULT NULL'
+        );
+        changes.push('Added new nullable is_read_new column');
+      } catch (addColError) {
+        // Column might already exist from previous migration attempt
+        if ((addColError as any).code !== 'ER_DUP_FIELDNAME') {
+          throw addColError;
+        }
+        changes.push('is_read_new column already exists');
+      }
+      
+      // Step 2: Copy data with logic - NULL for admin, keep value for client (if old column exists)
+      try {
+        await connection.execute(`
+          UPDATE messages SET is_read_new = CASE 
+            WHEN sender_role = 'admin' THEN NULL 
+            ELSE is_read 
+          END
+        `);
+        changes.push('Copied data to new column with proper NULL handling');
+        
+        // Step 3: Drop old column
+        await connection.execute('ALTER TABLE messages DROP COLUMN is_read');
+        changes.push('Dropped old is_read column');
+      } catch (copyError) {
+        if ((copyError as any).code === 'ER_BAD_FIELD_ERROR') {
+          // Old column doesn't exist, probably already migrated partially
+          changes.push('Old is_read column already dropped, skipping data copy');
+        } else {
+          throw copyError;
+        }
+      }
+      
+      // Step 4: Create new table with proper structure and copy data
+      // Drop existing messages_new table if it exists from previous attempts
+      try {
+        await connection.execute('DROP TABLE IF EXISTS messages_new');
+        changes.push('Dropped existing messages_new table from previous attempts');
+      } catch (error) {
+        // Ignore errors if table doesn't exist
+      }
+      
+      await connection.execute(`
+        CREATE TABLE messages_new (
+          id VARCHAR(36) PRIMARY KEY,
+          client_id VARCHAR(4) NOT NULL,
+          sender_role VARCHAR(10) NOT NULL,
+          message_content TEXT NOT NULL,
+          is_read VARCHAR(5) NULL DEFAULT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          SHARD KEY (id),
+          INDEX (client_id),
+          INDEX (created_at)
+        )
+      `);
+      changes.push('Created new messages table with proper structure');
+      
+      // Step 5: Copy data from old table to new table
+      await connection.execute(`
+        INSERT INTO messages_new (id, client_id, sender_role, message_content, is_read, created_at)
+        SELECT id, client_id, sender_role, message_content, is_read_new, created_at FROM messages
+      `);
+      changes.push('Copied data to new table');
+      
+      // Step 6: Drop old table and rename new table
+      await connection.execute('DROP TABLE messages');
+      await connection.execute('ALTER TABLE messages_new RENAME TO messages');
+      changes.push('Replaced old table with new table');
+      
+      // Step 7: Add CHECK constraint to enforce the rule
+      try {
+        await connection.execute(`
+          ALTER TABLE messages ADD CONSTRAINT chk_is_read_rule 
+          CHECK (
+            (sender_role = 'admin' AND is_read IS NULL) OR 
+            (sender_role = 'client' AND is_read IS NOT NULL)
+          )
+        `);
+        changes.push('Added CHECK constraint to enforce is_read rules');
+      } catch (constraintError) {
+        if ((constraintError as any).code === 'ER_DUP_KEYNAME') {
+          changes.push('CHECK constraint already exists');
+        } else {
+          throw constraintError;
+        }
+      }
+      
+      // Step 4: Create trigger for automatic handling of future admin messages
+      try {
+        // Drop trigger if exists
+        await connection.execute('DROP TRIGGER IF EXISTS tr_admin_message_is_read');
+        
+        // Create new trigger
+        await connection.execute(`
+          CREATE TRIGGER tr_admin_message_is_read
+          BEFORE INSERT ON messages
+          FOR EACH ROW
+          BEGIN
+            IF NEW.sender_role = 'admin' THEN
+              SET NEW.is_read = NULL;
+            ELSEIF NEW.sender_role = 'client' AND NEW.is_read IS NULL THEN
+              SET NEW.is_read = 'false';
+            END IF;
+          END
+        `);
+        changes.push('Created trigger for automatic is_read handling');
+      } catch (triggerError) {
+        changes.push(`Trigger creation note: ${(triggerError as any).message}`);
+      }
+      
+      connection.release();
+      
+      console.log('✅ Messages is_read field migration completed successfully');
+      return { success: true, changes };
+      
+    } catch (error) {
+      console.error('❌ Error during messages migration:', error);
+      return { success: false, changes: [...changes, `Error: ${(error as any).message}`] };
     }
   }
 
