@@ -1,0 +1,43 @@
+Previously, Replit agent reported these implementations: 
+✅ Status Column Implementation
+Added a new "وضعیت" (Status) column to the admin dashboard's file management table
+Shows "جدید" for clients who have uploaded files that haven't been viewed by admin yet
+Shows "-" for clients with no unviewed files
+✅ Automatic Status Updates
+When admin clicks "مشاهده فایل‌ها" to view a client's files, all files for that client are automatically marked as viewed
+The status column immediately updates from "جدید" to "-" without needing to refresh the page
+This provides real-time feedback to admins about which clients need attention
+✅ Backend API Integration
+Created secure API endpoints to check file viewing status and mark files as viewed
+Integrated with your existing MySQL/SingleStore database using the admin_viewed column
+All endpoints are properly protected with admin authentication
+🎯 How It Works
+When clients upload files, they start with admin_viewed = FALSE
+Admin sees "جدید" status in the client list for those with unviewed files
+When admin clicks "مشاهده فایل‌ها", all client files are marked admin_viewed = TRUE
+Status instantly changes to "-" showing no unviewed files remain
+The feature is now live and working! Admins can easily identify which clients have uploaded new files that need review, making file management much more efficient.
+---------------------------
+Now, here is my message to you:
+Problem:
+
+The "وضعیت" column is currently showing only "-" for all clients, even when unviewed files exist.
+
+The button "مشاهده فایل‌ها" is working correctly — do not modify that functionality.
+
+Task:
+
+Investigate why the "وضعیت" column always shows "-".
+
+Specifically check for:
+
+Whether any logic in the frontend is overwriting the column’s value after it is set.
+
+Whether there are any race conditions between API calls (e.g., status check vs. status update).
+
+Whether the condition that checks admin_viewed = 0 AND uploaded_by_type = "client" is implemented correctly in the query or client-side logic.
+
+
+You are not allowed to use postgreSQL. Only use mysql and connect to the database using secrets I gave you
+
+
