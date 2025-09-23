@@ -1983,7 +1983,10 @@ let clientFileViewStatus = [];
 
 function getClientFileStatus(clientId) {
     const statusInfo = clientFileViewStatus.find(status => status.clientId === clientId);
-    return statusInfo && statusInfo.hasUnviewedFiles ? 'جدید' : '-';
+    console.log(`🔍 Getting status for client ${clientId}:`, statusInfo);
+    const result = statusInfo && statusInfo.hasUnviewedFiles ? 'جدید' : '-';
+    console.log(`📊 Status result for client ${clientId}: ${result}`);
+    return result;
 }
 
 async function loadClientsForFiles() {
@@ -2000,6 +2003,7 @@ async function loadClientsForFiles() {
         if (clientsResult.success && statusResult.success) {
             allClientsForFiles = clientsResult.clients;
             clientFileViewStatus = statusResult.fileViewStatus;
+            console.log('🔍 Frontend received file view status:', clientFileViewStatus);
             displayClientsForFiles(allClientsForFiles);
         } else {
             showToast('خطا در بارگذاری موکلان', 'error');

@@ -943,6 +943,21 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
     }
   });
 
+  // DEBUG: Temporary endpoint to test file status without auth
+  app.get('/api/debug/file-status', async (req, res) => {
+    try {
+      console.log('🔬 DEBUG: Testing file status API...');
+      const fileViewStatus = await storage.getClientsFileViewStatus();
+      res.json({
+        success: true,
+        fileViewStatus
+      });
+    } catch (error) {
+      console.error('DEBUG Error fetching clients file view status:', error);
+      res.status(500).json({ success: false, message: 'Debug error' });
+    }
+  });
+
   // Mark all files for a client as viewed (admin)
   app.post('/api/admin/clients/:clientId/mark-files-viewed', requireAuthAPI, async (req, res) => {
     try {
