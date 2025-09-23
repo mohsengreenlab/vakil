@@ -1360,6 +1360,7 @@ export class SingleStoreStorage implements IStorage {
         filePath: file.file_path,
         uploadDate: file.upload_date,
         uploadedByType: file.uploaded_by_type || 'client',
+        adminViewed: file.admin_viewed || false,
         createdAt: file.created_at,
       };
     } catch (error) {
@@ -1392,6 +1393,7 @@ export class SingleStoreStorage implements IStorage {
         filePath: file.file_path,
         uploadDate: file.upload_date,
         uploadedByType: file.uploaded_by_type || 'client',
+        adminViewed: file.admin_viewed || false,
         createdAt: file.created_at,
       }));
     } catch (error) {
@@ -1446,6 +1448,7 @@ export class SingleStoreStorage implements IStorage {
         filePath: insertClientFile.filePath,
         uploadDate,
         uploadedByType: uploadedByType,
+        adminViewed: false, // New files default to not viewed by admin
         createdAt: new Date(),
       };
     } catch (error) {
