@@ -1472,23 +1472,6 @@ export class SingleStoreStorage implements IStorage {
 
   async getClientsFileViewStatus(): Promise<{ clientId: string; hasUnviewedFiles: boolean }[]> {
     try {
-      // First, let's check all files with their admin_viewed and uploaded_by_type status
-      const [allFiles] = await this.pool.execute(`
-        SELECT client_id, file_name, admin_viewed, uploaded_by_type, upload_date 
-        FROM client_files 
-        ORDER BY client_id, upload_date DESC
-      `);
-      console.log('🔍 All client files:', allFiles);
-      
-      // Now check files that should count as unviewed
-      const [unviewedFiles] = await this.pool.execute(`
-        SELECT client_id, file_name, admin_viewed, uploaded_by_type, upload_date 
-        FROM client_files 
-        WHERE admin_viewed = 0 AND uploaded_by_type = 'client'
-        ORDER BY client_id, upload_date DESC
-      `);
-      console.log('🔍 Unviewed client files:', unviewedFiles);
-      
       // Get all clients and check their file view status
       const [rows] = await this.pool.execute(`
         SELECT 
@@ -1502,15 +1485,10 @@ export class SingleStoreStorage implements IStorage {
         ORDER BY c.client_id
       `);
       
-      console.log('🔍 File view status query results:', rows);
-      
-      const result = (rows as any[]).map(row => ({
+      return (rows as any[]).map(row => ({
         clientId: row.client_id,
         hasUnviewedFiles: Boolean(row.has_unviewed_files)
       }));
-      
-      console.log('📊 Processed file view status:', result);
-      return result;
     } catch (error) {
       console.error('Error getting clients file view status:', error);
       throw error;

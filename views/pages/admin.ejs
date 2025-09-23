@@ -1982,28 +1982,36 @@ let allClientsForFiles = [];
 let clientFileViewStatus = [];
 
 function getClientFileStatus(clientId) {
-    const statusInfo = clientFileViewStatus.find(status => status.clientId === clientId);
-    console.log(`🔍 Getting status for client ${clientId}:`, statusInfo);
-    const result = statusInfo && statusInfo.hasUnviewedFiles ? 'جدید' : '-';
-    console.log(`📊 Status result for client ${clientId}: ${result}`);
-    return result;
+    // Normalize clientId to number for consistent comparison
+    const normalizedClientId = Number(clientId);
+    const statusInfo = clientFileViewStatus.find(status => status.clientId === normalizedClientId);
+    return statusInfo && statusInfo.hasUnviewedFiles ? 'جدید' : '-';
 }
 
 async function loadClientsForFiles() {
     try {
-        // DEBUG: Test with debug endpoint for debugging
+        // Load clients and file view status in parallel
         const [clientsResponse, statusResponse] = await Promise.all([
-            fetch('/api/debug/clients'),  // Use debug endpoint temporarily 
-            fetch('/api/debug/file-status')  // Use debug endpoint temporarily
+            fetch('/api/admin/clients'),
+            fetch('/api/admin/clients/file-status')
         ]);
         
         const clientsResult = await clientsResponse.json();
         const statusResult = await statusResponse.json();
         
         if (clientsResult.success && statusResult.success) {
-            allClientsForFiles = clientsResult.clients;
-            clientFileViewStatus = statusResult.fileViewStatus;
-            console.log('🔍 Frontend received file view status:', clientFileViewStatus);
+            // Normalize client data to consistent camelCase with numeric IDs
+            allClientsForFiles = clientsResult.clients.map(client => ({
+                ...client,
+                clientId: Number(client.clientId ?? client.client_id)
+            }));
+            
+            // Normalize status data to ensure numeric IDs for consistent comparison
+            clientFileViewStatus = statusResult.fileViewStatus.map(status => ({
+                ...status,
+                clientId: Number(status.clientId)
+            }));
+            
             displayClientsForFiles(allClientsForFiles);
         } else {
             showToast('خطا در بارگذاری موکلان', 'error');
@@ -3251,13 +3259,4 @@ window.closeClientMessages = closeClientMessages;
 window.refreshMessages = refreshMessages;
 window.searchMessagingClients = searchMessagingClients;
 
-// DEBUG: Auto-test the file status loading when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        console.log('🔬 DEBUG: Auto-testing file status loading...');
-        if (typeof loadClientsForFiles === 'function') {
-            loadClientsForFiles();
-        }
-    }, 3000);
-});
 </script>
