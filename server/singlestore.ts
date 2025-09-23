@@ -1470,6 +1470,50 @@ export class SingleStoreStorage implements IStorage {
     }
   }
 
+  async getClientsFileViewStatus(): Promise<{ clientId: string; hasUnviewedFiles: boolean }[]> {
+    try {
+      // Get all clients and check their file view status
+      const [rows] = await this.pool.execute(`
+        SELECT 
+          c.client_id,
+          COUNT(cf.id) > 0 as has_unviewed_files
+        FROM clients c
+        LEFT JOIN client_files cf ON c.client_id = cf.client_id 
+          AND cf.admin_viewed = 0 
+          AND cf.uploaded_by_type = 'client'
+        GROUP BY c.client_id
+        ORDER BY c.client_id
+      `);
+      
+      return (rows as any[]).map(row => ({
+        clientId: row.client_id,
+        hasUnviewedFiles: Boolean(row.has_unviewed_files)
+      }));
+    } catch (error) {
+      console.error('Error getting clients file view status:', error);
+      throw error;
+    }
+  }
+
+  async markAllClientFilesAsViewed(clientId: string | number): Promise<boolean> {
+    try {
+      const clientIdStr = typeof clientId === 'number' ? clientId.toString() : clientId;
+      const paddedClientId = clientIdStr.padStart(4, '0');
+      
+      const [result] = await this.pool.execute(
+        'UPDATE client_files SET admin_viewed = 1 WHERE client_id = ?',
+        [paddedClientId]
+      );
+      
+      const affectedRows = (result as any).affectedRows;
+      console.log(`📝 Marked ${affectedRows} files as viewed for client ${paddedClientId}`);
+      return affectedRows >= 0; // Return true even if no rows were affected (no files)
+    } catch (error) {
+      console.error('Error marking client files as viewed:', error);
+      throw error;
+    }
+  }
+
   // Message methods
   async getMessage(messageId: string): Promise<Message | undefined> {
     try {

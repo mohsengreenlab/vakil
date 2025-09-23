@@ -929,5 +929,51 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
     }
   });
 
+  // Get file view status for all clients (admin)
+  app.get('/api/admin/clients/file-status', requireAuthAPI, async (req, res) => {
+    try {
+      const fileViewStatus = await storage.getClientsFileViewStatus();
+      res.json({
+        success: true,
+        fileViewStatus
+      });
+    } catch (error) {
+      console.error('Error fetching clients file view status:', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت وضعیت فایل‌های موکلان' });
+    }
+  });
+
+  // Mark all files for a client as viewed (admin)
+  app.post('/api/admin/clients/:clientId/mark-files-viewed', requireAuthAPI, async (req, res) => {
+    try {
+      const { clientId } = req.params;
+      
+      if (!clientId) {
+        return res.status(400).json({ success: false, message: 'شناسه موکل الزامی است' });
+      }
+
+      // Verify client exists
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ success: false, message: 'موکل یافت نشد' });
+      }
+
+      // Mark all files as viewed
+      const success = await storage.markAllClientFilesAsViewed(clientId);
+      
+      if (success) {
+        res.json({
+          success: true,
+          message: 'تمامی فایل‌های موکل به عنوان مشاهده شده علامت‌گذاری شدند'
+        });
+      } else {
+        res.status(500).json({ success: false, message: 'خطا در علامت‌گذاری فایل‌ها' });
+      }
+    } catch (error) {
+      console.error('Error marking client files as viewed:', error);
+      res.status(500).json({ success: false, message: 'خطا در علامت‌گذاری فایل‌ها به عنوان مشاهده شده' });
+    }
+  });
+
   // Routes registered successfully
 }

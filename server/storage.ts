@@ -41,6 +41,8 @@ export interface IStorage {
   getClientFiles(clientId: string | number): Promise<ClientFile[]>;
   createClientFile(clientFile: InsertClientFile): Promise<ClientFile>;
   deleteClientFile(fileId: string): Promise<boolean>;
+  getClientsFileViewStatus(): Promise<{ clientId: string; hasUnviewedFiles: boolean }[]>;
+  markAllClientFilesAsViewed(clientId: string | number): Promise<boolean>;
   
   // Message methods
   getMessage(messageId: string): Promise<Message | undefined>;
@@ -394,6 +396,16 @@ export class MemStorage implements IStorage {
 
   async deleteClientFile(fileId: string): Promise<boolean> {
     return this.clientFiles.delete(fileId);
+  }
+
+  async getClientsFileViewStatus(): Promise<{ clientId: string; hasUnviewedFiles: boolean }[]> {
+    // Stub implementation for MemStorage
+    return [];
+  }
+
+  async markAllClientFilesAsViewed(clientId: string | number): Promise<boolean> {
+    // Stub implementation for MemStorage
+    return true;
   }
 
   // Message methods
