@@ -824,9 +824,15 @@ export class SingleStoreStorage implements IStorage {
 
   async getAllCases(): Promise<Case[]> {
     try {
-      const [rows] = await this.pool.execute(
-        'SELECT * FROM cases ORDER BY created_at DESC'
-      );
+      const [rows] = await this.pool.execute(`
+        SELECT 
+          c.*,
+          cl.first_name,
+          cl.last_name
+        FROM cases c
+        LEFT JOIN clients cl ON c.client_id = cl.client_id
+        ORDER BY c.created_at DESC
+      `);
       return rows as Case[];
     } catch (error) {
       console.error('Error getting all cases:', error);

@@ -575,11 +575,15 @@ function performCasesLiveSearch() {
                 default:
                     const caseId = String(caseItem.case_id || '').toLowerCase();
                     const clientId = String(caseItem.client_id || '').toLowerCase();
+                    const firstName = String(caseItem.first_name || '').toLowerCase();
+                    const lastName = String(caseItem.last_name || '').toLowerCase();
                     const status = (getStatusText(caseItem.last_case_status) || caseItem.last_case_status || '').toLowerCase();
                     const date = new Date(caseItem.case_creation_date).toLocaleDateString('fa-IR');
                     return (
                         caseId.includes(searchTerm) ||
                         clientId.includes(searchTerm) ||
+                        firstName.includes(searchTerm) ||
+                        lastName.includes(searchTerm) ||
                         status.includes(searchTerm) ||
                         date.includes(searchTerm)
                     );
@@ -603,7 +607,7 @@ function renderCasesTable(casesData = null) {
     if (!dataToRender || dataToRender.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="4" class="text-center py-8 text-muted-foreground">
+                <td colspan="6" class="text-center py-8 text-muted-foreground">
                     ${(allCases && allCases.length === 0) ? 'هیچ پرونده‌ای یافت نشد' : 'هیچ نتیجه‌ای برای جستجوی شما یافت نشد'}
                 </td>
             </tr>
@@ -611,23 +615,58 @@ function renderCasesTable(casesData = null) {
         return;
     }
     
-    tableBody.innerHTML = dataToRender.map(caseItem => `
-        <tr data-testid="case-row-${caseItem.case_id}">
-            <td class="font-medium">${caseItem.case_id}</td>
-            <td>${caseItem.client_id}</td>
-            <td>
-                <span class="status-display px-2 py-1 rounded bg-muted text-sm inline-block min-w-[180px]" 
-                      data-testid="text-case-status-${caseItem.case_id}">
-                    ${getStatusDisplayText(caseItem.last_case_status)}
-                </span>
-            </td>
-            <td>
-                <button onclick="viewCaseDetails('${caseItem.case_id}')" class="text-primary hover:underline text-sm" data-testid="button-view-case-${caseItem.case_id}">
-                    نمایش جزئیات
-                </button>
-            </td>
-        </tr>
-    `).join('');
+    // Clear the table body first
+    tableBody.innerHTML = '';
+    
+    // Create table rows using DOM API to prevent XSS
+    dataToRender.forEach(caseItem => {
+        const row = document.createElement('tr');
+        row.setAttribute('data-testid', `case-row-${caseItem.case_id}`);
+        
+        // Case ID cell
+        const caseIdCell = document.createElement('td');
+        caseIdCell.className = 'font-medium';
+        caseIdCell.textContent = caseItem.case_id;
+        row.appendChild(caseIdCell);
+        
+        // First name cell (safe text content)
+        const firstNameCell = document.createElement('td');
+        firstNameCell.setAttribute('data-testid', `text-client-firstname-${caseItem.case_id}`);
+        firstNameCell.textContent = caseItem.first_name || '-';
+        row.appendChild(firstNameCell);
+        
+        // Last name cell (safe text content)
+        const lastNameCell = document.createElement('td');
+        lastNameCell.setAttribute('data-testid', `text-client-lastname-${caseItem.case_id}`);
+        lastNameCell.textContent = caseItem.last_name || '-';
+        row.appendChild(lastNameCell);
+        
+        // Client ID cell
+        const clientIdCell = document.createElement('td');
+        clientIdCell.textContent = caseItem.client_id;
+        row.appendChild(clientIdCell);
+        
+        // Status cell
+        const statusCell = document.createElement('td');
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'status-display px-2 py-1 rounded bg-muted text-sm inline-block min-w-[180px]';
+        statusSpan.setAttribute('data-testid', `text-case-status-${caseItem.case_id}`);
+        statusSpan.textContent = getStatusDisplayText(caseItem.last_case_status);
+        statusCell.appendChild(statusSpan);
+        row.appendChild(statusCell);
+        
+        // Actions cell
+        const actionsCell = document.createElement('td');
+        const viewButton = document.createElement('button');
+        viewButton.className = 'text-primary hover:underline text-sm';
+        viewButton.setAttribute('data-testid', `button-view-case-${caseItem.case_id}`);
+        viewButton.textContent = 'نمایش جزئیات';
+        viewButton.onclick = () => viewCaseDetails(caseItem.case_id);
+        actionsCell.appendChild(viewButton);
+        row.appendChild(actionsCell);
+        
+        tableBody.appendChild(row);
+    });
 }
 
 function getStatusText(status) {

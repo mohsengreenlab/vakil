@@ -367,6 +367,8 @@
                         <thead>
                             <tr>
                                 <th>شناسه پرونده</th>
+                                <th>نام</th>
+                                <th>نام خانوادگی</th>
                                 <th>شناسه موکل</th>
                                 <th>وضعیت</th>
                                 <th>عملیات</th>
@@ -374,7 +376,7 @@
                         </thead>
                         <tbody id="cases-table-body">
                             <tr>
-                                <td colspan="4" class="text-center py-8 text-muted-foreground">در حال بارگذاری...</td>
+                                <td colspan="6" class="text-center py-8 text-muted-foreground">در حال بارگذاری...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1125,7 +1127,7 @@ async function loadCases() {
             renderCasesTable(cases);
         } else {
             document.getElementById('cases-table-body').innerHTML = 
-                '<tr><td colspan="4" class="text-center py-8 text-muted-foreground">خطا در بارگذاری پرونده‌ها</td></tr>';
+                '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">خطا در بارگذاری پرونده‌ها</td></tr>';
         }
     } catch (error) {
         console.error('Error loading cases:', error);
