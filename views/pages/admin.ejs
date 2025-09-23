@@ -1979,14 +1979,27 @@ function getStatusText(status) {
 
 // File Management Functions
 let allClientsForFiles = [];
+let clientFileViewStatus = [];
+
+function getClientFileStatus(clientId) {
+    const statusInfo = clientFileViewStatus.find(status => status.clientId === clientId);
+    return statusInfo && statusInfo.hasUnviewedFiles ? 'جدید' : '-';
+}
 
 async function loadClientsForFiles() {
     try {
-        const response = await fetch('/api/admin/clients');
-        const result = await response.json();
+        // Load clients and file view status in parallel
+        const [clientsResponse, statusResponse] = await Promise.all([
+            fetch('/api/admin/clients'),
+            fetch('/api/admin/clients/file-status')
+        ]);
         
-        if (result.success) {
-            allClientsForFiles = result.clients;
+        const clientsResult = await clientsResponse.json();
+        const statusResult = await statusResponse.json();
+        
+        if (clientsResult.success && statusResult.success) {
+            allClientsForFiles = clientsResult.clients;
+            clientFileViewStatus = statusResult.fileViewStatus;
             displayClientsForFiles(allClientsForFiles);
         } else {
             showToast('خطا در بارگذاری موکلان', 'error');
@@ -2021,7 +2034,7 @@ function displayClientsForFiles(clients) {
                     <span id="file-count-${client.clientId}">-</span>
                 </td>
                 <td data-testid="files-client-status-${client.clientId}">
-                    <!-- وضعیت - Empty for now -->
+                    ${getClientFileStatus(client.clientId)}
                 </td>
                 <td>
                     <div class="flex gap-2">
@@ -2072,12 +2085,32 @@ async function viewClientFiles(clientId, clientName) {
         // Update client info
         document.getElementById('selected-client-info').textContent = `موکل: ${clientName} (شناسه: ${clientId})`;
         
-        // Load client files
-        const response = await fetch(`/api/admin/clients/${clientId}/files`);
-        const result = await response.json();
+        // Load client files and mark them as viewed
+        const [filesResponse, markViewedResponse] = await Promise.all([
+            fetch(`/api/admin/clients/${clientId}/files`),
+            fetch(`/api/admin/clients/${clientId}/mark-files-viewed`, { method: 'POST' })
+        ]);
         
-        if (result.success) {
-            displayClientFiles(result.files);
+        const filesResult = await filesResponse.json();
+        const markViewedResult = await markViewedResponse.json();
+        
+        if (filesResult.success) {
+            displayClientFiles(filesResult.files);
+            
+            // If marking as viewed was successful, update the status in the clients table
+            if (markViewedResult.success) {
+                // Update the status column in the clients table to show "-" (no unviewed files)
+                const statusCell = document.querySelector(`[data-testid="files-client-status-${clientId}"]`);
+                if (statusCell) {
+                    statusCell.textContent = '-';
+                }
+                
+                // Update the local status data
+                const statusIndex = clientFileViewStatus.findIndex(status => status.clientId === clientId);
+                if (statusIndex !== -1) {
+                    clientFileViewStatus[statusIndex].hasUnviewedFiles = false;
+                }
+            }
         } else {
             showToast(result.message || 'خطا در دریافت فایل‌ها', 'error');
             closeClientFiles();
