@@ -585,12 +585,13 @@
                                 <th>کد ملی</th>
                                 <th>شماره تلفن</th>
                                 <th>تعداد فایل</th>
+                                <th>وضعیت</th>
                                 <th>عملیات</th>
                             </tr>
                         </thead>
                         <tbody id="files-clients-table-body">
                             <tr>
-                                <td colspan="6" class="text-center py-8 text-muted-foreground">در حال بارگذاری موکلان...</td>
+                                <td colspan="7" class="text-center py-8 text-muted-foreground">در حال بارگذاری موکلان...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -2000,7 +2001,7 @@ function displayClientsForFiles(clients) {
     const tbody = document.getElementById('files-clients-table-body');
     
     if (clients.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">هیچ موکلی یافت نشد</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-muted-foreground">هیچ موکلی یافت نشد</td></tr>';
         return;
     }
     
@@ -2018,6 +2019,9 @@ function displayClientsForFiles(clients) {
                 <td data-testid="files-client-phone-${client.clientId}">${firstPhone}</td>
                 <td data-testid="files-client-count-${client.clientId}">
                     <span id="file-count-${client.clientId}">-</span>
+                </td>
+                <td data-testid="files-client-status-${client.clientId}">
+                    <!-- وضعیت - Empty for now -->
                 </td>
                 <td>
                     <div class="flex gap-2">
