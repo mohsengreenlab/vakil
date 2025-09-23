@@ -1476,7 +1476,8 @@ export class SingleStoreStorage implements IStorage {
       const [rows] = await this.pool.execute(`
         SELECT 
           c.client_id,
-          COUNT(cf.id) > 0 as has_unviewed_files
+          COUNT(cf.id) > 0 as has_unviewed_files,
+          COUNT(cf.id) as file_count
         FROM clients c
         LEFT JOIN client_files cf ON c.client_id = cf.client_id 
           AND cf.admin_viewed = 0 
@@ -1485,10 +1486,19 @@ export class SingleStoreStorage implements IStorage {
         ORDER BY c.client_id
       `);
       
-      return (rows as any[]).map(row => ({
-        clientId: row.client_id,
-        hasUnviewedFiles: Boolean(row.has_unviewed_files)
-      }));
+      console.log('🔍 File view status query results:', rows);
+      
+      const result = (rows as any[]).map(row => {
+        const hasUnviewed = Boolean(row.has_unviewed_files);
+        console.log(`📊 Client ${row.client_id}: fileCount=${row.file_count}, hasUnviewedFiles=${hasUnviewed}, rawValue=${row.has_unviewed_files}`);
+        return {
+          clientId: row.client_id,
+          hasUnviewedFiles: hasUnviewed
+        };
+      });
+      
+      console.log('🎯 Final file view status result:', result);
+      return result;
     } catch (error) {
       console.error('Error getting clients file view status:', error);
       throw error;

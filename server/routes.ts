@@ -943,6 +943,68 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
     }
   });
 
+  // Debug endpoint to check database file data (temporary for debugging)
+  app.get('/api/debug/file-data', async (req, res) => {
+    try {
+      const debugData = await (storage as any).pool.execute(`
+        SELECT 
+          client_id,
+          file_name,
+          uploaded_by_type,
+          admin_viewed,
+          upload_date
+        FROM client_files 
+        ORDER BY client_id, upload_date DESC
+      `);
+      
+      console.log('🔍 Debug: Raw client_files data:', debugData[0]);
+      res.json({
+        success: true,
+        files: debugData[0]
+      });
+    } catch (error) {
+      console.error('Error getting debug file data:', error);
+      res.status(500).json({ success: false, message: 'Debug error' });
+    }
+  });
+
+  // Debug endpoint to test the exact SQL query used in getClientsFileViewStatus
+  app.get('/api/debug/file-status-query', async (req, res) => {
+    try {
+      const queryResult = await (storage as any).pool.execute(`
+        SELECT 
+          c.client_id,
+          COUNT(cf.id) > 0 as has_unviewed_files,
+          COUNT(cf.id) as file_count
+        FROM clients c
+        LEFT JOIN client_files cf ON c.client_id = cf.client_id 
+          AND cf.admin_viewed = 0 
+          AND cf.uploaded_by_type = 'client'
+        GROUP BY c.client_id
+        ORDER BY c.client_id
+      `);
+      
+      console.log('🔍 Debug: File status query result:', queryResult[0]);
+      
+      const processedResult = (queryResult[0] as any[]).map(row => ({
+        clientId: row.client_id,
+        hasUnviewedFiles: Boolean(row.has_unviewed_files),
+        fileCount: row.file_count,
+        rawHasUnviewed: row.has_unviewed_files
+      }));
+      
+      console.log('🎯 Debug: Processed file status result:', processedResult);
+      
+      res.json({
+        success: true,
+        statusData: processedResult
+      });
+    } catch (error) {
+      console.error('Error getting debug file status query:', error);
+      res.status(500).json({ success: false, message: 'Debug error' });
+    }
+  });
+
 
   // Mark all files for a client as viewed (admin)
   app.post('/api/admin/clients/:clientId/mark-files-viewed', requireAuthAPI, async (req, res) => {
