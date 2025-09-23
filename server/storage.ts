@@ -388,6 +388,7 @@ export class MemStorage implements IStorage {
       filePath: insertClientFile.filePath,
       uploadedByType: 'client',
       uploadDate: new Date(),
+      adminViewed: false,
       createdAt: new Date(),
     };
     this.clientFiles.set(id, clientFile);
