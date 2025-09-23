@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { mysqlTable, text, varchar, timestamp, json, int } from "drizzle-orm/mysql-core";
+import { mysqlTable, text, varchar, timestamp, json, int, boolean } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -66,6 +66,7 @@ export const clientFiles = mysqlTable("client_files", {
   uploadDate: timestamp("upload_date").defaultNow(),
   filePath: varchar("file_path", { length: 1000 }).notNull(),
   uploadedByType: varchar("uploaded_by_type", { length: 10 }).notNull().default("client"),
+  adminViewed: boolean("admin_viewed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

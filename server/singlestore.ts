@@ -230,6 +230,17 @@ export class SingleStoreStorage implements IStorage {
         console.log('ℹ️ uploaded_by_type column already exists or table is properly configured');
       }
 
+      // Add admin_viewed column to client_files table
+      try {
+        await connection.execute(`
+          ALTER TABLE client_files ADD COLUMN admin_viewed BOOLEAN NOT NULL DEFAULT FALSE
+        `);
+        console.log('✅ Added admin_viewed column to client_files table');
+      } catch (alterError) {
+        // Column already exists or other issue - this is expected after first run
+        console.log('ℹ️ admin_viewed column already exists or table is properly configured');
+      }
+
       // Check existing client_files table data
       try {
         const [existingFiles] = await connection.execute('SELECT COUNT(*) as file_count FROM client_files');
