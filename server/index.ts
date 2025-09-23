@@ -759,6 +759,25 @@ app.post('/api/admin/logout', (req, res) => {
   });
 });
 
+// DEBUG: Temporary clients endpoint without auth
+app.get('/api/debug/clients', async (req, res) => {
+  try {
+    console.log('🔬 DEBUG: Testing clients API...');
+    const clients = await storage.getAllClients();
+    console.log('🔍 DEBUG: Found clients count:', clients.length);
+    res.json({ 
+      success: true, 
+      clients: clients 
+    });
+  } catch (error) {
+    console.error('DEBUG Error getting clients:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Debug error' 
+    });
+  }
+});
+
 // Admin API endpoints for clients management
 app.get('/api/admin/clients', requireAuthAPI, async (req, res) => {
   try {

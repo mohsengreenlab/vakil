@@ -1991,10 +1991,10 @@ function getClientFileStatus(clientId) {
 
 async function loadClientsForFiles() {
     try {
-        // Load clients and file view status in parallel
+        // DEBUG: Test with debug endpoint for debugging
         const [clientsResponse, statusResponse] = await Promise.all([
-            fetch('/api/admin/clients'),
-            fetch('/api/admin/clients/file-status')
+            fetch('/api/debug/clients'),  // Use debug endpoint temporarily 
+            fetch('/api/debug/file-status')  // Use debug endpoint temporarily
         ]);
         
         const clientsResult = await clientsResponse.json();
@@ -2030,7 +2030,7 @@ function displayClientsForFiles(clients) {
         
         return `
             <tr data-testid="files-client-row-${client.clientId}">
-                <td data-testid="files-client-id-${client.clientId}">${client.client_id}</td>
+                <td data-testid="files-client-id-${client.clientId}">${client.clientId}</td>
                 <td data-testid="files-client-name-${client.clientId}">${client.firstName} ${client.lastName}</td>
                 <td data-testid="files-client-national-${client.clientId}">${client.nationalId}</td>
                 <td data-testid="files-client-phone-${client.clientId}">${firstPhone}</td>
@@ -3250,4 +3250,14 @@ window.openClientMessages = openClientMessages;
 window.closeClientMessages = closeClientMessages;
 window.refreshMessages = refreshMessages;
 window.searchMessagingClients = searchMessagingClients;
+
+// DEBUG: Auto-test the file status loading when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        console.log('🔬 DEBUG: Auto-testing file status loading...');
+        if (typeof loadClientsForFiles === 'function') {
+            loadClientsForFiles();
+        }
+    }, 3000);
+});
 </script>
