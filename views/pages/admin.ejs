@@ -2030,7 +2030,24 @@ function displayClientsForFiles(clients) {
         return;
     }
     
-    tbody.innerHTML = clients.map(client => {
+    // Sort clients to show those with "جدید" (new) file status at the top
+    const sortedClients = [...clients].sort((a, b) => {
+        const statusA = getClientFileStatus(a.clientId);
+        const statusB = getClientFileStatus(b.clientId);
+        
+        // If client A has "جدید" status and B doesn't, A comes first
+        if (statusA === 'جدید' && statusB !== 'جدید') {
+            return -1;
+        }
+        // If client B has "جدید" status and A doesn't, B comes first
+        if (statusB === 'جدید' && statusA !== 'جدید') {
+            return 1;
+        }
+        // If both have same status (both "جدید" or both "-"), maintain original order
+        return 0;
+    });
+    
+    tbody.innerHTML = sortedClients.map(client => {
         const phoneNumbers = typeof client.phoneNumbers === 'string' 
             ? JSON.parse(client.phoneNumbers) 
             : client.phoneNumbers;
@@ -2066,8 +2083,8 @@ function displayClientsForFiles(clients) {
         `;
     }).join('');
     
-    // Load file counts for each client
-    clients.forEach(client => {
+    // Load file counts for each client using the sorted array
+    sortedClients.forEach(client => {
         loadClientFileCount(client.clientId);
     });
 }
