@@ -3219,34 +3219,9 @@ function createCaseTitleElement(title) {
             <div class="flex-1">
                 <div class="font-medium text-lg" id="title-label-${safeId}">${title.label}</div>
                 
-                <!-- Edit Form (Hidden by default) -->
-                <div id="edit-form-${safeId}" class="hidden mt-3">
-                    <div class="flex gap-2">
-                        <input type="text" 
-                               id="edit-input-${safeId}" 
-                               value="${title.label}" 
-                               class="input-field flex-1" 
-                               data-testid="input-edit-title-${safeId}">
-                        <button onclick="saveCaseTitleEdit('${title.label}')" 
-                                class="btn-primary text-sm px-3" 
-                                data-testid="button-save-edit-${safeId}">
-                            ذخیره
-                        </button>
-                        <button onclick="cancelCaseTitleEdit('${title.label}')" 
-                                class="btn-secondary text-sm px-3" 
-                                data-testid="button-cancel-edit-${safeId}">
-                            لغو
-                        </button>
-                    </div>
-                </div>
             </div>
             
             <div class="flex gap-2" id="title-actions-${safeId}">
-                <button onclick="startEditCaseTitle('${title.label}')" 
-                        class="text-blue-600 hover:text-blue-800 text-sm" 
-                        data-testid="button-edit-title-${safeId}">
-                    ویرایش
-                </button>
                 <button onclick="deleteCaseTitle('${title.label}')" 
                         class="text-red-600 hover:text-red-800 text-sm" 
                         data-testid="button-delete-title-${safeId}">
