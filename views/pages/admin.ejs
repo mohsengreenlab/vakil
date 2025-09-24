@@ -3234,70 +3234,6 @@ function createCaseTitleElement(title) {
     return div;
 }
 
-function startEditCaseTitle(titleLabel) {
-    const safeId = titleLabel.replace(/[^a-zA-Z0-9آ-ی]/g, '_');
-    
-    // Hide the label and actions, show the edit form
-    document.getElementById(`title-label-${safeId}`).style.display = 'none';
-    document.getElementById(`title-actions-${safeId}`).style.display = 'none';
-    document.getElementById(`edit-form-${safeId}`).classList.remove('hidden');
-    
-    // Focus on the input
-    document.getElementById(`edit-input-${safeId}`).focus();
-}
-
-function cancelCaseTitleEdit(titleLabel) {
-    const safeId = titleLabel.replace(/[^a-zA-Z0-9آ-ی]/g, '_');
-    
-    // Show the label and actions, hide the edit form
-    document.getElementById(`title-label-${safeId}`).style.display = 'block';
-    document.getElementById(`title-actions-${safeId}`).style.display = 'flex';
-    document.getElementById(`edit-form-${safeId}`).classList.add('hidden');
-}
-
-async function saveCaseTitleEdit(oldLabel) {
-    const safeId = oldLabel.replace(/[^a-zA-Z0-9آ-ی]/g, '_');
-    const newLabel = document.getElementById(`edit-input-${safeId}`).value.trim();
-    
-    if (!newLabel) {
-        showToast('عنوان نمی‌تواند خالی باشد', 'error');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/admin/case-titles/${encodeURIComponent(oldLabel)}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ label: newLabel })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            // Update the label in the display
-            document.getElementById(`title-label-${safeId}`).textContent = newLabel;
-            
-            // Update the data attribute
-            const element = document.querySelector(`[data-title-label="${oldLabel}"]`);
-            if (element) {
-                element.setAttribute('data-title-label', newLabel);
-            }
-            
-            // Hide edit form and show normal view
-            cancelCaseTitleEdit(newLabel);
-            
-            showToast('عنوان با موفقیت بروزرسانی شد', 'success');
-        } else {
-            showToast(result.message || 'خطا در بروزرسانی عنوان', 'error');
-        }
-        
-    } catch (error) {
-        console.error('Error updating case title:', error);
-        showToast('خطا در بروزرسانی عنوان', 'error');
-    }
-}
 
 async function deleteCaseTitle(titleLabel) {
     if (!confirm('آیا از حذف این عنوان اطمینان دارید؟')) {
@@ -3709,9 +3645,6 @@ window.refreshMessages = refreshMessages;
 window.searchMessagingClients = searchMessagingClients;
 window.openCaseTitlesModal = openCaseTitlesModal;
 window.closeCaseTitlesModal = closeCaseTitlesModal;
-window.startEditCaseTitle = startEditCaseTitle;
-window.cancelCaseTitleEdit = cancelCaseTitleEdit;
-window.saveCaseTitleEdit = saveCaseTitleEdit;
 window.deleteCaseTitle = deleteCaseTitle;
 
 </script>
