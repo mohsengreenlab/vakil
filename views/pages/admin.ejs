@@ -185,11 +185,7 @@
                     <div>
                         <label class="block text-sm font-medium mb-2">وضعیت پرونده</label>
                         <select name="status" required class="input-field" data-testid="select-assign-case-status">
-                            <option value="under-review">در انتظار بررسی</option>
-                            <option value="lawyer-study">در حال مطالعه وکیل</option>
-                            <option value="in-progress">در حال اقدام</option>
-                            <option value="awaiting-court">در انتظار رای دادگاه</option>
-                            <option value="verdict-issued">صدور رای</option>
+                            <option value="">انتخاب وضعیت پرونده</option>
                         </select>
                     </div>
                     <div class="md:col-span-2 flex gap-4">
@@ -306,11 +302,7 @@
                     <div>
                         <label class="block text-sm font-medium mb-2">وضعیت پرونده</label>
                         <select name="status" required class="input-field" data-testid="select-case-status">
-                            <option value="under-review">در انتظار بررسی</option>
-                            <option value="lawyer-study">در حال مطالعه وکیل</option>
-                            <option value="in-progress">در حال اقدام</option>
-                            <option value="awaiting-court">در انتظار رای دادگاه</option>
-                            <option value="verdict-issued">صدور رای</option>
+                            <option value="">انتخاب وضعیت پرونده</option>
                         </select>
                     </div>
                     <div class="md:col-span-2 flex gap-4">
@@ -1070,9 +1062,12 @@ function hideAddClientForm() {
 }
 
 // Case management
-function showAddCaseForm() {
+async function showAddCaseForm() {
     document.getElementById('add-case-form').classList.remove('hidden');
-    loadClientsForSelect();
+    await Promise.all([
+        loadClientsForSelect(),
+        loadCaseTitlesForStatusSelect()
+    ]);
 }
 
 function hideAddCaseForm() {
@@ -1683,7 +1678,7 @@ async function convertToClient(contactId) {
 }
 
 // Show/Hide assign case form
-function showAssignCaseForm(clientId, clientName) {
+async function showAssignCaseForm(clientId, clientName) {
     document.getElementById('assign-case-form').classList.remove('hidden');
     document.getElementById('selected-client-name').textContent = clientName;
     document.getElementById('selected-client-id').textContent = clientId;
@@ -1692,6 +1687,9 @@ function showAssignCaseForm(clientId, clientName) {
     // Reset form
     document.getElementById('assignCaseForm').reset();
     document.getElementById('assign-client-id').value = clientId; // Set again after reset
+    
+    // Load case titles for status selection
+    await loadCaseTitlesForStatusSelect();
     
     // Scroll to form
     document.getElementById('assign-case-form').scrollIntoView({ behavior: 'smooth' });
