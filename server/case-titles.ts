@@ -5,7 +5,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export interface CaseTitle {
-  id: string;
   label: string;
   createdAt: string;
 }
@@ -29,12 +28,10 @@ function readCaseTitlesFromFile(): CaseTitle[] {
       // Create default file if it doesn't exist
       const defaultTitles: CaseTitle[] = [
         {
-          id: "lawyer-study",
           label: "مطالعه وکیل",
           createdAt: new Date().toISOString()
         },
         {
-          id: "awaiting-court",
           label: "در انتظار رای دادگاه", 
           createdAt: new Date().toISOString()
         }
@@ -70,9 +67,15 @@ export function getAllCaseTitles(): CaseTitle[] {
 
 export function addCaseTitle(label: string): CaseTitle {
   const titles = readCaseTitlesFromFile();
+  const trimmedLabel = label.trim();
+  
+  // Check if title already exists
+  if (titles.some(title => title.label === trimmedLabel)) {
+    throw new Error('عنوان تکراری است');
+  }
+  
   const newTitle: CaseTitle = {
-    id: generateId(),
-    label: label.trim(),
+    label: trimmedLabel,
     createdAt: new Date().toISOString()
   };
   
@@ -82,23 +85,30 @@ export function addCaseTitle(label: string): CaseTitle {
   return newTitle;
 }
 
-export function updateCaseTitle(id: string, label: string): CaseTitle | null {
+export function updateCaseTitle(oldLabel: string, newLabel: string): CaseTitle | null {
   const titles = readCaseTitlesFromFile();
-  const titleIndex = titles.findIndex(title => title.id === id);
+  const titleIndex = titles.findIndex(title => title.label === oldLabel);
   
   if (titleIndex === -1) {
     return null;
   }
   
-  titles[titleIndex].label = label.trim();
+  const trimmedNewLabel = newLabel.trim();
+  
+  // Check if new label already exists (unless it's the same)
+  if (trimmedNewLabel !== oldLabel && titles.some(title => title.label === trimmedNewLabel)) {
+    throw new Error('عنوان تکراری است');
+  }
+  
+  titles[titleIndex].label = trimmedNewLabel;
   writeCaseTitlesToFile(titles);
   
   return titles[titleIndex];
 }
 
-export function deleteCaseTitle(id: string): boolean {
+export function deleteCaseTitle(label: string): boolean {
   const titles = readCaseTitlesFromFile();
-  const titleIndex = titles.findIndex(title => title.id === id);
+  const titleIndex = titles.findIndex(title => title.label === label);
   
   if (titleIndex === -1) {
     return false;
@@ -108,9 +118,4 @@ export function deleteCaseTitle(id: string): boolean {
   writeCaseTitlesToFile(titles);
   
   return true;
-}
-
-// Helper function to generate unique IDs
-function generateId(): string {
-  return 'title_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }

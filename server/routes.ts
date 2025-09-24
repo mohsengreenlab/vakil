@@ -1073,21 +1073,25 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
       });
     } catch (error) {
       console.error('Error adding case title:', error);
-      res.status(500).json({ success: false, message: 'خطا در افزودن عنوان جدید' });
+      if (error instanceof Error && error.message === 'عنوان تکراری است') {
+        res.status(400).json({ success: false, message: error.message });
+      } else {
+        res.status(500).json({ success: false, message: 'خطا در افزودن عنوان جدید' });
+      }
     }
   });
 
   // Update case title
-  app.put('/api/admin/case-titles/:id', requireAuthAPI, async (req, res) => {
+  app.put('/api/admin/case-titles/:label', requireAuthAPI, async (req, res) => {
     try {
-      const { id } = req.params;
-      const { label } = req.body;
+      const { label: oldLabel } = req.params;
+      const { label: newLabel } = req.body;
       
-      if (!label || typeof label !== 'string' || !label.trim()) {
+      if (!newLabel || typeof newLabel !== 'string' || !newLabel.trim()) {
         return res.status(400).json({ success: false, message: 'عنوان الزامی است' });
       }
 
-      const updatedTitle = updateCaseTitle(id, label);
+      const updatedTitle = updateCaseTitle(decodeURIComponent(oldLabel), newLabel);
       
       if (!updatedTitle) {
         return res.status(404).json({ success: false, message: 'عنوان یافت نشد' });
@@ -1100,16 +1104,20 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
       });
     } catch (error) {
       console.error('Error updating case title:', error);
-      res.status(500).json({ success: false, message: 'خطا در بروزرسانی عنوان' });
+      if (error instanceof Error && error.message === 'عنوان تکراری است') {
+        res.status(400).json({ success: false, message: error.message });
+      } else {
+        res.status(500).json({ success: false, message: 'خطا در بروزرسانی عنوان' });
+      }
     }
   });
 
   // Delete case title
-  app.delete('/api/admin/case-titles/:id', requireAuthAPI, async (req, res) => {
+  app.delete('/api/admin/case-titles/:label', requireAuthAPI, async (req, res) => {
     try {
-      const { id } = req.params;
+      const { label } = req.params;
       
-      const success = deleteCaseTitle(id);
+      const success = deleteCaseTitle(decodeURIComponent(label));
       
       if (!success) {
         return res.status(404).json({ success: false, message: 'عنوان یافت نشد' });

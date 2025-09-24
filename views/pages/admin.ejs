@@ -3117,45 +3117,47 @@ function renderCaseTitles(caseTitles) {
 function createCaseTitleElement(title) {
     const div = document.createElement('div');
     div.className = 'card p-4 bg-muted/20';
-    div.setAttribute('data-title-id', title.id);
+    div.setAttribute('data-title-label', title.label);
+    
+    // Create a safe ID for the title by replacing special characters
+    const safeId = title.label.replace(/[^a-zA-Z0-9آ-ی]/g, '_');
     
     div.innerHTML = `
         <div class="flex items-center justify-between">
             <div class="flex-1">
-                <div class="font-medium text-lg" id="title-label-${title.id}">${title.label}</div>
-                <div class="text-sm text-muted-foreground">شناسه: ${title.id}</div>
+                <div class="font-medium text-lg" id="title-label-${safeId}">${title.label}</div>
                 
                 <!-- Edit Form (Hidden by default) -->
-                <div id="edit-form-${title.id}" class="hidden mt-3">
+                <div id="edit-form-${safeId}" class="hidden mt-3">
                     <div class="flex gap-2">
                         <input type="text" 
-                               id="edit-input-${title.id}" 
+                               id="edit-input-${safeId}" 
                                value="${title.label}" 
                                class="input-field flex-1" 
-                               data-testid="input-edit-title-${title.id}">
-                        <button onclick="saveCaseTitleEdit('${title.id}')" 
+                               data-testid="input-edit-title-${safeId}">
+                        <button onclick="saveCaseTitleEdit('${title.label}')" 
                                 class="btn-primary text-sm px-3" 
-                                data-testid="button-save-edit-${title.id}">
+                                data-testid="button-save-edit-${safeId}">
                             ذخیره
                         </button>
-                        <button onclick="cancelCaseTitleEdit('${title.id}')" 
+                        <button onclick="cancelCaseTitleEdit('${title.label}')" 
                                 class="btn-secondary text-sm px-3" 
-                                data-testid="button-cancel-edit-${title.id}">
+                                data-testid="button-cancel-edit-${safeId}">
                             لغو
                         </button>
                     </div>
                 </div>
             </div>
             
-            <div class="flex gap-2" id="title-actions-${title.id}">
-                <button onclick="startEditCaseTitle('${title.id}')" 
+            <div class="flex gap-2" id="title-actions-${safeId}">
+                <button onclick="startEditCaseTitle('${title.label}')" 
                         class="text-blue-600 hover:text-blue-800 text-sm" 
-                        data-testid="button-edit-title-${title.id}">
+                        data-testid="button-edit-title-${safeId}">
                     ویرایش
                 </button>
-                <button onclick="deleteCaseTitle('${title.id}')" 
+                <button onclick="deleteCaseTitle('${title.label}')" 
                         class="text-red-600 hover:text-red-800 text-sm" 
-                        data-testid="button-delete-title-${title.id}">
+                        data-testid="button-delete-title-${safeId}">
                     حذف
                 </button>
             </div>
@@ -3165,25 +3167,30 @@ function createCaseTitleElement(title) {
     return div;
 }
 
-function startEditCaseTitle(titleId) {
+function startEditCaseTitle(titleLabel) {
+    const safeId = titleLabel.replace(/[^a-zA-Z0-9آ-ی]/g, '_');
+    
     // Hide the label and actions, show the edit form
-    document.getElementById(`title-label-${titleId}`).style.display = 'none';
-    document.getElementById(`title-actions-${titleId}`).style.display = 'none';
-    document.getElementById(`edit-form-${titleId}`).classList.remove('hidden');
+    document.getElementById(`title-label-${safeId}`).style.display = 'none';
+    document.getElementById(`title-actions-${safeId}`).style.display = 'none';
+    document.getElementById(`edit-form-${safeId}`).classList.remove('hidden');
     
     // Focus on the input
-    document.getElementById(`edit-input-${titleId}`).focus();
+    document.getElementById(`edit-input-${safeId}`).focus();
 }
 
-function cancelCaseTitleEdit(titleId) {
+function cancelCaseTitleEdit(titleLabel) {
+    const safeId = titleLabel.replace(/[^a-zA-Z0-9آ-ی]/g, '_');
+    
     // Show the label and actions, hide the edit form
-    document.getElementById(`title-label-${titleId}`).style.display = 'block';
-    document.getElementById(`title-actions-${titleId}`).style.display = 'flex';
-    document.getElementById(`edit-form-${titleId}`).classList.add('hidden');
+    document.getElementById(`title-label-${safeId}`).style.display = 'block';
+    document.getElementById(`title-actions-${safeId}`).style.display = 'flex';
+    document.getElementById(`edit-form-${safeId}`).classList.add('hidden');
 }
 
-async function saveCaseTitleEdit(titleId) {
-    const newLabel = document.getElementById(`edit-input-${titleId}`).value.trim();
+async function saveCaseTitleEdit(oldLabel) {
+    const safeId = oldLabel.replace(/[^a-zA-Z0-9آ-ی]/g, '_');
+    const newLabel = document.getElementById(`edit-input-${safeId}`).value.trim();
     
     if (!newLabel) {
         showToast('عنوان نمی‌تواند خالی باشد', 'error');
@@ -3191,7 +3198,7 @@ async function saveCaseTitleEdit(titleId) {
     }
     
     try {
-        const response = await fetch(`/api/admin/case-titles/${titleId}`, {
+        const response = await fetch(`/api/admin/case-titles/${encodeURIComponent(oldLabel)}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -3203,10 +3210,16 @@ async function saveCaseTitleEdit(titleId) {
         
         if (result.success) {
             // Update the label in the display
-            document.getElementById(`title-label-${titleId}`).textContent = newLabel;
+            document.getElementById(`title-label-${safeId}`).textContent = newLabel;
+            
+            // Update the data attribute
+            const element = document.querySelector(`[data-title-label="${oldLabel}"]`);
+            if (element) {
+                element.setAttribute('data-title-label', newLabel);
+            }
             
             // Hide edit form and show normal view
-            cancelCaseTitleEdit(titleId);
+            cancelCaseTitleEdit(newLabel);
             
             showToast('عنوان با موفقیت بروزرسانی شد', 'success');
         } else {
@@ -3219,13 +3232,13 @@ async function saveCaseTitleEdit(titleId) {
     }
 }
 
-async function deleteCaseTitle(titleId) {
+async function deleteCaseTitle(titleLabel) {
     if (!confirm('آیا از حذف این عنوان اطمینان دارید؟')) {
         return;
     }
     
     try {
-        const response = await fetch(`/api/admin/case-titles/${titleId}`, {
+        const response = await fetch(`/api/admin/case-titles/${encodeURIComponent(titleLabel)}`, {
             method: 'DELETE'
         });
         
@@ -3233,7 +3246,7 @@ async function deleteCaseTitle(titleId) {
         
         if (result.success) {
             // Remove the element from UI
-            const element = document.querySelector(`[data-title-id="${titleId}"]`);
+            const element = document.querySelector(`[data-title-label="${titleLabel}"]`);
             if (element) {
                 element.remove();
             }

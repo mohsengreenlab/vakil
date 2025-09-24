@@ -1,11 +1,9 @@
 [
   {
-    "id": "lawyer-study",
     "label": "مطالعه وکیل",
     "createdAt": "2025-09-24T10:53:00.000Z"
   },
   {
-    "id": "awaiting-court", 
     "label": "در انتظار رای دادگاه",
     "createdAt": "2025-09-24T10:53:00.000Z"
   }
