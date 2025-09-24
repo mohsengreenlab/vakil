@@ -1155,6 +1155,61 @@ async function loadCaseTitlesForSelect() {
     }
 }
 
+// Load case titles for case status selection
+async function loadCaseTitlesForStatusSelect() {
+    try {
+        const response = await fetch(`/api/admin/case-titles?t=${Date.now()}`, {
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache'
+            }
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            const assignCaseSelect = document.querySelector('select[data-testid="select-assign-case-status"]');
+            const addCaseSelect = document.querySelector('select[data-testid="select-case-status"]');
+            
+            // Update assign case form select
+            if (assignCaseSelect) {
+                const currentValue = assignCaseSelect.value;
+                assignCaseSelect.innerHTML = '<option value="">انتخاب وضعیت پرونده</option>';
+                result.data.forEach(caseTitle => {
+                    const option = document.createElement('option');
+                    option.value = caseTitle.label;
+                    option.textContent = caseTitle.label;
+                    assignCaseSelect.appendChild(option);
+                });
+                if (currentValue) assignCaseSelect.value = currentValue;
+            }
+            
+            // Update add case form select
+            if (addCaseSelect) {
+                const currentValue = addCaseSelect.value;
+                addCaseSelect.innerHTML = '<option value="">انتخاب وضعیت پرونده</option>';
+                result.data.forEach(caseTitle => {
+                    const option = document.createElement('option');
+                    option.value = caseTitle.label;
+                    option.textContent = caseTitle.label;
+                    addCaseSelect.appendChild(option);
+                });
+                if (currentValue) addCaseSelect.value = currentValue;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading case titles for status select:', error);
+        // Fallback to showing an error message in select
+        const assignCaseSelect = document.querySelector('select[data-testid="select-assign-case-status"]');
+        const addCaseSelect = document.querySelector('select[data-testid="select-case-status"]');
+        if (assignCaseSelect) {
+            assignCaseSelect.innerHTML = '<option value="">خطا در بارگذاری وضعیت‌های پرونده</option>';
+        }
+        if (addCaseSelect) {
+            addCaseSelect.innerHTML = '<option value="">خطا در بارگذاری وضعیت‌های پرونده</option>';
+        }
+    }
+}
+
 // Load dashboard statistics
 async function loadDashboardStats() {
     try {
