@@ -5,6 +5,7 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { getAllCaseTitles, addCaseTitle, updateCaseTitle, deleteCaseTitle } from "./case-titles";
 
 export async function registerRoutes(app: Express, storage: IStorage): Promise<void> {
   
@@ -1035,6 +1036,92 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
     } catch (error) {
       console.error('Error marking client files as viewed:', error);
       res.status(500).json({ success: false, message: 'خطا در علامت‌گذاری فایل‌ها به عنوان مشاهده شده' });
+    }
+  });
+
+  // Case Titles Management Routes
+  
+  // Get all case titles
+  app.get('/api/admin/case-titles', requireAuthAPI, async (req, res) => {
+    try {
+      const caseTitles = getAllCaseTitles();
+      res.json({
+        success: true,
+        data: caseTitles
+      });
+    } catch (error) {
+      console.error('Error getting case titles:', error);
+      res.status(500).json({ success: false, message: 'خطا در دریافت عناوین پرونده' });
+    }
+  });
+
+  // Add new case title
+  app.post('/api/admin/case-titles', requireAuthAPI, async (req, res) => {
+    try {
+      const { label } = req.body;
+      
+      if (!label || typeof label !== 'string' || !label.trim()) {
+        return res.status(400).json({ success: false, message: 'عنوان الزامی است' });
+      }
+
+      const newTitle = addCaseTitle(label);
+      
+      res.json({
+        success: true,
+        message: 'عنوان جدید با موفقیت اضافه شد',
+        data: newTitle
+      });
+    } catch (error) {
+      console.error('Error adding case title:', error);
+      res.status(500).json({ success: false, message: 'خطا در افزودن عنوان جدید' });
+    }
+  });
+
+  // Update case title
+  app.put('/api/admin/case-titles/:id', requireAuthAPI, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { label } = req.body;
+      
+      if (!label || typeof label !== 'string' || !label.trim()) {
+        return res.status(400).json({ success: false, message: 'عنوان الزامی است' });
+      }
+
+      const updatedTitle = updateCaseTitle(id, label);
+      
+      if (!updatedTitle) {
+        return res.status(404).json({ success: false, message: 'عنوان یافت نشد' });
+      }
+      
+      res.json({
+        success: true,
+        message: 'عنوان با موفقیت بروزرسانی شد',
+        data: updatedTitle
+      });
+    } catch (error) {
+      console.error('Error updating case title:', error);
+      res.status(500).json({ success: false, message: 'خطا در بروزرسانی عنوان' });
+    }
+  });
+
+  // Delete case title
+  app.delete('/api/admin/case-titles/:id', requireAuthAPI, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const success = deleteCaseTitle(id);
+      
+      if (!success) {
+        return res.status(404).json({ success: false, message: 'عنوان یافت نشد' });
+      }
+      
+      res.json({
+        success: true,
+        message: 'عنوان با موفقیت حذف شد'
+      });
+    } catch (error) {
+      console.error('Error deleting case title:', error);
+      res.status(500).json({ success: false, message: 'خطا در حذف عنوان' });
     }
   });
 

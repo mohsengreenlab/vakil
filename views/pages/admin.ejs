@@ -52,6 +52,9 @@
                 <button onclick="showTab('client-messages')" class="tab-btn" data-tab="client-messages" data-testid="tab-client-messages">
                     پیام های موکلان
                 </button>
+                <button onclick="showTab('settings')" class="tab-btn" data-tab="settings" data-testid="tab-settings">
+                    تنظیمات
+                </button>
             </nav>
         </div>
     </div>
@@ -810,6 +813,85 @@
             </div>
         </div>
 
+        <!-- Settings Tab -->
+        <div id="settings-tab" class="tab-content hidden">
+            <h1 class="text-3xl font-bold mb-6">تنظیمات</h1>
+            
+            <!-- Case Titles Management Section -->
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">مدیریت عناوین پرونده</h2>
+                </div>
+                
+                <p class="text-muted-foreground mb-6">در این بخش می‌توانید عناوین و وضعیت‌های پرونده‌ها را مدیریت کنید.</p>
+                
+                <button onclick="openCaseTitlesModal()" class="btn-primary" data-testid="button-edit-case-titles">
+                    ویرایش عناوین پرونده
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Case Titles Management Modal -->
+<div id="case-titles-modal" class="fixed inset-0 bg-black/50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-card rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="border-b border-border p-6">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold">مدیریت عناوین پرونده</h2>
+                    <button onclick="closeCaseTitlesModal()" class="text-muted-foreground hover:text-foreground" data-testid="button-close-case-titles-modal">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <!-- Add New Case Title Section -->
+                <div class="card p-4 mb-6 bg-muted/30">
+                    <h3 class="text-lg font-semibold mb-4">افزودن عنوان جدید</h3>
+                    <form id="add-case-title-form" class="flex gap-4">
+                        <div class="flex-1">
+                            <input type="text" 
+                                   id="new-case-title-input" 
+                                   class="input-field w-full" 
+                                   placeholder="عنوان جدید پرونده را وارد کنید..." 
+                                   data-testid="input-new-case-title"
+                                   required>
+                        </div>
+                        <button type="submit" class="btn-primary" data-testid="button-add-case-title">
+                            افزودن
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Existing Case Titles List -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold">عناوین موجود</h3>
+                    
+                    <div id="case-titles-loading" class="text-center py-8">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <p class="text-muted-foreground mt-2">در حال بارگذاری...</p>
+                    </div>
+                    
+                    <div id="case-titles-list" class="space-y-3 hidden">
+                        <!-- Case titles will be loaded here -->
+                    </div>
+                    
+                    <div id="case-titles-empty" class="text-center py-8 hidden">
+                        <div class="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                            </svg>
+                        </div>
+                        <h4 class="text-xl font-semibold mb-2">هنوز عنوانی تعریف نشده</h4>
+                        <p class="text-muted-foreground">اولین عنوان پرونده را اضافه کنید.</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -2958,6 +3040,277 @@ async function getUnreadMessageCount(clientId) {
     }
 }
 
+// Case Titles Management Functions
+async function openCaseTitlesModal() {
+    document.getElementById('case-titles-modal').classList.remove('hidden');
+    await loadCaseTitles();
+}
+
+function closeCaseTitlesModal() {
+    document.getElementById('case-titles-modal').classList.add('hidden');
+    document.getElementById('new-case-title-input').value = '';
+}
+
+async function loadCaseTitles() {
+    try {
+        showCaseTitlesLoading();
+        
+        // Since we're not using APIs as per requirements, we'll simulate loading from the hardcoded file
+        // In a real implementation, this would fetch from the case-titles.ts file through a simple endpoint
+        const caseTitles = await getCaseTitlesFromFile();
+        
+        const listContainer = document.getElementById('case-titles-list');
+        const emptyContainer = document.getElementById('case-titles-empty');
+        const loadingContainer = document.getElementById('case-titles-loading');
+        
+        loadingContainer.classList.add('hidden');
+        
+        if (caseTitles.length === 0) {
+            listContainer.classList.add('hidden');
+            emptyContainer.classList.remove('hidden');
+        } else {
+            emptyContainer.classList.add('hidden');
+            listContainer.classList.remove('hidden');
+            renderCaseTitles(caseTitles);
+        }
+    } catch (error) {
+        console.error('Error loading case titles:', error);
+        document.getElementById('case-titles-loading').classList.add('hidden');
+        showToast('خطا در بارگذاری عناوین پرونده', 'error');
+    }
+}
+
+function showCaseTitlesLoading() {
+    document.getElementById('case-titles-loading').classList.remove('hidden');
+    document.getElementById('case-titles-list').classList.add('hidden');
+    document.getElementById('case-titles-empty').classList.add('hidden');
+}
+
+// Get case titles from the file via API
+async function getCaseTitlesFromFile() {
+    try {
+        const response = await fetch('/api/admin/case-titles');
+        const result = await response.json();
+        
+        if (result.success) {
+            return result.data;
+        } else {
+            console.error('Failed to load case titles:', result.message);
+            return [];
+        }
+    } catch (error) {
+        console.error('Error fetching case titles:', error);
+        return [];
+    }
+}
+
+function renderCaseTitles(caseTitles) {
+    const container = document.getElementById('case-titles-list');
+    container.innerHTML = '';
+    
+    caseTitles.forEach(title => {
+        const titleElement = createCaseTitleElement(title);
+        container.appendChild(titleElement);
+    });
+}
+
+function createCaseTitleElement(title) {
+    const div = document.createElement('div');
+    div.className = 'card p-4 bg-muted/20';
+    div.setAttribute('data-title-id', title.id);
+    
+    div.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <div class="font-medium text-lg" id="title-label-${title.id}">${title.label}</div>
+                <div class="text-sm text-muted-foreground">شناسه: ${title.id}</div>
+                
+                <!-- Edit Form (Hidden by default) -->
+                <div id="edit-form-${title.id}" class="hidden mt-3">
+                    <div class="flex gap-2">
+                        <input type="text" 
+                               id="edit-input-${title.id}" 
+                               value="${title.label}" 
+                               class="input-field flex-1" 
+                               data-testid="input-edit-title-${title.id}">
+                        <button onclick="saveCaseTitleEdit('${title.id}')" 
+                                class="btn-primary text-sm px-3" 
+                                data-testid="button-save-edit-${title.id}">
+                            ذخیره
+                        </button>
+                        <button onclick="cancelCaseTitleEdit('${title.id}')" 
+                                class="btn-secondary text-sm px-3" 
+                                data-testid="button-cancel-edit-${title.id}">
+                            لغو
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-2" id="title-actions-${title.id}">
+                <button onclick="startEditCaseTitle('${title.id}')" 
+                        class="text-blue-600 hover:text-blue-800 text-sm" 
+                        data-testid="button-edit-title-${title.id}">
+                    ویرایش
+                </button>
+                <button onclick="deleteCaseTitle('${title.id}')" 
+                        class="text-red-600 hover:text-red-800 text-sm" 
+                        data-testid="button-delete-title-${title.id}">
+                    حذف
+                </button>
+            </div>
+        </div>
+    `;
+    
+    return div;
+}
+
+function startEditCaseTitle(titleId) {
+    // Hide the label and actions, show the edit form
+    document.getElementById(`title-label-${titleId}`).style.display = 'none';
+    document.getElementById(`title-actions-${titleId}`).style.display = 'none';
+    document.getElementById(`edit-form-${titleId}`).classList.remove('hidden');
+    
+    // Focus on the input
+    document.getElementById(`edit-input-${titleId}`).focus();
+}
+
+function cancelCaseTitleEdit(titleId) {
+    // Show the label and actions, hide the edit form
+    document.getElementById(`title-label-${titleId}`).style.display = 'block';
+    document.getElementById(`title-actions-${titleId}`).style.display = 'flex';
+    document.getElementById(`edit-form-${titleId}`).classList.add('hidden');
+}
+
+async function saveCaseTitleEdit(titleId) {
+    const newLabel = document.getElementById(`edit-input-${titleId}`).value.trim();
+    
+    if (!newLabel) {
+        showToast('عنوان نمی‌تواند خالی باشد', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/case-titles/${titleId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ label: newLabel })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Update the label in the display
+            document.getElementById(`title-label-${titleId}`).textContent = newLabel;
+            
+            // Hide edit form and show normal view
+            cancelCaseTitleEdit(titleId);
+            
+            showToast('عنوان با موفقیت بروزرسانی شد', 'success');
+        } else {
+            showToast(result.message || 'خطا در بروزرسانی عنوان', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Error updating case title:', error);
+        showToast('خطا در بروزرسانی عنوان', 'error');
+    }
+}
+
+async function deleteCaseTitle(titleId) {
+    if (!confirm('آیا از حذف این عنوان اطمینان دارید؟')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/case-titles/${titleId}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Remove the element from UI
+            const element = document.querySelector(`[data-title-id="${titleId}"]`);
+            if (element) {
+                element.remove();
+            }
+            
+            showToast('عنوان با موفقیت حذف شد', 'success');
+            
+            // Check if list is empty
+            const container = document.getElementById('case-titles-list');
+            if (container.children.length === 0) {
+                container.classList.add('hidden');
+                document.getElementById('case-titles-empty').classList.remove('hidden');
+            }
+        } else {
+            showToast(result.message || 'خطا در حذف عنوان', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Error deleting case title:', error);
+        showToast('خطا در حذف عنوان', 'error');
+    }
+}
+
+// Handle the add new case title form
+document.addEventListener('DOMContentLoaded', function() {
+    const addForm = document.getElementById('add-case-title-form');
+    if (addForm) {
+        addForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const input = document.getElementById('new-case-title-input');
+            const newLabel = input.value.trim();
+            
+            if (!newLabel) {
+                showToast('عنوان نمی‌تواند خالی باشد', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/admin/case-titles', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ label: newLabel })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Add to UI
+                    const container = document.getElementById('case-titles-list');
+                    const emptyContainer = document.getElementById('case-titles-empty');
+                    
+                    if (container.children.length === 0) {
+                        emptyContainer.classList.add('hidden');
+                        container.classList.remove('hidden');
+                    }
+                    
+                    const titleElement = createCaseTitleElement(result.data);
+                    container.appendChild(titleElement);
+                    
+                    // Clear the input
+                    input.value = '';
+                    
+                    showToast('عنوان جدید با موفقیت اضافه شد', 'success');
+                } else {
+                    showToast(result.message || 'خطا در افزودن عنوان جدید', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error adding case title:', error);
+                showToast('خطا در افزودن عنوان جدید', 'error');
+            }
+        });
+    }
+});
+
 async function openClientMessages(clientId, clientName) {
     try {
         currentClientForMessaging = { id: clientId, name: clientName };
@@ -3274,5 +3627,11 @@ window.openClientMessages = openClientMessages;
 window.closeClientMessages = closeClientMessages;
 window.refreshMessages = refreshMessages;
 window.searchMessagingClients = searchMessagingClients;
+window.openCaseTitlesModal = openCaseTitlesModal;
+window.closeCaseTitlesModal = closeCaseTitlesModal;
+window.startEditCaseTitle = startEditCaseTitle;
+window.cancelCaseTitleEdit = cancelCaseTitleEdit;
+window.saveCaseTitleEdit = saveCaseTitleEdit;
+window.deleteCaseTitle = deleteCaseTitle;
 
 </script>
