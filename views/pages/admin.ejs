@@ -420,14 +420,6 @@
                                             <label class="block text-sm font-medium mb-2">نوع رویداد <span class="text-red-500">*</span></label>
                                             <select name="eventType" required class="input-field" data-testid="select-event-type">
                                                 <option value="">انتخاب نوع رویداد</option>
-                                                <option value="جلسه دادگاه">جلسه دادگاه</option>
-                                                <option value="مشاوره">مشاوره</option>
-                                                <option value="تنظیم لایحه">تنظیم لایحه</option>
-                                                <option value="ارسال مدارک">ارسال مدارک</option>
-                                                <option value="دریافت مدارک">دریافت مدارک</option>
-                                                <option value="پیگیری">پیگیری</option>
-                                                <option value="تماس تلفنی">تماس تلفنی</option>
-                                                <option value="سایر">سایر</option>
                                             </select>
                                         </div>
                                         <div>
@@ -482,14 +474,6 @@
                                     <label class="block text-sm font-medium mb-2">نوع رویداد <span class="text-red-500">*</span></label>
                                     <select name="eventType" required class="input-field" id="edit-event-type" data-testid="select-edit-event-type">
                                         <option value="">انتخاب نوع رویداد</option>
-                                        <option value="جلسه دادگاه">جلسه دادگاه</option>
-                                        <option value="مشاوره">مشاوره</option>
-                                        <option value="تنظیم لایحه">تنظیم لایحه</option>
-                                        <option value="ارسال مدارک">ارسال مدارک</option>
-                                        <option value="دریافت مدارک">دریافت مدارک</option>
-                                        <option value="پیگیری">پیگیری</option>
-                                        <option value="تماس تلفنی">تماس تلفنی</option>
-                                        <option value="سایر">سایر</option>
                                     </select>
                                 </div>
                                 <div>
@@ -1115,6 +1099,54 @@ async function loadClientsForSelect() {
         }
     } catch (error) {
         console.error('Error loading clients for select:', error);
+    }
+}
+
+// Load case titles for event type selection
+async function loadCaseTitlesForSelect() {
+    try {
+        const response = await fetch('/api/admin/case-titles');
+        const result = await response.json();
+        
+        if (result.success) {
+            const addSelect = document.querySelector('select[name="eventType"]');
+            const editSelect = document.getElementById('edit-event-type');
+            
+            // Update add event form select
+            if (addSelect) {
+                addSelect.innerHTML = '<option value="">انتخاب نوع رویداد</option>';
+                result.data.forEach(caseTitle => {
+                    const option = document.createElement('option');
+                    option.value = caseTitle.label;
+                    option.textContent = caseTitle.label;
+                    addSelect.appendChild(option);
+                });
+            }
+            
+            // Update edit event form select
+            if (editSelect) {
+                const currentValue = editSelect.value;
+                editSelect.innerHTML = '<option value="">انتخاب نوع رویداد</option>';
+                result.data.forEach(caseTitle => {
+                    const option = document.createElement('option');
+                    option.value = caseTitle.label;
+                    option.textContent = caseTitle.label;
+                    editSelect.appendChild(option);
+                });
+                editSelect.value = currentValue;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading case titles for select:', error);
+        // Fallback to showing an error message in select
+        const addSelect = document.querySelector('select[name="eventType"]');
+        const editSelect = document.getElementById('edit-event-type');
+        if (addSelect) {
+            addSelect.innerHTML = '<option value="">خطا در بارگذاری انواع رویداد</option>';
+        }
+        if (editSelect) {
+            editSelect.innerHTML = '<option value="">خطا در بارگذاری انواع رویداد</option>';
+        }
     }
 }
 
@@ -1983,9 +2015,10 @@ function toggleAddEventForm() {
     }
 }
 
-function showAddEventForm() {
+async function showAddEventForm() {
     document.getElementById('add-event-form').classList.remove('hidden');
     document.getElementById('toggle-add-event-btn').textContent = 'لغو';
+    await loadCaseTitlesForSelect();
     document.querySelector('select[name="eventType"]').focus();
 }
 
@@ -1999,13 +2032,14 @@ function cancelAddEvent() {
     hideAddEventForm();
 }
 
-function editCaseEvent(eventId) {
+async function editCaseEvent(eventId) {
     const event = currentCaseEvents.find(e => e.id === eventId);
     if (event) {
         document.getElementById('edit-event-id').value = event.id;
-        document.getElementById('edit-event-type').value = event.eventType;
         document.getElementById('edit-event-details').value = event.details || '';
         document.getElementById('edit-event-modal').classList.remove('hidden');
+        await loadCaseTitlesForSelect();
+        document.getElementById('edit-event-type').value = event.eventType;
     }
 }
 
