@@ -1166,9 +1166,6 @@ function renderClientsTable(clientsData) {
                 <td class="p-4">${caseCount}</td>
                 <td class="p-4">
                     <div class="flex gap-2">
-                        <button onclick="viewClient('${client.clientId}')" class="text-primary hover:underline text-sm" data-testid="button-view-client-${client.clientId}">
-                            مشاهده
-                        </button>
                         <button class="assign-case-btn text-accent hover:underline text-sm" 
                                 data-client-id="${client.clientId}" 
                                 data-client-name="${client.firstName} ${client.lastName}" 
