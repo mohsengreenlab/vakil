@@ -691,3 +691,74 @@ function getStatusText(status) {
     return statusMap[status] || status;
 }
 
+// Close Case Modal Functions
+let currentCaseToClose = null;
+
+function openCloseCaseModal(caseId, firstName, lastName) {
+    currentCaseToClose = caseId;
+    const clientName = `${firstName || ''} ${lastName || ''}`.trim();
+    
+    const messageElement = document.getElementById('close-case-message');
+    messageElement.textContent = `لطفا با حروف بزرگ انگلیسی کلمه YES را بنویسید تا این پرونده با شناسه ${caseId} مربوط به موکل ${clientName} خاتمه پیدا کند.`;
+    
+    // Clear the input field
+    document.getElementById('close-case-confirmation').value = '';
+    
+    // Show the modal
+    const modal = document.getElementById('close-case-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    // Focus on the input field
+    setTimeout(() => {
+        document.getElementById('close-case-confirmation').focus();
+    }, 100);
+}
+
+function cancelCloseCase() {
+    currentCaseToClose = null;
+    const modal = document.getElementById('close-case-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    
+    // Clear the input field
+    document.getElementById('close-case-confirmation').value = '';
+}
+
+async function confirmCloseCase() {
+    const confirmation = document.getElementById('close-case-confirmation').value.trim();
+    
+    // Validate exactly "YES" (uppercase, no extra characters)
+    if (confirmation !== 'YES') {
+        showToast('برای تأیید خاتمه پرونده باید دقیقاً کلمه YES را با حروف بزرگ وارد کنید', 'error');
+        return;
+    }
+    
+    if (!currentCaseToClose) {
+        showToast('خطا: شناسه پرونده یافت نشد', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/cases/${currentCaseToClose}/close`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('پرونده با موفقیت بسته شد', 'success');
+            cancelCloseCase(); // Close the modal
+            loadCases(); // Refresh the cases table
+        } else {
+            showToast(result.message || 'خطا در بستن پرونده', 'error');
+        }
+    } catch (error) {
+        console.error('Error closing case:', error);
+        showToast('خطا در ارتباط با سرور', 'error');
+    }
+}
+
