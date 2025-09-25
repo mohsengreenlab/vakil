@@ -30,6 +30,7 @@ export const cases = mysqlTable("cases", {
   caseCreationDate: timestamp("case_creation_date").defaultNow(),
   lastCaseStatus: varchar("last_case_status", { length: 255 }).notNull().default("pending"),
   lastStatusDate: timestamp("last_status_date").defaultNow(),
+  closed: boolean("closed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -97,6 +98,7 @@ export const insertClientSchema = createInsertSchema(clients).pick({
 export const insertCaseSchema = createInsertSchema(cases).pick({
   clientId: true,
   lastCaseStatus: true,
+  closed: true,
 });
 
 export const insertContactSchema = createInsertSchema(contacts).pick({

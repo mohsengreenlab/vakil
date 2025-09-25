@@ -146,6 +146,17 @@ export class SingleStoreStorage implements IStorage {
         )
       `);
 
+      // Add closed column to cases table if it doesn't exist
+      try {
+        await connection.execute(`
+          ALTER TABLE cases ADD COLUMN closed BOOLEAN NOT NULL DEFAULT 0
+        `);
+        console.log('✅ Added closed column to cases table');
+      } catch (alterError) {
+        // Column already exists or other issue - this is expected after first run
+        console.log('ℹ️ closed column already exists or table is properly configured');
+      }
+
       // Create users table for admin authentication with role-based access
       await connection.execute(`
         CREATE TABLE IF NOT EXISTS users (
@@ -703,6 +714,7 @@ export class SingleStoreStorage implements IStorage {
         caseCreationDate: new Date(caseCreationDate),
         lastCaseStatus: lastCaseStatus,
         lastStatusDate: new Date(),
+        closed: false,
         createdAt: new Date()
       };
     } catch (error) {
