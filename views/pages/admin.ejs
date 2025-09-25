@@ -107,18 +107,6 @@
                     <p class="text-sm text-muted-foreground">تعداد کل</p>
                 </div>
 
-                <div class="card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-medium text-muted-foreground">پیام‌های جدید</h3>
-                        <div class="w-8 h-8 bg-accent/10 rounded-lg flex items-center justify-center">
-                            <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <div class="text-3xl font-bold text-accent mb-2"><%= contacts.length %></div>
-                    <p class="text-sm text-muted-foreground">پیام دریافتی</p>
-                </div>
             </div>
         </div>
 
@@ -1222,7 +1210,7 @@ async function loadDashboardStats() {
         
         if (casesResult.success) {
             const totalCases = casesResult.cases.length;
-            const activeCases = casesResult.cases.filter(c => c.last_case_status === 'under-review' || c.last_case_status === 'lawyer-study' || c.last_case_status === 'in-progress' || c.last_case_status === 'awaiting-court').length;
+            const activeCases = casesResult.cases.filter(c => c.closed == 0).length;
             
             document.getElementById('total-cases-count').textContent = totalCases;
             document.getElementById('active-cases-count').textContent = activeCases;
