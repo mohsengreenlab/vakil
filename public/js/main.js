@@ -658,21 +658,37 @@ function renderCasesTable(casesData = null) {
         // Actions cell
         const actionsCell = document.createElement('td');
         
-        // Close Case button (left side)
-        const closeButton = document.createElement('button');
-        closeButton.className = 'text-red-600 hover:underline text-sm mr-3';
-        closeButton.setAttribute('data-testid', `button-close-case-${caseItem.case_id}`);
-        closeButton.textContent = 'خاتمه پرونده';
-        closeButton.onclick = () => openCloseCaseModal(caseItem.case_id, caseItem.first_name, caseItem.last_name);
-        actionsCell.appendChild(closeButton);
+        // Check if case is closed (handle different data types from DB)
+        const isClosed = Boolean(Number(caseItem.closed)) || caseItem.closed === true;
         
-        // View Details button (right side)
+        if (isClosed) {
+            // If case is closed, show "Closed" badge instead of close button
+            const closedBadge = document.createElement('span');
+            closedBadge.className = 'text-gray-500 text-sm mr-3 px-2 py-1 bg-gray-200 rounded font-medium';
+            closedBadge.textContent = 'بسته شده';
+            actionsCell.appendChild(closedBadge);
+        } else {
+            // If case is open, show close button
+            const closeButton = document.createElement('button');
+            closeButton.className = 'text-red-600 hover:underline text-sm mr-3';
+            closeButton.setAttribute('data-testid', `button-close-case-${caseItem.case_id}`);
+            closeButton.textContent = 'خاتمه پرونده';
+            closeButton.onclick = () => openCloseCaseModal(caseItem.case_id, caseItem.first_name, caseItem.last_name);
+            actionsCell.appendChild(closeButton);
+        }
+        
+        // View Details button (always shown)
         const viewButton = document.createElement('button');
         viewButton.className = 'text-primary hover:underline text-sm';
         viewButton.setAttribute('data-testid', `button-view-case-${caseItem.case_id}`);
         viewButton.textContent = 'نمایش جزئیات';
         viewButton.onclick = () => viewCaseDetails(caseItem.case_id);
         actionsCell.appendChild(viewButton);
+        
+        // Add visual styling for closed cases
+        if (isClosed) {
+            row.classList.add('opacity-70', 'bg-gray-50');
+        }
         
         row.appendChild(actionsCell);
         
