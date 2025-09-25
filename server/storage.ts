@@ -22,6 +22,7 @@ export interface IStorage {
   getCase(caseId: string | number): Promise<Case | undefined>;
   getAllCases(): Promise<Case[]>;
   createCase(clientId: string | number, status: string, caseId?: string): Promise<Case>;
+  closeCase(caseId: string | number): Promise<void>;
   
   // Case Events methods
   getCaseEvents(caseId: string | number): Promise<CaseEvent[]>;
@@ -223,10 +224,20 @@ export class MemStorage implements IStorage {
       lastCaseStatus: status,
       caseCreationDate: new Date(),
       lastStatusDate: new Date(),
+      closed: false,
       createdAt: new Date(),
     };
     this.cases.set(numericCaseId, case_);
     return case_;
+  }
+
+  async closeCase(caseId: string | number): Promise<void> {
+    const numericCaseId = typeof caseId === 'string' ? parseInt(caseId) : caseId;
+    const case_ = this.cases.get(numericCaseId);
+    if (case_) {
+      case_.closed = true;
+      this.cases.set(numericCaseId, case_);
+    }
   }
 
 

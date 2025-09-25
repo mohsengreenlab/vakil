@@ -865,6 +865,19 @@ export class SingleStoreStorage implements IStorage {
     }
   }
 
+  async closeCase(caseId: string | number): Promise<void> {
+    try {
+      await this.pool.execute(
+        'UPDATE cases SET closed = 1 WHERE case_id = ?',
+        [String(caseId)]
+      );
+      console.log(`✅ Case ${caseId} marked as closed`);
+    } catch (error) {
+      console.error('Error closing case:', error);
+      throw error;
+    }
+  }
+
   // Client authentication and password management methods
   async authenticateClient(nationalId: string, password: string): Promise<Client | null> {
     try {

@@ -269,6 +269,31 @@ export async function registerRoutes(app: Express, storage: IStorage): Promise<v
   // ROUTE CONSOLIDATION FIX: This duplicate route is removed to prevent conflicts
   // The primary '/api/admin/cases' route is handled in server/index.ts
 
+  // Close a case (admin functionality)
+  app.put('/api/admin/cases/:caseId/close', requireAuthAPI, async (req, res) => {
+    try {
+      const { caseId } = req.params;
+      
+      // Verify case exists
+      const case_ = await storage.getCase(caseId);
+      if (!case_) {
+        return res.status(404).json({ success: false, message: 'پرونده یافت نشد' });
+      }
+
+      // Update the case to mark it as closed
+      await storage.closeCase(caseId);
+      
+      res.json({ 
+        success: true, 
+        message: 'پرونده با موفقیت بسته شد',
+        caseId: caseId
+      });
+    } catch (error) {
+      console.error('Error closing case:', error);
+      res.status(500).json({ success: false, message: 'خطا در بستن پرونده' });
+    }
+  });
+
   // Add a new event to a case (admin functionality)
   app.post('/api/cases/:caseId/events', requireAuthAPI, async (req, res) => {
     try {
