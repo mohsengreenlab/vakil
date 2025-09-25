@@ -51,6 +51,7 @@
                 </button>
                 <button onclick="showTab('client-messages')" class="tab-btn" data-tab="client-messages" data-testid="tab-client-messages">
                     پیام های موکلان
+                    <span id="client-messages-badge" class="inline-block mr-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full hidden">جدید</span>
                 </button>
                 <button onclick="showTab('settings')" class="tab-btn" data-tab="settings" data-testid="tab-settings">
                     تنظیمات
@@ -2558,6 +2559,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load dashboard stats after a brief delay to ensure all elements are ready
     setTimeout(function() {
         loadDashboardStats();
+        // Also check for unread messages on page load to update badge
+        checkUnreadMessagesForBadge();
     }, 100);
     
     // Initialize QA form handlers
@@ -3046,6 +3049,7 @@ async function displayClientsForMessaging(clients) {
     
     if (clients.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-muted-foreground">هیچ موکلی یافت نشد</td></tr>';
+        updateClientMessagesBadge(false);
         return;
     }
     
@@ -3054,6 +3058,10 @@ async function displayClientsForMessaging(clients) {
         const unreadCount = await getUnreadMessageCount(client.clientId);
         return { ...client, unreadCount: Number(unreadCount) || 0 };
     }));
+    
+    // Check if any client has unread messages
+    const hasUnreadMessages = clientsWithMessages.some(client => client.unreadCount > 0);
+    updateClientMessagesBadge(hasUnreadMessages);
     
     // Sort clients to show those with unread messages at the top (defensive copy)
     const sortedClients = [...clientsWithMessages].sort((a, b) => {
@@ -3117,6 +3125,45 @@ async function getUnreadMessageCount(clientId) {
     } catch (error) {
         console.error(`Error getting unread count for client ${clientId}:`, error);
         return 0;
+    }
+}
+
+// Function to update the client messages tab badge
+function updateClientMessagesBadge(hasUnreadMessages) {
+    const badge = document.getElementById('client-messages-badge');
+    if (badge) {
+        if (hasUnreadMessages) {
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+}
+
+// Function to check for unread messages and update badge (without loading full table)
+async function checkUnreadMessagesForBadge() {
+    try {
+        const response = await fetch('/api/admin/clients');
+        const result = await response.json();
+        
+        if (result.success && result.clients) {
+            // Check if any client has unread messages
+            let hasUnreadMessages = false;
+            
+            for (const client of result.clients) {
+                const unreadCount = await getUnreadMessageCount(client.clientId);
+                if (unreadCount > 0) {
+                    hasUnreadMessages = true;
+                    break; // Found at least one, no need to check others
+                }
+            }
+            
+            updateClientMessagesBadge(hasUnreadMessages);
+        }
+    } catch (error) {
+        console.error('Error checking unread messages for badge:', error);
+        // In case of error, don't show the badge
+        updateClientMessagesBadge(false);
     }
 }
 
