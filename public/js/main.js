@@ -657,12 +657,23 @@ function renderCasesTable(casesData = null) {
         
         // Actions cell
         const actionsCell = document.createElement('td');
+        
+        // Close Case button (left side)
+        const closeButton = document.createElement('button');
+        closeButton.className = 'text-red-600 hover:underline text-sm mr-3';
+        closeButton.setAttribute('data-testid', `button-close-case-${caseItem.case_id}`);
+        closeButton.textContent = 'خاتمه پرونده';
+        closeButton.onclick = () => openCloseCaseModal(caseItem.case_id, caseItem.first_name, caseItem.last_name);
+        actionsCell.appendChild(closeButton);
+        
+        // View Details button (right side)
         const viewButton = document.createElement('button');
         viewButton.className = 'text-primary hover:underline text-sm';
         viewButton.setAttribute('data-testid', `button-view-case-${caseItem.case_id}`);
         viewButton.textContent = 'نمایش جزئیات';
         viewButton.onclick = () => viewCaseDetails(caseItem.case_id);
         actionsCell.appendChild(viewButton);
+        
         row.appendChild(actionsCell);
         
         tableBody.appendChild(row);
