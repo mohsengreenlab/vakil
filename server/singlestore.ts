@@ -591,6 +591,7 @@ export class SingleStoreStorage implements IStorage {
           email: contact.email || null,
           subject: contact.subject,
           message: contact.message,
+          isRead: !!contact.is_read, // Convert 1/0 or true/false to boolean
           createdAt: contact.created_at
         };
       }
@@ -614,6 +615,7 @@ export class SingleStoreStorage implements IStorage {
         email: contact.email || null,
         subject: contact.subject,
         message: contact.message,
+        isRead: !!contact.is_read, // Convert 1/0 or true/false to boolean
         createdAt: contact.created_at
       }));
     } catch (error) {
@@ -626,8 +628,8 @@ export class SingleStoreStorage implements IStorage {
     try {
       const id = this.generateUUID();
       await this.pool.execute(
-        'INSERT INTO contact_us_messages (id, first_name, last_name, phone_number, email, subject, message) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [id, contact.firstName, contact.lastName, contact.phone, contact.email, contact.subject, contact.message]
+        'INSERT INTO contact_us_messages (id, first_name, last_name, phone_number, email, subject, message, is_read) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [id, contact.firstName, contact.lastName, contact.phone, contact.email, contact.subject, contact.message, 0]
       );
       
       return {
@@ -638,6 +640,7 @@ export class SingleStoreStorage implements IStorage {
         email: contact.email || null,
         subject: contact.subject,
         message: contact.message,
+        isRead: false,
         createdAt: new Date()
       };
     } catch (error) {
