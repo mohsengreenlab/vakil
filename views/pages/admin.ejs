@@ -520,6 +520,11 @@
                                 <span data-testid="contact-email-<%= contact.id %>">📧 <%= contact.email %></span>
                                 <% } %>
                             </div>
+                            <div class="flex gap-2">
+                                <button onclick="markAsRead('<%= contact.id %>')" class="text-primary hover:underline text-sm" data-testid="button-mark-read-<%= contact.id %>">
+                                    خوانده شد
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <% }) %>
@@ -1661,6 +1666,29 @@ function hideAssignCaseForm() {
 // Other functions
 function viewClient(clientId) {
     showToast(`مشاهده جزئیات موکل ${clientId}`, 'info');
+}
+
+// Mark contact as read
+async function markAsRead(contactId) {
+    try {
+        const response = await fetch(`/api/admin/contacts/${contactId}/mark-read`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('پیام به عنوان خوانده شده علامت‌گذاری شد', 'success');
+            // Optionally reload contacts to reflect changes
+            // loadContacts();
+        } else {
+            showToast(result.message || 'خطا در علامت‌گذاری پیام', 'error');
+        }
+    } catch (error) {
+        console.error('Error marking contact as read:', error);
+        showToast('خطا در علامت‌گذاری پیام', 'error');
+    }
 }
 
 
@@ -3703,6 +3731,7 @@ window.editCaseEvent = editCaseEvent;
 window.closeEditEventModal = closeEditEventModal;
 window.deleteCaseEvent = deleteCaseEvent;
 window.updateCaseStatus = updateCaseStatus;
+window.markAsRead = markAsRead;
 window.showAddQAForm = showAddQAForm;
 window.hideAddQAForm = hideAddQAForm;
 window.showEditQAForm = showEditQAForm;

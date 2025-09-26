@@ -36,6 +36,7 @@ export interface IStorage {
   getContact(id: string): Promise<Contact | undefined>;
   getAllContacts(): Promise<Contact[]>;
   createContact(contact: InsertContact): Promise<Contact>;
+  markContactAsRead(contactId: string): Promise<boolean>;
   
   // Client File methods
   getClientFile(fileId: string): Promise<ClientFile | undefined>;
@@ -368,6 +369,12 @@ export class MemStorage implements IStorage {
     };
     this.contacts.set(id, contact);
     return contact;
+  }
+
+  async markContactAsRead(contactId: string): Promise<boolean> {
+    // For MemStorage, this is a stub implementation since we don't have is_read column in memory
+    // In real app, would need to add is_read field to Contact interface
+    return true;
   }
 
   // Client File methods

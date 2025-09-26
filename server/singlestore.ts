@@ -646,6 +646,20 @@ export class SingleStoreStorage implements IStorage {
     }
   }
 
+  async markContactAsRead(contactId: string): Promise<boolean> {
+    try {
+      const [result] = await this.pool.execute(
+        'UPDATE contact_us_messages SET is_read = 1 WHERE id = ?',
+        [contactId]
+      );
+      
+      return (result as any).affectedRows > 0;
+    } catch (error) {
+      console.error('Error marking contact as read:', error);
+      throw error;
+    }
+  }
+
   // New methods specific to SingleStore schema
   async createClient(firstName: string, lastName: string, nationalId: string, phoneNumbers: string[], password?: string): Promise<Client> {
     const connection = await this.pool.getConnection();

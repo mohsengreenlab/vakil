@@ -919,6 +919,34 @@ app.put('/api/admin/cases/:caseId/status', requireAuthAPI, async (req, res) => {
   }
 });
 
+// Mark contact as read
+app.put('/api/admin/contacts/:contactId/mark-read', requireAuthAPI, async (req, res) => {
+  try {
+    const { contactId } = req.params;
+    
+    const contact = await storage.getContact(contactId);
+    if (!contact) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'پیام یافت نشد' 
+      });
+    }
+    
+    // Update the is_read column to 1 (true)
+    await storage.markContactAsRead(contactId);
+    
+    res.json({ 
+      success: true, 
+      message: 'پیام به عنوان خوانده شده علامت‌گذاری شد'
+    });
+  } catch (error) {
+    console.error('Error marking contact as read:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'خطا در علامت‌گذاری پیام' 
+    });
+  }
+});
 
 // Form submission handlers (saving to SingleStore)
 app.post('/api/case-review', async (req, res) => {
