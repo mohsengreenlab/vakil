@@ -663,7 +663,7 @@ function renderCasesTable(casesData = null) {
         
         // View Details button (always shown first for RTL layout)
         const viewButton = document.createElement('button');
-        viewButton.className = 'text-primary hover:underline text-sm mr-4';
+        viewButton.className = 'text-primary hover:underline text-sm mr-8';
         viewButton.setAttribute('data-testid', `button-view-case-${caseItem.case_id}`);
         viewButton.textContent = 'نمایش جزئیات';
         viewButton.onclick = () => viewCaseDetails(caseItem.case_id);
