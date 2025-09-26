@@ -48,6 +48,7 @@
                 </button>
                 <button onclick="showTab('files')" class="tab-btn" data-tab="files" data-testid="tab-files">
                     مدیریت فایل ها
+                    <span id="files-badge" class="inline-block mr-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full hidden" data-testid="status-files-badge">جدید</span>
                 </button>
                 <button onclick="showTab('client-messages')" class="tab-btn" data-tab="client-messages" data-testid="tab-client-messages">
                     پیام های موکلان
@@ -2175,6 +2176,10 @@ async function loadClientsForFiles() {
             }));
             
             displayClientsForFiles(allClientsForFiles);
+            
+            // Update badge based on global status after loading file view status
+            const hasNewFiles = clientFileViewStatus.some(s => s.hasUnviewedFiles);
+            updateFilesBadge(hasNewFiles);
         } else {
             showToast('خطا در بارگذاری موکلان', 'error');
         }
@@ -2189,8 +2194,14 @@ function displayClientsForFiles(clients) {
     
     if (clients.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-muted-foreground">هیچ موکلی یافت نشد</td></tr>';
+        // Don't hide badge for empty filtered results - check global status instead
+        updateFilesBadge(clientFileViewStatus.some(s => s.hasUnviewedFiles));
         return;
     }
+    
+    // Always check global status for badge, not just filtered clients
+    const hasNewFiles = clientFileViewStatus.some(s => s.hasUnviewedFiles);
+    updateFilesBadge(hasNewFiles);
     
     // Sort clients to show those with "جدید" (new) file status at the top
     const sortedClients = [...clients].sort((a, b) => {
@@ -2300,6 +2311,8 @@ async function viewClientFiles(clientId, clientName) {
                 const statusIndex = clientFileViewStatus.findIndex(status => status.clientId === clientId);
                 if (statusIndex !== -1) {
                     clientFileViewStatus[statusIndex].hasUnviewedFiles = false;
+                    // Update badge after marking files as viewed
+                    updateFilesBadge(clientFileViewStatus.some(s => s.hasUnviewedFiles));
                 }
             }
         } else {
@@ -2559,8 +2572,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load dashboard stats after a brief delay to ensure all elements are ready
     setTimeout(function() {
         loadDashboardStats();
-        // Also check for unread messages on page load to update badge
+        // Also check for unread messages and new files on page load to update badges
         checkUnreadMessagesForBadge();
+        checkNewFilesForBadge();
     }, 100);
     
     // Initialize QA form handlers
@@ -3164,6 +3178,38 @@ async function checkUnreadMessagesForBadge() {
         console.error('Error checking unread messages for badge:', error);
         // In case of error, don't show the badge
         updateClientMessagesBadge(false);
+    }
+}
+
+// Function to update the files tab badge
+function updateFilesBadge(hasNewFiles) {
+    const badge = document.getElementById('files-badge');
+    if (badge) {
+        if (hasNewFiles) {
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+}
+
+// Function to check for new files and update badge (without loading full table)
+async function checkNewFilesForBadge() {
+    try {
+        const statusResponse = await fetch('/api/admin/clients/file-status');
+        const statusResult = await statusResponse.json();
+        
+        if (statusResult.success && statusResult.fileViewStatus) {
+            // Check if any client has unviewed files
+            const hasNewFiles = statusResult.fileViewStatus.some(status => status.hasUnviewedFiles);
+            updateFilesBadge(hasNewFiles);
+        } else {
+            updateFilesBadge(false);
+        }
+    } catch (error) {
+        console.error('Error checking new files for badge:', error);
+        // In case of error, don't show the badge
+        updateFilesBadge(false);
     }
 }
 
