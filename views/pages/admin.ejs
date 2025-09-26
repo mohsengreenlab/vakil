@@ -520,14 +520,6 @@
                                 <span data-testid="contact-email-<%= contact.id %>">📧 <%= contact.email %></span>
                                 <% } %>
                             </div>
-                            <div class="flex gap-2">
-                                <button onclick="convertToClient('<%= contact.id %>')" class="text-primary hover:underline text-sm" data-testid="button-convert-<%= contact.id %>">
-                                    تبدیل به موکل
-                                </button>
-                                <button onclick="replyToContact('<%= contact.id %>')" class="text-accent hover:underline text-sm" data-testid="button-reply-<%= contact.id %>">
-                                    پاسخ
-                                </button>
-                            </div>
                         </div>
                     </div>
                     <% }) %>
@@ -1642,30 +1634,6 @@ async function updateCaseStatus(caseId, newStatus) {
     }
 }
 
-// Convert contact to client
-async function convertToClient(contactId) {
-    if (!confirm('آیا می‌خواهید این پیام را به موکل تبدیل کنید؟')) {
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/admin/convert-contact/${contactId}`, {
-            method: 'POST'
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showToast('پیام با موفقیت به موکل تبدیل شد', 'success');
-            showTab('clients'); // Switch to clients tab
-        } else {
-            showToast(result.message || 'خطا در تبدیل پیام', 'error');
-        }
-    } catch (error) {
-        console.error('Error converting contact:', error);
-        showToast('خطا در تبدیل پیام', 'error');
-    }
-}
 
 // Show/Hide assign case form
 async function showAssignCaseForm(clientId, clientName) {
@@ -1695,9 +1663,6 @@ function viewClient(clientId) {
     showToast(`مشاهده جزئیات موکل ${clientId}`, 'info');
 }
 
-function replyToContact(contactId) {
-    showToast(`پاسخ به پیام ${contactId}`, 'info');
-}
 
 // QA Management Functions
 let qaItems = [];
@@ -3737,9 +3702,7 @@ window.cancelAddEvent = cancelAddEvent;
 window.editCaseEvent = editCaseEvent;
 window.closeEditEventModal = closeEditEventModal;
 window.deleteCaseEvent = deleteCaseEvent;
-window.convertToClient = convertToClient;
 window.updateCaseStatus = updateCaseStatus;
-window.replyToContact = replyToContact;
 window.showAddQAForm = showAddQAForm;
 window.hideAddQAForm = hideAddQAForm;
 window.showEditQAForm = showEditQAForm;

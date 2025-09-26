@@ -919,34 +919,6 @@ app.put('/api/admin/cases/:caseId/status', requireAuthAPI, async (req, res) => {
   }
 });
 
-// Convert contact message to client
-app.post('/api/admin/convert-contact/:contactId', requireAuthAPI, async (req, res) => {
-  try {
-    const { contactId } = req.params;
-    
-    const contact = await storage.getContact(contactId);
-    if (!contact) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'پیام یافت نشد' 
-      });
-    }
-    
-    // For now, we need a national ID to create a client
-    // Since contacts don't have national ID, we'll need to ask admin to provide it
-    // For this implementation, we'll use a placeholder
-    res.status(400).json({ 
-      success: false, 
-      message: 'برای تبدیل پیام به موکل، کد ملی مورد نیاز است. لطفاً موکل را به صورت دستی اضافه کنید.' 
-    });
-  } catch (error) {
-    console.error('Error converting contact:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'خطا در تبدیل پیام' 
-    });
-  }
-});
 
 // Form submission handlers (saving to SingleStore)
 app.post('/api/case-review', async (req, res) => {
