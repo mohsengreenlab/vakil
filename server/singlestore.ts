@@ -185,6 +185,17 @@ export class SingleStoreStorage implements IStorage {
         )
       `);
 
+      // Add is_read column to contact_us_messages table if it doesn't exist
+      try {
+        await connection.execute(`
+          ALTER TABLE contact_us_messages ADD COLUMN is_read BOOLEAN NOT NULL DEFAULT 0
+        `);
+        console.log('✅ Added is_read column to contact_us_messages table');
+      } catch (alterError) {
+        // Column already exists or other issue - this is expected after first run
+        console.log('ℹ️ is_read column already exists or table is properly configured');
+      }
+
       // Create QA table for questions and answers
       await connection.execute(`
         CREATE TABLE IF NOT EXISTS QA (
