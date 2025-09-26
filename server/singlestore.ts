@@ -998,7 +998,16 @@ export class SingleStoreStorage implements IStorage {
         'SELECT * FROM cases WHERE client_id = ? ORDER BY created_at DESC',
         [clientId]
       );
-      return rows as Case[];
+      // Map database columns to Case interface properties
+      return (rows as any[]).map(row => ({
+        caseId: row.case_id,
+        clientId: row.client_id,
+        caseCreationDate: row.case_creation_date,
+        lastCaseStatus: row.last_case_status,
+        lastStatusDate: row.last_status_date,
+        closed: row.closed,
+        createdAt: row.created_at
+      }));
     } catch (error) {
       console.error('Error getting client cases:', error);
       throw error;
