@@ -605,7 +605,7 @@ export class SingleStoreStorage implements IStorage {
   async getAllContacts(): Promise<Contact[]> {
     try {
       const [rows] = await this.pool.execute(
-        'SELECT * FROM contact_us_messages ORDER BY created_at DESC'
+        'SELECT * FROM contact_us_messages ORDER BY is_read ASC, created_at DESC'
       );
       return (rows as any[]).map(contact => ({
         id: contact.id,

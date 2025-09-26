@@ -354,9 +354,14 @@ export class MemStorage implements IStorage {
   }
 
   async getAllContacts(): Promise<Contact[]> {
-    return Array.from(this.contacts.values()).sort(
-      (a, b) => b.createdAt!.getTime() - a.createdAt!.getTime()
-    );
+    return Array.from(this.contacts.values()).sort((a, b) => {
+      // First sort by read status: unread (false) comes before read (true)
+      if (a.isRead !== b.isRead) {
+        return a.isRead ? 1 : -1;
+      }
+      // Then sort by creation date: newest first within each group
+      return b.createdAt!.getTime() - a.createdAt!.getTime();
+    });
   }
 
   async createContact(insertContact: InsertContact): Promise<Contact> {
