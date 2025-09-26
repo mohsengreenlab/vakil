@@ -365,6 +365,7 @@ export class MemStorage implements IStorage {
       ...insertContact,
       id,
       email: insertContact.email || null,
+      isRead: false,
       createdAt: new Date(),
     };
     this.contacts.set(id, contact);
@@ -372,8 +373,12 @@ export class MemStorage implements IStorage {
   }
 
   async markContactAsRead(contactId: string): Promise<boolean> {
-    // For MemStorage, this is a stub implementation since we don't have is_read column in memory
-    // In real app, would need to add is_read field to Contact interface
+    const contact = this.contacts.get(contactId);
+    if (!contact) {
+      return false;
+    }
+    contact.isRead = true;
+    this.contacts.set(contactId, contact);
     return true;
   }
 

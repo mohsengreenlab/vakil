@@ -521,9 +521,15 @@
                                 <% } %>
                             </div>
                             <div class="flex gap-2">
-                                <button onclick="markAsRead('<%= contact.id %>')" class="text-primary hover:underline text-sm" data-testid="button-mark-read-<%= contact.id %>">
-                                    خوانده شد
-                                </button>
+                                <% if (contact.isRead) { %>
+                                    <span class="btn-read-completed" data-testid="button-mark-read-<%= contact.id %>">
+                                        خوانده شده
+                                    </span>
+                                <% } else { %>
+                                    <button onclick="markAsRead('<%= contact.id %>')" class="btn-mark-read" data-testid="button-mark-read-<%= contact.id %>">
+                                        خوانده شد
+                                    </button>
+                                <% } %>
                             </div>
                         </div>
                     </div>
@@ -981,6 +987,44 @@
 .badge-error {
     background-color: #fee2e2;
     color: #991b1b;
+}
+
+.btn-mark-read {
+    background: linear-gradient(135deg, #10b981, #34d399, #6ee7b7);
+    background-size: 200% 200%;
+    color: #000000;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    animation: shimmer 2s ease-in-out infinite alternate;
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+}
+
+.btn-mark-read:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.4);
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 0% 50%;
+    }
+    100% {
+        background-position: 100% 50%;
+    }
+}
+
+.btn-read-completed {
+    background-color: #d1fae5;
+    color: #065f46;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #a7f3d0;
+    cursor: default;
 }
 </style>
 
@@ -1671,6 +1715,14 @@ function viewClient(clientId) {
 // Mark contact as read
 async function markAsRead(contactId) {
     try {
+        // Immediately update UI
+        const button = document.querySelector(`[data-testid="button-mark-read-${contactId}"]`);
+        if (button && button.tagName === 'BUTTON') {
+            button.textContent = 'خوانده شده';
+            button.className = 'btn-read-completed';
+            button.onclick = null; // Remove click handler
+        }
+        
         const response = await fetch(`/api/admin/contacts/${contactId}/mark-read`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' }
@@ -1680,14 +1732,25 @@ async function markAsRead(contactId) {
         
         if (result.success) {
             showToast('پیام به عنوان خوانده شده علامت‌گذاری شد', 'success');
-            // Optionally reload contacts to reflect changes
-            // loadContacts();
         } else {
             showToast(result.message || 'خطا در علامت‌گذاری پیام', 'error');
+            // Revert UI if API call failed
+            if (button) {
+                button.textContent = 'خوانده شد';
+                button.className = 'btn-mark-read';
+                button.onclick = () => markAsRead(contactId);
+            }
         }
     } catch (error) {
         console.error('Error marking contact as read:', error);
         showToast('خطا در علامت‌گذاری پیام', 'error');
+        // Revert UI if API call failed
+        const button = document.querySelector(`[data-testid="button-mark-read-${contactId}"]`);
+        if (button) {
+            button.textContent = 'خوانده شد';
+            button.className = 'btn-mark-read';
+            button.onclick = () => markAsRead(contactId);
+        }
     }
 }
 

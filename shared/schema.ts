@@ -52,6 +52,7 @@ export const contacts = mysqlTable("contacts", {
   email: varchar("email", { length: 255 }),
   subject: varchar("subject", { length: 500 }).notNull(),
   message: text("message").notNull(),
+  isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
