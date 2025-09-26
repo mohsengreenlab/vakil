@@ -670,7 +670,7 @@ function renderCasesTable(casesData = null) {
         } else {
             // If case is open, show close button
             const closeButton = document.createElement('button');
-            closeButton.className = 'text-red-600 hover:underline text-sm mr-3';
+            closeButton.className = 'text-red-600 hover:underline text-sm';
             closeButton.setAttribute('data-testid', `button-close-case-${caseItem.case_id}`);
             closeButton.textContent = 'خاتمه پرونده';
             closeButton.onclick = () => openCloseCaseModal(caseItem.case_id, caseItem.first_name, caseItem.last_name);
@@ -679,7 +679,7 @@ function renderCasesTable(casesData = null) {
         
         // View Details button (always shown)
         const viewButton = document.createElement('button');
-        viewButton.className = 'text-primary hover:underline text-sm';
+        viewButton.className = 'text-primary hover:underline text-sm ml-4';
         viewButton.setAttribute('data-testid', `button-view-case-${caseItem.case_id}`);
         viewButton.textContent = 'نمایش جزئیات';
         viewButton.onclick = () => viewCaseDetails(caseItem.case_id);
